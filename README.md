@@ -1,42 +1,49 @@
-# sv
+# MyNamesake
 
-Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
+A consumer web app for building beautiful family trees and preserving family memories.
 
-## Creating a project
+## Stack
 
-If you're seeing this, you've probably already done this step. Congrats!
+SvelteKit, TypeScript, Supabase (Postgres + Auth + Storage), deployed on Vercel.
 
-```sh
-# create a new project
-npx sv create my-app
+## Setup
+
+Copy environment variables into `.env.local` (see `claude.md` for required keys):
+
+```
+PUBLIC_SUPABASE_URL=
+PUBLIC_SUPABASE_ANON_KEY=
+SUPABASE_SERVICE_ROLE_KEY=
+RESEND_API_KEY=
 ```
 
-To recreate this project with the same configuration:
+Install dependencies:
 
 ```sh
-# recreate this project
-npx sv@0.15.2 create --template minimal --types ts --add eslint prettier --no-download-check --no-install .
+npm install
 ```
 
 ## Developing
 
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
-
 ```sh
 npm run dev
 
-# or start the server and open the app in a new browser tab
+# or open the app in a new browser tab
 npm run dev -- --open
 ```
 
 ## Building
 
-To create a production version of your app:
-
 ```sh
 npm run build
+npm run preview
 ```
 
-You can preview the production build with `npm run preview`.
+## Other commands
 
-> To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
+```sh
+npm run check   # TypeScript / Svelte check
+npm run lint    # ESLint + Prettier
+```
+
+Project conventions and schema details live in `claude.md`.
