@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Prosapiam — App UI Kit</title>
+<link rel="stylesheet" href="../../colors_and_type.css">
+<style>
+  html,body,#root{margin:0;padding:0;min-height:100vh;background:#F7F4EE}
+  body{font-family:var(--font-display)}
+  *{box-sizing:border-box}
+</style>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+</head>
+<body class="mn-base">
+<div id="root"></div>
+<script type="text/babel" src="data.jsx"></script>
+<script type="text/babel" src="components.jsx"></script>
+<script type="text/babel" src="AuthScreen.jsx"></script>
+<script type="text/babel" src="Dashboard.jsx"></script>
+<script type="text/babel" src="TreeView.jsx"></script>
+<script type="text/babel" src="ProfileView.jsx"></script>
+<script type="text/babel">
+const { useState } = React;
+function App() {
+  const [screen, setScreen] = useState('auth');
+  const [personId, setPersonId] = useState('mw');
+  const showNav = screen !== 'auth';
+  return (
+    <div data-screen-label={screen} style={{ minHeight:'100vh', display:'flex', flexDirection:'column' }}>
+      {showNav && <TopNav active={screen==='profile'?'tree':screen} onNav={setScreen} onAvatar={()=>setScreen('dashboard')}/>}
+      <main style={{ flex:1 }}>
+        {screen==='auth' && <AuthScreen onSignIn={()=>setScreen('dashboard')}/>}
+        {screen==='dashboard' && <Dashboard onNav={setScreen} onPerson={(id)=>{setPersonId(id);setScreen('profile');}}/>}
+        {screen==='tree' && <TreeView onPerson={(id)=>{setPersonId(id);setScreen('profile');}}/>}
+        {screen==='memories' && <Dashboard onNav={setScreen} onPerson={(id)=>{setPersonId(id);setScreen('profile');}}/>}
+        {screen==='profile' && <ProfileView personId={personId} onBack={()=>setScreen('tree')}/>}
+      </main>
+    </div>
+  );
+}
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body></html>

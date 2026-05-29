@@ -6,14 +6,13 @@
 </script>
 
 <svelte:head>
-  <title>Dashboard — MyNamesake</title>
+  <title>Dashboard — Prosapiam</title>
 </svelte:head>
 
 <div class="page">
   <header class="header">
     <div class="brand">
-      <span class="logo">🌳</span>
-      <span class="wordmark">MyNamesake</span>
+      <img src="/logo-wordmark.svg" alt="Prosapiam" class="wordmark-img" height="28" />
     </div>
     <form method="POST" action="/api/auth/signout">
       <button type="submit" class="btn-signout">Sign out</button>
@@ -51,14 +50,7 @@
     gap: 0.5rem;
   }
 
-  .logo { font-size: 1.5rem; }
-
-  .wordmark {
-    font-size: 1.1rem;
-    font-weight: 700;
-    color: #3d2000;
-    letter-spacing: -0.02em;
-  }
+  .wordmark-img { display: block; }
 
   .btn-signout {
     background: none;

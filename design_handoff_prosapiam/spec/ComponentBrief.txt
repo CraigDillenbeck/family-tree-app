@@ -1,0 +1,973 @@
+
+PROSAPIAM
+Component Library Brief
+
+Derived from Design System Spec v1.1
+Part I — Core UI Components  ·  Part II — Product Patterns
+
+This document defines every component and product pattern to be built in Figma and implemented in code. Each entry specifies purpose, visual character, variants, states, typography, spacing, accessibility, and emotional tone. It is a build spec, not a style guide.
+
+Part I — Core UI Components
+01  Button
+02  Input
+03  Textarea
+04  Select
+05  Checkbox
+06  Radio
+07  Toggle
+08  Badge
+09  Tag
+10  Avatar
+11  Divider
+12  Tabs
+13  Card
+14  Modal
+15  Drawer
+16  Tooltip
+17  Dropdown
+18  Empty State
+19  Loading Skeleton
+20  Alert / Validation Message
+
+Part II — Product-Specific Patterns
+01  Family Tree Node
+02  Relationship Connector Treatment
+03  Person Summary Card
+04  Person Profile Header
+05  Memory / Story Card
+06  Media Attachment Card
+07  Add / Edit Person Modal
+08  Add Relationship Flow
+09  Empty Tree State
+10  Empty Profile State
+11  Profile Timeline / Memory List
+12  Search / Filter Pattern
+
+PART I
+Core UI Components
+The components below are the foundational building blocks of the Prosapiam interface. Each is defined at the level of specificity needed to build it directly in Figma and implement it in React or HTML/CSS. Token references use the CSS custom property names established in Design System Spec v1.1.
+
+01 — Button
+The primary action trigger in the system. Three variants correspond to three levels of action weight. Buttons never use color to signal importance — only fill and outline distinguish them. All variants share the same geometry and type treatment.
+Variants
+Primary
+Filled. bg: --color-ink. text: --color-parchment. Use for the single most important action on a screen. One primary button per view.
+Secondary
+Outlined. bg: transparent. border: --border-default (0.5px). text: --color-ink. Use for secondary actions alongside a primary.
+Ghost
+Text only. bg: transparent. no border. text: --color-ink. underline at offset 3px. Use for tertiary actions, cancel, skip, or back navigation.
+Destructive
+Filled. bg: --color-terra. text: --color-parchment. Use only for irreversible destructive actions (delete, remove). Requires confirmation pattern.
+States
+State
+Primary
+Secondary
+Ghost
+Default
+Primary: bg Ink, text Parchment
+Secondary: border-default, bg transparent
+Ghost: underline, no border
+Hover
+opacity 0.85, 150ms --ease
+bg Surface-1, border-strong
+opacity 0.70
+Active
+scale(0.98), 100ms
+scale(0.98)
+scale(0.98)
+Focus
+focus-ring: 2px Ink at 20% offset 2px
+focus-ring same
+focus-ring same
+Disabled
+opacity 0.40, cursor not-allowed
+opacity 0.40
+opacity 0.40
+Loading
+16px spinner (Parchment), label hidden
+16px spinner (Ink), label hidden
+16px spinner (Ink)
+Geometry & typography
+Font
+Avenir Next 500 (medium), 13px, 0 tracking, sentence case
+Height
+36px desktop · 44px mobile (touch target compliance)
+Padding
+horizontal: --space-6 (24px) · vertical: auto-centered
+Border radius
+--radius-sm (4px) · all variants
+Icon + label
+Icon 16px · gap --space-2 (8px) from label · icon-left default
+Icon only
+36×36px desktop · 44×44px mobile · tooltip required (see Tooltip)
+Min width
+80px — prevents single-character pill buttons
+Sizing variants
+Small (sm)
+Height 28px · font 12px · padding horizontal 16px · radius 3px · desktop only
+Medium (md)
+Height 36px · font 13px · padding horizontal 24px · default size
+Large (lg)
+Height 48px · font 15px · padding horizontal 32px · hero / CTA contexts only
+A11y: Role: button. All buttons require an accessible name. Icon-only buttons require aria-label. Disabled buttons should use aria-disabled='true' not the disabled HTML attribute — so they remain focusable for screen reader announcements. Loading state: aria-busy='true', aria-label updated to include 'loading'.
+Implementation note: Use <button> not <div> or <a>. Never use <a> for actions that do not navigate. Loading spinner uses CSS animation only — no JS libraries needed.
+02 — Input
+Single-line text entry. The workhorse of form interactions. Visual character is quiet — the field should recede and let the user's content become the subject. Labels always sit above the field. Never floating, never placeholder-only.
+Variants
+Default
+Standard text input. Label above, optional helper text below.
+With prefix
+Icon or short text prefix inside left edge (e.g. search icon, currency symbol).
+With suffix
+Icon or action suffix inside right edge (e.g. clear button, show/hide password, copy).
+Search
+Prefix: search icon (16px). Suffix: clear button (appears when value present). Borderless option for inline search contexts.
+States
+State
+Appearance
+Default
+bg Surface-2 (#E5DDD2) · border-default (0.5px #D6CFC4) · text Ink · placeholder Warm-Light
+Hover
+border-strong (0.5px #C4B9A8) · bg unchanged · 150ms
+Focus
+bg white · border-active (0.5px Gold) · focus-ring (2px Ink 20% offset 2px)
+Filled
+bg Surface-2 · border-default · text Ink · no special treatment
+Error
+bg Terra-Tint (#F2E4E1) · border-error (0.5px Terra) · error message below
+Disabled
+bg Surface-2 · border-subtle · text Warm-Light · opacity 0.40 · cursor not-allowed
+Read-only
+bg Surface-1 · border-subtle · text Ink-Soft · no focus ring · no hover
+Anatomy & typography
+Label
+Avenir Next 500 · 11px · ALL CAPS · 0.10em tracking · color Warm-Mid · margin-bottom --space-2 (8px)
+Input text
+Avenir Next 400 · 14px · color Ink · line-height 1.4
+Placeholder
+Avenir Next 400 · 14px · color Warm-Light (#C4B9A8)
+Helper text
+Avenir Next 400 · 12px · color Warm-Mid · margin-top --space-2 (8px)
+Error text
+Avenir Next 400 · 12px · color Terra · margin-top --space-2 (8px)
+Height
+36px desktop · 44px mobile
+Padding
+horizontal --space-3 (12px) · vertical: auto-centered
+Radius
+--radius-sm (4px)
+A11y: Label must be programmatically associated via for/id pair or aria-labelledby. Never use placeholder as the only label. Helper and error text use aria-describedby on the input. Error state: aria-invalid='true' + aria-describedby pointing to error message. Required fields: aria-required='true', visible indicator in label (asterisk + sr-only explanation).
+03 — Textarea
+Multi-line text entry. Used for story/memory content, biographical notes, and longer descriptions. The most emotionally significant input in the product — this is where people write about their grandparents. Its visual treatment must feel worthy of that.
+Variants
+Standard
+Fixed or resizable. Default: vertically resizable, not horizontally. Min-height: 120px.
+Story entry
+Large variant for memory/story content. Min-height: 240px. Avenir Next label but content renders in Avenir Next 400 until saved — Caslon is a display typeface for reading, not editing.
+Auto-grow
+Height grows with content. No manual resize handle. Used in inline edit contexts.
+States
+Default
+bg Surface-2 · border-default · text Ink · placeholder Warm-Light
+Hover
+border-strong · 150ms
+Focus
+bg white · border-active (Gold) · focus-ring
+Error
+bg Terra-Tint · border-error · error message below
+Disabled
+opacity 0.40 · cursor not-allowed
+Typography & spacing
+Input text
+Avenir Next 400 · 14px · line-height 1.65 · color Ink
+Label
+Same as Input label — Avenir Next 500 · 11px · ALL CAPS
+Padding
+--space-3 (12px) horizontal · --space-3 (12px) vertical
+Radius
+--radius-sm (4px)
+Char count
+Optional. Avenir 400 · 11px · Warm-Mid · right-aligned below field
+Resize handle
+Vertical only. Browser default styling — do not override with custom handle.
+Tone: Even though the user is typing in Avenir Next, the context of a story textarea should feel elevated — spacious padding, generous line-height, quiet border. The field should feel like a page, not a form field.
+A11y: Same label association as Input. If character count is present, it must be announced via aria-live='polite' when the user pauses typing, not on every keystroke.
+04 — Select
+Single-option selection from a predefined list. Used for relationship types, countries, years, and other bounded categorical choices. Inherits all Input visual treatment. Custom-styled — does not use the native OS dropdown.
+Variants
+Default
+Single selection. Chevron icon (12px, Warm-Mid) at right edge.
+Multi
+Multi-selection with tag chips inside the field. Uses Tag component (see Tag).
+Searchable
+Typed filter of options. Search input replaces static value display on open.
+States & dropdown behavior
+Closed / default
+Same visual as Input default. Chevron indicates selectability.
+Open
+Dropdown panel: bg white · border-default · radius-md (6px) · warm shadow (see Spec §05). Max-height: 280px, scroll within. Options: 36px height each · Avenir 400 14px.
+Option: hover
+bg Surface-1 · text Ink · 100ms
+Option: selected
+bg Surface-1 · text Ink · checkmark icon (12px Gold) at right
+Option: disabled
+opacity 0.40 · cursor not-allowed · not keyboard-selectable
+Focus
+border-active · focus-ring on the select trigger (not the dropdown)
+Error
+Terra-Tint bg · border-error · error message below
+Disabled
+opacity 0.40 · pointer-events none
+A11y: Implement as combobox with listbox (ARIA pattern). role='combobox' on trigger, role='listbox' on dropdown, role='option' on each item. aria-expanded, aria-haspopup='listbox', aria-activedescendant for keyboard navigation. Keyboard: Arrow keys navigate options · Enter selects · Escape closes · Home/End jump to first/last.
+05 — Checkbox
+Binary selection within a list. Used for multi-select preferences, feature toggles in settings, and consent confirmations. Visual character is quiet — the checkbox should not compete with its label.
+Anatomy
+Control
+16×16px box · radius-xs (2px) · border-default (0.5px) · bg white
+Checked
+bg Ink · border Ink · checkmark: Parchment SVG · 12×12px
+Indeterminate
+bg Ink · border Ink · dash: Parchment · for parent select-all states
+Label
+Avenir Next 400 · 14px · color Ink-Soft · margin-left --space-3 (12px)
+Touch target
+44×44px tap area via padding — visual size stays 16px
+States
+State
+Appearance
+Default unchecked
+border-default · bg white
+Default checked
+bg Ink · Parchment checkmark
+Hover (unchecked)
+border-strong · bg Surface-1
+Hover (checked)
+bg Ink-Soft
+Focus
+focus-ring: 2px Ink at 20% · offset 2px
+Disabled unchecked
+opacity 0.40 · cursor not-allowed
+Disabled checked
+opacity 0.40 · bg Ink · cursor not-allowed
+Error
+border-error (Terra) · optional Terra tint bg on label
+A11y: Native <input type='checkbox'> is strongly preferred. If custom, role='checkbox', aria-checked (true/false/mixed for indeterminate). Group of checkboxes: wrap in <fieldset> with <legend>. Error: aria-describedby pointing to error message.
+06 — Radio
+Single selection from a mutually exclusive set. Used for relationship type selection, privacy settings, and gender/pronoun options. Always presented in a group — never a standalone radio button.
+Anatomy
+Control
+18×18px circle · border-default (0.5px) · bg white
+Selected
+Outer ring: border Gold (1.5px) · Inner dot: 8×8px Gold fill · centered
+Label
+Avenir Next 400 · 14px · color Ink-Soft · margin-left --space-3 (12px)
+Group label
+Avenir Next 500 · 11px · ALL CAPS · 0.10em · Warm-Mid · margin-bottom --space-3
+Touch target
+44×44px via padding
+States
+State
+Appearance
+Default
+border-default · bg white
+Selected
+outer border Gold · inner dot Gold
+Hover
+border-strong · bg Surface-1 · 150ms
+Focus
+focus-ring: 2px Ink at 20%
+Disabled
+opacity 0.40 · cursor not-allowed
+Error
+border-error (Terra) on all options in group
+A11y: Group in <fieldset> + <legend>. Use native <input type='radio'> with shared name attribute. Arrow key navigation between options in a group is handled natively. If custom: role='radiogroup' on wrapper, role='radio' on each option, aria-checked.
+07 — Toggle
+Binary on/off switch. Used for settings and feature enablement where the result is immediate (no submit button needed). Distinct from Checkbox — use Toggle for live settings, Checkbox for form submission choices.
+Anatomy
+Track
+32×18px · radius-full · Off: bg Surface-2 border-default · On: bg Sage
+Thumb
+14×14px circle · bg white · offset 2px from edge · shadow: warm subtle
+Label
+Avenir Next 400 · 14px · Ink-Soft · margin-left --space-3
+Touch area
+44×44px · centered on toggle track
+States
+State
+Appearance
+Off default
+Track: bg Surface-2 · Thumb: bg white · left position
+On default
+Track: bg Sage · Thumb: bg white · right position
+Hover
+Track opacity 0.85 · 150ms
+Focus
+focus-ring on track: 2px Ink at 20% · offset 2px
+Disabled off
+opacity 0.40 · cursor not-allowed
+Disabled on
+opacity 0.40 · cursor not-allowed
+Transition
+Thumb: transform translateX, 200ms --ease · Track color: 200ms
+A11y: role='switch', aria-checked='true/false'. Must have accessible name via aria-label or associated <label>. State change announced to screen reader. Immediate action: changes take effect on toggle, no submit required — aria-live region confirms significant setting changes.
+08 — Badge
+A compact semantic label. Not interactive. Communicates a categorical state, relationship type, or status. In Prosapiam, badges carry real emotional weight — 'Living', 'Deceased', 'Maternal', 'Paternal' are not just labels.
+Semantic variants
+Default (Ink)
+bg: rgba(28,26,23,0.08) · text: Ink-Soft · border: none · Use for relationship roles (Spouse, Sibling)
+Gold
+bg: rgba(140,115,85,0.12) · text: #7A5F3E · Use for highlighted genealogical tags (Matriarch, Direct ancestor)
+Sage
+bg: Sage-Tint (#E4EDE5) · text: Sage (#5A6B5C) · Use for living status, active states
+Terra
+bg: Terra-Tint (#F2E4E1) · text: Terra (#8C4A38) · Use for deceased status only — handle with care
+Warm
+bg: Surface-2 · text: Warm-Mid · Use for metadata categories (Paternal line, Maternal line)
+Geometry & typography
+Font
+Avenir Next 500 · 10px · ALL CAPS · 0.06em tracking · sentence case for proper nouns
+Padding
+3px vertical · 8px horizontal
+Radius
+--radius-xs (2px)
+Max width
+None — text should not truncate · use concise labels only
+Icon
+Optional 10px icon at left · 4px gap to text
+Stacking
+When multiple badges: gap --space-2 (8px) between · wrap naturally
+Tone: Badge labels should be chosen with care. 'Deceased' is weighted — avoid 'Dead'. 'Living' is warm — avoid 'Active'. The vocabulary of the badge system is part of the product's emotional tone.
+A11y: Badges are presentational. Screen reader should read badge text inline with surrounding content — no special ARIA role needed. For status badges (Living/Deceased): include in the accessible name of the parent component so it is not read in isolation.
+09 — Tag
+User-applied or system-applied categorical labels. Unlike Badge, Tags may be interactive — dismissible or clickable for filtering. Used for memory categories (e.g. 'Childhood', 'Migration', 'Wartime'), locations, and custom user labels.
+Variants
+Static
+Display only · no interaction · same visual as Badge but neutral only
+Dismissible
+Has × close button (12px) at right · hover: close icon darkens · used in filter chips and multi-select
+Clickable
+Full tag is interactive · hover bg darkens · used for filter/category navigation
+Input chip
+Appears inside Select or Textarea fields · compact: 24px height · close icon required
+Geometry & typography
+Font
+Avenir Next 400 · 12px · sentence case · color Ink-Soft
+Height
+28px standard · 24px input-chip variant
+Padding
+4px vertical · 10px horizontal · reduce to 8px when close icon present
+Radius
+--radius-xs (2px)
+Fill
+bg Surface-2 · border: --border-default · no semantic color variants (use Badge for semantic states)
+Close icon
+12×12px × · Warm-Mid · hover: Ink · 4px gap from text · 44px touch target on mobile
+A11y: Dismissible tag: close button needs aria-label='Remove [tag name]'. Clickable tag: role='button' or link depending on behavior. Tag list: wrap in nav or group with aria-label describing the tag set.
+10 — Avatar
+Represents a person in the system. The most visible component in the family tree and person cards. Must handle both uploaded photographs and initial-based fallbacks gracefully and with equal dignity — a person without a photo is not a lesser entry.
+Sizes
+xs  — 24px
+Inline in lists, compact metadata contexts
+sm  — 32px
+Table rows, small card bylines
+md  — 48px
+Default — person cards, search results, relationship lists
+lg  — 64px
+Dashboard card headers, modal person summaries
+xl  — 96px
+Person profile header (full profile view)
+2xl — 128px
+Profile hero on person page
+States & fallback
+Photo
+Circular crop · object-fit: cover · radius-full
+Initials
+bg Surface-2 or Surface-3 · Avenir Next 500 · initials 40% of avatar height · color Warm-Mid. For known person: use first+last initial. For unknown: '?' in Warm-Light.
+Deceased tint
+Monochrome filter (grayscale 25%) on photo · subtle visual distinction without being mournful
+Add / empty
+Dashed border-default circle · + icon (Warm-Light) · for tree nodes awaiting photo
+Loading
+Skeleton pulse on circle — Surface-2 fill, opacity pulse 1.2s
+Hover (interactive)
+Scale(1.04) · 150ms · only when Avatar is a link/button
+Avatar group
+When multiple avatars appear in sequence (e.g. 'shared with 4 people'): overlap by 8px · later avatars sit behind earlier ones · max visible: 4 · overflow count shown as +N avatar in Surface-2 with Warm-Mid text.
+A11y: Avatar image: alt text must be the person's name, not 'profile photo of [name]'. Just the name. Initials fallback: aria-label with full name on the container. Decorative avatars (repeated in same context): alt=''. Interactive avatars: role='link' or role='button' with full name in accessible label.
+11 — Divider
+A structural separator. Used to organize content within cards and panels. The divider is not decoration — it marks a genuine conceptual boundary. Do not use dividers between every element; use whitespace first.
+Variants
+Horizontal
+Full-width · 0.5px · color: --color-border-default (#D6CFC4) · margin: --space-6 (24px) vertical
+Horizontal muted
+0.5px · color: --color-border-subtle · for lighter separation within a single content area
+Vertical
+1px height of parent · same color · used only in horizontal button groups or tab bars
+With label
+Horizontal divider with centered text label: Avenir 400 · 11px · ALL CAPS · Warm-Mid · padded 16px horizontal from line · used for timeline year dividers
+Implementation: Use <hr> for semantic dividers. role='separator' if implemented as <div>. Never use a Table row as a divider. Never use margin alone to imply separation — dividers are structural, not spatial.
+A11y: Decorative dividers: aria-hidden='true'. Semantic dividers (section separators in a document-like context): native <hr> is sufficient. Vertical dividers in button groups: aria-hidden='true'.
+12 — Tabs
+Switches between related content panes within a single context. Used on the Person Profile (Overview / Memories / Relationships / Media) and in settings. Underline style only — no filled or pill-style tab variants.
+Anatomy
+Tab list
+Horizontal row · border-bottom: 0.5px --color-border-default · full width
+Tab item
+Avenir Next 500 · 13px · padding: 0 --space-6 (24px) · height 40px · centered label
+Active tab
+text: Ink · 2px solid Gold underline at bottom · border-bottom overrides list border
+Inactive tab
+text: Warm-Mid · no underline · hover: text Ink-Soft · 150ms
+Tab panel
+Renders beneath tab list · padding-top --space-8 (32px)
+Count badge
+Optional: small count badge (number, circular) in Warm bg · 8px left of tab right edge
+States
+State
+Appearance
+Active
+Ink text · Gold underline 2px · font-weight 500
+Inactive
+Warm-Mid text · no underline
+Hover
+Ink-Soft text · 0.5px border-subtle underline · 150ms
+Focus
+focus-ring: 2px Ink at 20% · around tab label
+Disabled
+opacity 0.35 · cursor not-allowed · no hover
+Responsive: on mobile, tab list scrolls horizontally if tabs overflow viewport. Show scroll affordance (fade gradient at right edge). Never wrap tabs to multiple rows. Consider reducing tab labels to icons + tooltip on very small screens.
+A11y: role='tablist', role='tab', role='tabpanel'. aria-selected, aria-controls, aria-labelledby. Keyboard: Arrow Left/Right to navigate tabs · Tab to enter panel · Shift+Tab to return to tab list. Panels not visible are aria-hidden='true'. Manual activation (user clicks/presses Enter to switch) preferred over automatic activation for accessibility.
+13 — Card
+The primary container for bounded content units. Cards in Prosapiam carry person records, memory entries, and media items. They must feel like archival objects — substantial, not lightweight. Surface treatment is everything here.
+Variants
+Content card
+Standard card. bg Surface-1 · border-default · radius-lg (10px) · padding --space-6 (24px). Use for general content groupings.
+Person card
+Interactive. Contains Avatar + name + dates + relationship badge. Hover state. Used in tree, search results, relationship lists.
+Memory card
+Contains title + Caslon excerpt + date + tags. Interactive (links to full entry). See Memory/Story Card pattern.
+Media card
+Photo or video thumbnail with caption. Hover reveals action controls. See Media Attachment Card pattern.
+Stat card
+Displays a single metric or summary value. bg Surface-1 · no border · compact padding --space-4.
+Featured card
+One-off emphasis. 1px Gold border (sole exception to 0.5px rule) · else identical to Content card.
+Anatomy
+Container
+bg Surface-1 · border-default · radius-lg · overflow: hidden
+Padding
+--space-6 (24px) horizontal · --space-6 (24px) vertical · reduce to --space-4 for compact cards
+Card header
+Optional. Contains title + action menu. border-bottom inside card if present.
+Card body
+Primary content area. No fixed min-height.
+Card footer
+Optional. Metadata, secondary actions. border-top inside card if present. padding --space-4.
+Media area
+Full-bleed image within card: no horizontal padding · image touches card edges at top
+States (interactive cards only)
+State
+Appearance
+Default
+bg Surface-1 · border-default · radius-lg · no shadow
+Hover
+bg Surface-3 (#D9D0C4) · border-strong · 150ms · no scale
+Active
+bg Surface-3 · border-active (Gold) · scale(0.995) · 100ms
+Focus
+focus-ring: 2px Ink at 20% · around full card
+Loading
+Skeleton pulse — Surface-2 · opacity loop 1.2s · preserve card shape
+A11y: Interactive cards: role='article' with aria-label. If the card is a link, wrap content in a single <a> or use the card-as-link pattern (pseudo-element covers card, with a real <a> as the accessible target). Never nest interactive elements inside a card-link pattern. Static cards: no role needed beyond semantic HTML structure inside.
+14 — Modal
+Interrupts the current task with a focused interaction. Used for Add Person, Edit Person, confirmation dialogs, and media lightbox. Modals should be used sparingly — they are the most disruptive pattern in the system.
+Variants
+Standard
+Max-width 560px · centered · standard padding · for forms, confirmations, notices
+Wide
+Max-width 760px · for Add/Edit Person form (content-heavy) · See Add/Edit Person Modal pattern
+Fullscreen
+Mobile only: slides up full screen · for forms that would be cramped in standard modal
+Lightbox
+Full viewport with Ink scrim · image centered · no border-radius on image · close button top-right
+Confirmation
+Max-width 400px · brief message · two buttons only (destructive + cancel) · no header
+Anatomy
+Scrim
+Fixed overlay · bg rgba(28,26,23,0.40) · --dur-base fade · click to close (non-destructive only)
+Container
+bg white · radius-lg (10px) · no shadow · padding --space-8 (32px)
+Header
+Title: Avenir Next 500 · 18px · Ink · Close button: top-right · 44×44px touch target · × icon 16px Warm-Mid
+Body
+Scrollable if needed · max-height: 70vh · padding 0 (outer container handles padding)
+Footer
+border-top --border-default · padding-top --space-6 · actions right-aligned · Primary + Secondary/Ghost
+Animation
+Open: scrim fades in 280ms · modal rises: translateY(16px)→0 + fade · 280ms --ease
+A11y: role='dialog', aria-modal='true', aria-labelledby (modal title ID). Focus trap: Tab key stays within modal while open. Focus management: move focus to first interactive element on open, return focus to trigger element on close. Escape key: closes non-destructive modals. Screen reader: modal title announced on open via aria-labelledby.
+15 — Drawer
+A side panel that slides in from the right edge. Used for contextual detail views — person quick-view, filter panels, and settings sub-sections — without fully navigating away. Less disruptive than a Modal; more contained than a new page.
+Variants
+Detail drawer
+Right-slide · 480px wide desktop · full-width mobile · for person quick-view, memory detail
+Filter drawer
+Right-slide · 360px wide desktop · for search filter panels on mobile
+Settings drawer
+Right-slide · 400px · for sub-settings navigation on mobile
+Anatomy
+Scrim
+Fixed · bg rgba(28,26,23,0.30) · lighter than Modal scrim · click to close
+Panel
+bg Parchment · border-left: --border-default · no radius on panel edges that touch viewport · radius-lg on left edge if detached
+Header
+Avenir Next 500 · 16px · Ink · border-bottom --border-default · padding --space-6 · Close button left or right (context-dependent)
+Body
+Overflow-y scroll · padding --space-6
+Footer
+Optional · sticky to bottom · border-top · padding --space-4
+Animation
+Panel: translateX(100%)→0 · 280ms --ease · Scrim: fade 280ms
+A11y: Same ARIA pattern as Modal: role='dialog', aria-modal='true', aria-labelledby, focus trap. Escape key closes. On mobile: swipe-to-close gesture must have a keyboard equivalent. Animation respects prefers-reduced-motion: instant open/close.
+16 — Tooltip
+Reveals supplementary text on hover or focus. Used for icon button labels, truncated text, date formatting, and brief contextual explanations. Tooltips contain text only — no interactive elements, no rich content.
+Anatomy
+Container
+bg Ink · text Parchment · radius-sm (4px) · padding: 4px vertical · 10px horizontal
+Typography
+Avenir Next 400 · 12px · Parchment · max-width 240px · wraps naturally
+Arrow
+Optional 6px caret pointing to trigger · matches bg color
+Shadow
+Floating element exception applies: 0 4px 16px rgba(28,26,23,0.10) + 0 1px 4px rgba(28,26,23,0.06)
+Position
+Top preferred · auto-flips to bottom/left/right if viewport edge approached · 8px offset from trigger
+Behavior
+Trigger
+Hover (200ms delay before show) · Focus (immediate show) · Touch (tap-to-toggle on mobile)
+Dismiss
+Mouse leave · blur · Escape key · after 5s if no interaction (optional)
+Animation
+fade + scale(0.95→1) · 150ms --ease
+Persistence
+Never auto-dismiss on hover. Never block content. Never cover the trigger element.
+A11y: role='tooltip', aria-describedby on the trigger pointing to the tooltip ID. Tooltips are supplementary — never the only source of critical information. Do not use tooltip as a replacement for a visible label. Touch devices: tooltip on first tap, action on second tap for icon-only buttons — or provide visible labels on mobile.
+17 — Dropdown
+A menu of actions triggered by a button. Distinct from Select (which chooses a value) — Dropdown triggers actions. Used for overflow menus, context menus on cards, and the person record action menu (Edit / Add relationship / Delete).
+Anatomy
+Trigger
+Usually a Button (Secondary or Ghost) with chevron, or an icon-only '⋯' button
+Panel
+bg white · border-default (0.5px) · radius-md (6px) · min-width 180px · floating shadow (§05 exception)
+Item
+Avenir Next 400 · 14px · Ink · height 36px · padding horizontal --space-4 (16px) · hover: bg Surface-1
+Divider
+0.5px horizontal divider between item groups · Warm-Light color · --space-2 margin
+Destructive item
+Avenir Next 400 · 14px · Terra color · hover: bg Terra-Tint
+Icon in item
+16px icon · Warm-Mid · 8px right margin · aligned with text baseline
+Behavior & animation
+Open
+Trigger click · panel fades in + slight rise (translateY(−4px)→0) · 150ms
+Close
+Item selected · click outside · Escape key · trigger click again
+Position
+Below trigger default · auto-flip to above if viewport bottom approached · right-aligned to trigger
+Max items
+8 items before scroll · max-height 280px
+A11y: role='menu' on panel, role='menuitem' on each item, role='separator' on dividers. Trigger: aria-haspopup='menu', aria-expanded. Keyboard: Arrow keys navigate · Enter/Space activates · Escape closes · Tab moves focus out of menu and closes it. Destructive items: no special ARIA but consider aria-label clarifying consequence.
+18 — Empty State
+What the user sees when there is no content yet. In Prosapiam, empty states are not failure states — they are invitations. The first time someone opens their family tree, the empty state may be the most emotionally significant screen they see. It must feel warm and generative, not hollow.
+Variants
+First use
+Large · centered in viewport · illustration zone (reserved for future) · heading + paragraph + primary CTA. Most important empty state.
+Section empty
+Mid-size · centered in its container · heading + short line + ghost/secondary CTA. For empty tabs, empty lists.
+Search empty
+Inline · no CTA · acknowledge query · suggest alternatives. For search returning no results.
+Error empty
+Section empty but with Terra icon/indicator · actionable message. For failed loads.
+Anatomy
+Illustration zone
+48×48px reserved space · currently: simple SVG glyph in Warm-Light. Future: bespoke illustration. Do not use generic 'no data' iconography.
+Heading
+Avenir Next 500 · 18px · Ink · max 40 characters · must be inviting, not clinical
+Supporting text
+Avenir Next 400 · 14px · Warm-Mid · max 2 lines · line-height 1.6 · max-width 360px centered
+CTA
+Primary or Secondary Button · one action only · margin-top --space-6
+Container
+Centered in parent · padding --space-12 (48px) vertical minimum
+Tone: Empty state copy is the hardest copy to write in this product. 'Your family tree is empty' is cold. 'Every family story begins somewhere.' is an invitation. Copy must be reviewed by a human, not generated. The empty tree state is defined in detail in Part II.
+A11y: Empty states must be perceivable — not just visual. If loading fails (error empty): provide a retry action with accessible label. If content is genuinely absent (first use): aria-live='polite' region announces the empty state after load.
+19 — Loading Skeleton
+Structural placeholder while content loads. Preserves layout and reduces perceived wait time. Skeletons mimic the shape of the content they replace — not generic boxes.
+Skeleton shapes
+Text line
+height 12px · rounded full · width: 60–90% of container · bg Surface-2 · margin-bottom 8px
+Text block
+3–4 text lines · last line 40–60% width · standard paragraph approximation
+Avatar
+Circle · matches Avatar size variants · bg Surface-2
+Card
+Full card shape preserved · header zone + body zone + optional footer zone · bg Surface-2
+Person card
+Avatar circle (48px) left · two text lines right (60% / 40%) · badge stub below
+Image/media
+Rectangle at media aspect ratio · bg Surface-2 · radius matches media context
+Animation
+Pulse
+opacity: 1 → 0.5 → 1 · 1.2s ease-in-out infinite · all skeleton elements in phase
+Reduced motion
+Static Surface-2 fill · no animation · no pulse
+Duration
+Show skeleton after 200ms delay — prevents flash for fast connections
+Removal
+Fade out skeleton · content fades in · 200ms crossfade · not an abrupt swap
+A11y: aria-busy='true' on the loading container. aria-label='Loading [content description]'. When content loads: aria-busy='false'. For significant content loads: aria-live='polite' region announces completion ('Family tree loaded, 12 members'). Skeleton shapes themselves are aria-hidden='true'.
+20 — Alert / Validation Message
+Communicates system feedback: validation errors, success confirmations, warnings, and informational notices. Two contexts: inline (within forms) and toast/banner (page-level). The palette for alerts is warm and muted — alerts here should not alarm.
+Variants
+Inline error
+Below a form field. Terra color. 12px Avenir. Icon (12px) + text. No border, no bg — just colored text with icon.
+Form summary
+Above the submit button when multiple field errors exist. Terra-Tint bg · Terra border-left (2px) · list of affected fields.
+Toast — success
+Bottom-right (desktop) · full-width bottom (mobile). bg Ink · Parchment text · Sage icon. 4s auto-dismiss with close button.
+Toast — error
+Same position. bg Ink · Parchment text · Terra icon. No auto-dismiss — requires manual close.
+Toast — info
+Same position. bg Surface-1 · Ink text · Gold icon. 4s auto-dismiss.
+Banner
+Full-width below navigation. Warm surface · Ink text. For important, persistent notices.
+Toast anatomy
+Container
+bg Ink · radius-md (6px) · padding --space-4 horizontal · --space-3 vertical · shadow (floating exception) · max-width 360px desktop
+Icon
+16px · left of text · Sage/Terra/Gold depending on type · vertical-aligned with first text line
+Message
+Avenir Next 400 · 14px · Parchment · max 2 lines · line-height 1.4
+Close button
+12px × · Warm-Light · hover Parchment · right of text · 44px touch target · always present
+Progress bar
+Optional: 2px bottom edge of container · Parchment at 30% opacity · depletes over auto-dismiss duration
+Animation
+Rise from bottom: translateY(16px)→0 + fade · 280ms · Dismiss: reverse · 200ms
+A11y: Toast messages: role='alert' for errors (immediate announcement) · role='status' for success/info (polite). Inline errors: aria-invalid + aria-describedby (see Input). Banner: role='banner' if page-level, else role='region' with aria-label. All alerts: sufficient color contrast — Parchment on Ink for toasts passes AAA. Never rely on color alone to communicate alert type — always include an icon and text.
+PART II
+Product-Specific Patterns
+The patterns below are compositions unique to Prosapiam. They are not single components — they are assembled from the component library into repeatable, product-specific structures. Each pattern is defined at the level of content hierarchy, composition, and interaction. Full-page mockups come next — these are the building blocks for that work.
+
+P01 — Family Tree Node
+The atomic unit of the family tree view. Each node represents one person. The tree is the most technically and emotionally complex surface in the product. Nodes must be readable at multiple zoom levels and identifiable at a glance.
+Content hierarchy
+1. Avatar
+48×48px · circular · centered horizontally · deceased: grayscale tint
+2. Full name
+Avenir Next 500 · 13px · Ink · single line · truncate at 140px with ellipsis · below avatar, --space-2 gap
+3. Life dates
+Avenir Next 400 · 11px · Warm-Mid · 'b. 1932' or '1932–2011' · below name · --space-1 gap
+4. Relationship label
+Badge component · Warm variant · centered below dates · optional (shown on hover only at smaller zoom)
+Geometry
+Node size
+160px wide · min 100px height (auto-grows with content) · radius-md (6px)
+Fill
+bg white · border-default · hover: border-strong + bg Surface-1
+Selected
+border-active (Gold 0.5px) · bg Surface-1
+Currently viewing
+border-active (Gold 1px) · bg Surface-1 · subtle Gold left accent bar (3px)
+Zoom levels
+100%: full node · 75%: avatar + name only · 50%: avatar only · 25%: dot (8px circle, Warm-Mid)
+Interaction
+Single click/tap: opens Person Summary Card drawer or panel.
+Double click: navigates to full Person Profile page.
+Right-click / long press: opens Dropdown with: View profile · Add relationship · Edit · Remove from tree.
+Drag: repositions node (if manual layout mode). Visual drag affordance: slight scale(1.02) + shadow.
+Hover: shows relationship label badge if hidden at current zoom.
+Responsive behavior
+Desktop: fixed-width node in SVG/canvas tree, pan and zoom via mouse wheel + drag.
+Tablet: same, pinch-to-zoom.
+Mobile: tap-to-navigate replaces hover states. No drag-reposition on mobile.
+Tone: The node is where a person's life is compressed to 160px. Avatar quality, name legibility, and the handling of missing data all communicate how much the product values the person being represented. An empty node (no photo, unknown dates) should feel like a placeholder, not a placeholder for a person.
+A11y: Each node is a focusable element with role='button' or role='link'. Accessible name: full name + life dates. Tree as a whole: provide a list-view alternative (accessible table of all members) accessible via a 'View as list' control near the tree. Keyboard navigation between nodes: Arrow keys move between connected nodes.
+P02 — Relationship Connector Treatment
+The lines that link nodes in the family tree. Connectors are not merely decorative — they carry relationship type, direction, and sometimes status. Their visual treatment must be legible without overwhelming the nodes.
+Line types
+Parent–child
+Solid · 1px · Warm-Light (#C4B9A8) · orthogonal routing (right-angle bends, no diagonal)
+Spouse / partner
+Solid · 1.5px · Gold-Light (#BFA882) · horizontal connector between two nodes at same tier
+Divorced
+Dashed · 1px · Warm-Light · 4px dash · 4px gap · same routing as spouse
+Adopted
+Dotted · 1px · Warm-Mid · 2px dot · 6px gap
+Uncertain
+Dashed · 0.5px · Warm-Light · lighter, more tentative appearance
+Routing rules
+Orthogonal only — no diagonal lines. Horizontal then vertical, or vertical then horizontal.
+Junction points (where lines meet a horizontal bus line): small filled circle, 4px, Warm-Light.
+Minimum clearance between parallel lines: 8px.
+Lines route behind nodes, never over them — z-index of connectors below nodes.
+On hover of a connector: line weight increases to 2px, color shifts to Warm-Mid. Label appears if applicable.
+Connector labels
+Optional label on connector: Avenir Next 400 · 10px · Warm-Mid · appears on hover only unless the relationship is non-obvious. Label sits in a small white pill (bg white, border-subtle) centered on the connector at its longest segment.
+Responsive behavior
+At zoom < 75%: connector labels hidden. Lines remain, reduce to 0.5px.
+At zoom < 50%: only spouse connectors remain visible. Parent-child structure implied by node position.
+At zoom < 25%: all connectors visible as 0.5px lines only.
+A11y: Connectors are structural but not interactive. In the list-view alternative, relationships are communicated via text: 'Parent of [name]', 'Spouse of [name]'. Connectors themselves are aria-hidden='true' in the SVG layer.
+P03 — Person Summary Card
+A compact, data-rich view of a person. Appears in search results, relationship lists, and as the content of the detail drawer triggered by clicking a tree node. More than a contact card — it frames a life.
+Content hierarchy
+1. Avatar
+64px · left-aligned · margin-right --space-6
+2. Full name
+Avenir Next 500 · 18px · Ink · below avatar in vertical layout / right of avatar in horizontal
+3. Life dates
+Avenir Next 400 · 13px · Warm-Mid · 'b. August 1932, Cork, Ireland' · 'Lived 1932–2011'
+4. Relationship
+Badge: relationship to current user's perspective (e.g. 'Great-grandmother') · Warm variant
+5. Short bio
+Caslon italic · 14px · Ink-Soft · max 2 lines · italic excerpt from full biography · margin-top --space-3
+6. Actions
+Ghost buttons or icon buttons: 'View profile' · 'Add memory' · margin-top --space-4
+Layout variants
+Horizontal (default)
+Avatar left · text content right · used in list views, search results · padding --space-4 · border-bottom divider between items
+Vertical (drawer)
+Avatar centered top · text centered · used in detail drawer and modal person previews
+Interaction
+Primary action: 'View full profile' — navigates to Person Profile page.
+Secondary action: 'Add memory' — opens Add Memory modal pre-linked to this person.
+Card itself is not interactive — actions are explicit buttons (avoids accidental navigation).
+Responsive behavior
+Mobile: horizontal layout collapses to vertical. Avatar centers. Full width.
+In drawer context: always vertical layout regardless of viewport.
+Tone: The short bio excerpt is the most important element for emotional resonance. Even two Caslon italic lines — 'Kept a garden on Maple Street and made the best brown bread in the county.' — transforms a card from a record into a person.
+A11y: Card is presentational — not a link. Each action button has an explicit aria-label including the person's name: 'View Margaret Walsh's profile'. Avatar image alt text: person's full name only.
+P04 — Person Profile Header
+The top section of a person's full profile page. Sets the tone for everything below it. The most prominent placement of a person's avatar, name, and identity in the entire product. Designed to feel like the opening page of a biographical record.
+Content hierarchy
+1. Avatar
+128px (2xl) · centered (mobile) or left-aligned (desktop) · circular · deceased: subtle grayscale tint
+2. Full name
+Avenir Next 300 (light) · 40px · Ink · below/right of avatar · tracking -0.01em
+3. Life dates
+Avenir Next 400 · 16px · Warm-Mid · 'Born August 14, 1932 · Cork, Ireland' (or just birth year if limited data)
+4. Relationship line
+Avenir Next 400 · 13px · Warm-Mid · 'Your great-grandmother on your mother's side' · margin-top --space-2
+5. Status badge
+Badge: Sage/Living or Terra/Deceased · margin-top --space-3
+6. Short biography
+Caslon 400 · 17px · Ink-Soft · 2–4 lines · line-height 1.75 · max-width 680px · margin-top --space-6
+7. Action row
+Primary: 'Add memory' · Secondary: 'Edit profile' · Ghost: 'Add relationship' · margin-top --space-6
+Background treatment
+Default
+Surface-1 bg (#EDE8E0) · no photograph behind header · clean editorial surface
+With cover
+Optional: user-uploaded cover photo (landscape) · full-width · 240px height · overlaid with gradient from transparent to Surface-1 · name/content sits on gradient
+Deceased
+No visual change beyond status badge and avatar tint — this product does not use black or grayscale page themes
+Responsive behavior
+Desktop: horizontal layout — avatar left, content right. Max-width 1280px, 80px margins.
+Tablet: horizontal layout maintained down to 768px.
+Mobile: vertical layout. Avatar centered top. Name and content centered. Actions full-width.
+Tone: The name at 40px in Avenir Next Light is the largest typographic statement in the product. It must feel like the title of a book — not a database record. The Caslon biography excerpt is where the human lives. Prioritize getting that field populated in onboarding.
+A11y: Header is an <article> or <header> element with an implicit heading (name as h1 on this page). Life dates use <time> element. Status badge has sr-only text: 'Status: Living' or 'Status: Deceased'. Cover photo is decorative: alt=''. Avatar photo alt: full name only.
+P05 — Memory / Story Card
+Represents a single memory or story entry in a list. This is the primary unit of the memory archive — the product's core value. It must balance visual richness (conveying what a memory feels like) with enough structure to be scannable in a list.
+Content hierarchy
+1. Title
+Avenir Next 500 · 16px · Ink · single line with ellipsis
+2. Caslon excerpt
+Caslon 400 · 14px · Ink-Soft · italic · 2 lines · line-height 1.7 · margin-top --space-2
+3. Date
+Avenir Next 400 · 11px · Warm-Mid · formatted: 'Summer 1967' or 'August 1967' or '1967' depending on precision · below excerpt
+4. Tags
+Tag components (max 3 visible, +N overflow) · below date · --space-2 gap
+5. Photo thumbnail
+Optional · 80×80px · right-aligned · radius-sm · object-fit: cover · only when memory has attached photo
+6. Author avatar
+16px Avatar (xs) + 'Added by [name]' in 11px Warm-Mid · bottom of card · only in shared family tree contexts
+Card layout
+Container
+Card/Content card variant · bg Surface-1 · border-default · radius-lg · padding --space-6
+With photo
+Text content left (fills remaining width) · photo thumbnail right · gap --space-4
+Without photo
+Full width text layout
+Hover
+bg Surface-3 · border-strong · 150ms · entire card is a link to full entry
+Active
+scale(0.998) · border-active (Gold)
+Responsive behavior
+Desktop + Tablet: side-by-side layout with thumbnail.
+Mobile: photo thumbnail moves to top of card (full-width, 160px height) if present, text below.
+Tone: The two lines of Caslon italic are the emotional core of this card. They should read like the opening lines of a story, not a summary. Guide users during entry creation to write the first sentence as if beginning a narrative.
+A11y: Full card is a <article> element. The link wraps the card title (not the whole card). Thumbnail image alt: brief description of photo content (user-provided). Date: <time> element with datetime attribute.
+P06 — Media Attachment Card
+Represents a single photo, document scan, or (future) audio/video clip. Used in the media gallery section of a person's profile and within memory entries. Photography is the only full-color element in the UI — the card frames it without competing.
+Content hierarchy
+1. Thumbnail
+Full-bleed within card · aspect-ratio: 4/3 (photos) · 16/9 (video future) · object-fit: cover · radius-lg top only
+2. Caption
+Avenir Next 400 · 12px · Ink-Soft · max 2 lines · padding --space-3 · below thumbnail
+3. Date
+Avenir Next 400 · 11px · Warm-Mid · inline after caption or below
+4. Document type
+Badge (Warm variant): 'Photograph' · 'Certificate' · 'Letter' · 'Newspaper' · top-left overlay on thumbnail
+Hover behavior
+Thumbnail: subtle scale(1.02) · 150ms — image feels alive.
+Action overlay: appears on hover · Ink bg at 60% opacity over bottom third · Parchment icon buttons: View full · Download · Add to memory · Delete.
+On touch devices: long-press reveals action sheet (no hover overlay).
+Grid layout
+Default: 3-column grid on desktop (gap --space-4).
+Tablet: 2-column.
+Mobile: 2-column tight grid (gap --space-2).
+Individual card width: flex to grid, min 200px.
+A11y: Image alt text: user-provided caption if present, else 'Photo from [year]' or 'Document'. Action buttons on hover: must also be keyboard accessible — focus on thumbnail reveals actions. For keyboard users: each card has a visible action button that opens a dropdown of actions (hover state is not sufficient for keyboard access).
+P07 — Add / Edit Person Modal
+The form used to create or edit a person record. This is a high-frequency, high-stakes interaction — the quality of the data entered here determines the richness of the entire family tree. Form design must feel effortless and unhurried, not transactional.
+Content structure
+Modal variant
+Wide modal · max-width 760px · two-column form layout on desktop · single column mobile
+Header
+Avenir Next 500 · 18px · 'Add a person' or 'Edit [First name]' · close button top-right
+Photo upload zone
+Left column top · 128px × 128px circle · dashed border-default · Warm-Light + icon when empty · click/drag to upload · shows preview on upload
+Section 1: Name
+Given name (required) · Middle name(s) · Family name (required) · Preferred name / nickname
+Section 2: Dates
+Birth date (day/month/year selects or free text for approximate) · Birth location (autocomplete) · Death date (optional) · Death location (optional)
+Section 3: About
+Biographical notes (Textarea/story variant) · Pronouns (select with custom option) · Nationality
+Footer
+'Save person' (Primary) · 'Cancel' (Ghost) · right-aligned · sticky on scroll
+Interaction behavior
+Fields are grouped in collapsible sections — Name is always expanded, Dates and About start expanded for new entry, collapsed for quick edits.
+Required fields: Given name, Family name only. Everything else optional — never block a save with incomplete optional data.
+Date input: day/month/year dropdowns for precision, but 'Approximate year' free-text option available. Never force precision the user doesn't have.
+Unsaved changes: if user clicks close/cancel with edits, show Confirmation modal ('Discard changes?').
+Save success: modal closes, tree node or card updates immediately (optimistic update), success toast appears.
+Responsive behavior
+Desktop (760px+): two-column layout. Photo upload left column, fields right.
+Tablet: single column, photo upload above name fields.
+Mobile: fullscreen modal (slides up). Photo upload stacked above all fields.
+Tone: The 'Add a person' form is where someone types their grandmother's name for the first time. Label copy should be warm: 'Given name' not 'First name'. 'About this person' not 'Biography'. Placeholder text in the bio field: an invitation — 'What do you most want to remember about them?'
+A11y: Form uses <fieldset>/<legend> for each section. Required fields: aria-required='true' + visible asterisk with sr-only explanation. Date selects: three linked selects with a single accessible group label. Photo upload: input[type=file] with accessible label, accepts image/* types. Focus management: on open, focus moves to first field. On save error, focus moves to first invalid field.
+P08 — Add Relationship Flow
+A multi-step interaction for connecting two people in the tree. This is more complex than a simple form — it requires selecting or creating a person, defining the relationship type, and confirming the connection. The flow must be learnable on the first use and fast on the tenth.
+Step structure
+Step 1: Select person
+Choose who to connect to the current person. Search field with autocomplete showing Person Summary Cards in results. Option: 'Add a new person' if they don't exist yet (inline mini-form or branches to Add Person modal).
+Step 2: Define relationship
+Select relationship type: Parent of · Child of · Spouse / Partner of · Sibling of · 'Other' (with custom text). Direction is explicit — 'Add [Name A] as a parent of [Name B]'. Confirmation sentence auto-generates.
+Step 3: Confirm
+Preview card showing both people and the connector type. 'Confirm' (Primary) or 'Back' (Ghost). No data is saved until this step.
+UI pattern
+Implemented as a stepped modal (stepper pattern within the Wide Modal component).
+Step indicators: three dots at modal top — filled dot for current step, hollow for future, checkmark for completed.
+Progress is preserved if user navigates back — filled fields and selections retained.
+'Back' always available on steps 2 and 3.
+Search / autocomplete behavior
+Minimum 1 character to trigger search. Results appear below input in dropdown list.
+Each result: Person Summary Card (compact horizontal — Avatar + Name + Dates).
+No results: 'No one found — add [search term] as a new person?' with action link.
+Recent/suggested: if no query typed yet, show 5 most recently added people.
+Responsive behavior
+Desktop: modal stays wide. Steps are side-by-side summary pane (right) + active step (left).
+Mobile: fullscreen modal. Steps are sequential full-screen — no split layout.
+A11y: Stepper: aria-label='Add relationship, step N of 3' on modal. Step indicators: aria-current='step' on active dot. Search autocomplete: combobox ARIA pattern (same as Select component). Confirmation sentence (Step 3): read aloud by screen reader as a summary before submission.
+P09 — Empty Tree State
+The state of the family tree when a user has just signed up or has no members yet. This is the most important empty state in the product — it may be the first thing a new user sees after onboarding. It must be an invitation, not a void.
+Content hierarchy
+1. Illustration zone
+Centered · 80×80px reserved · SVG glyph of a simple branching form in Warm-Light. Future: bespoke illustration. Must not feel generic.
+2. Primary heading
+Avenir Next 500 · 22px · Ink · 'Begin with yourself.' · centered · max 220px
+3. Supporting copy
+Avenir Next 400 · 15px · Warm-Mid · line-height 1.6 · max-width 400px centered · 'Add the first person to your tree — it can be you, a parent, or any ancestor you want to start with.'
+4. Primary CTA
+Button: Primary · 'Add the first person' · centered · margin-top --space-6
+5. Secondary option
+Ghost · 'Import from GEDCOM' · below primary · --space-3 gap · smaller text
+Background treatment
+The empty canvas is not white or blank. It shows a very subtle, low-opacity grid of node placeholder shapes (dashed-outline rectangles at tree positions) in Warm-Light at 15% opacity. This communicates the spatial nature of what is about to be built without overwhelming the CTA.
+After first person added
+As soon as one node exists, the tree canvas loads with that node centered. A contextual tooltip appears on the node: 'Add [Name]'s parents or a spouse to grow the tree.' The empty-state content area disappears completely — it does not persist alongside content.
+Tone: 'Begin with yourself.' is a more intimate prompt than 'Get started'. It implies that the user is part of this story, not just its archivist. Copy here is non-negotiable — it was approved at the design principle level.
+A11y: Canvas is focusable. Keyboard user entering the tree view with no content: focus should land on the 'Add the first person' button immediately. The subtle placeholder grid is aria-hidden='true'.
+P10 — Empty Profile State
+The state of a person profile when a user has added the person to the tree but has not yet added biographical details, memories, or media. Appears within the profile tabs (About, Memories, Media). Each tab has its own empty state variant.
+Per-tab empty states
+About tab (empty)
+Illustration zone (40px glyph) · heading: 'Nothing recorded yet' · copy: 'Add a biography, key dates, or anything else worth remembering.' · CTA: 'Edit profile' (Secondary)
+Memories tab (empty)
+Illustration zone · heading: 'No memories yet' · copy: 'The first memory you add will live here.' · CTA: 'Add a memory' (Primary)
+Media tab (empty)
+Illustration zone · heading: 'No photos or documents' · copy: 'Photographs, letters, certificates — anything that brings this person to life.' · CTA: 'Upload media' (Primary)
+Profile header with minimal data
+Even when biographical data is absent, the profile header shows what is available: name (required, always present), status badge, and relationship label. Missing fields (dates, location, biography) render as Warm-Light dashes or are simply absent — no 'Unknown' labels. The layout adapts gracefully to sparse data without looking broken.
+Tone: The copy 'The first memory you add will live here.' is forward-looking. It communicates that absence is a beginning, not a gap. Avoid 'No data found' or 'Nothing here yet' — both are cold and imply failure.
+A11y: Each empty state section: aria-live='polite' to announce content once loaded. CTA buttons include person name in accessible label: 'Add a memory for Margaret Walsh'.
+P11 — Profile Timeline / Memory List
+The Memories tab on a person's profile. A chronological list of all memories associated with this person. The most 'archive-like' surface in the product — the one that feels most like a journal, a scrapbook, or a family record.
+Layout
+Container
+max-width --reading-width (680px) · centered in content area · left-aligned text
+Year divider
+Divider/with-label variant · 'YYYY' in Warm-Mid ALL CAPS · Avenir 500 · 11px · margin --space-12 above, --space-8 below
+Memory card
+Memory/Story Card component · stacked vertically · gap --space-6 between cards within a year
+Timeline spine
+Optional: 1px Warm-Light vertical line at left margin (24px from left edge) · decade markers
+Sort control
+Avenir 400 · 12px · right-aligned above list · 'Newest first / Oldest first / By decade' · Ghost button with chevron
+Filter control
+Tag filter chips above list · 'All memories' pre-selected · filter by tag
+Interaction
+Each Memory Card: click navigates to full memory entry view (new page or full-height drawer).
+Sort: instant re-order with stagger animation (40ms delay between items, rise pattern).
+Filter: clicking a tag chip filters the list. Multiple tags = union filter (show memories with any selected tag).
+Add memory: sticky 'Add memory' button at bottom-right of viewport on this tab. Not inline — avoids disrupting the reading experience.
+Responsive behavior
+Desktop: max-width 680px centered with generous side margins.
+Tablet: same layout, narrower side margins.
+Mobile: full-width. Sort/filter controls collapse to a single 'Sort & filter' button opening a drawer.
+Tone: The chronological timeline is where the archive feeling lives. Year dividers with generous spacing create the sensation of turning through decades. The Caslon excerpts in each card make it feel like reading, not scanning. Do not compromise the vertical rhythm of this layout with dense or cramped spacing.
+A11y: List is a <ul> of <article> elements. Year dividers are <h2> headings. Sort control: aria-live='polite' region announces 'Sorted by [option]' on change. Filter: each active tag chip has aria-pressed='true'. Filter change announces count: '4 memories shown'.
+P12 — Search / Filter Pattern
+The pattern for finding family members across the tree. Used in the global navigation, in the Add Relationship flow, and in any list context where filtering is needed. Search in Prosapiam is personal — results feel like looking through a family album, not querying a database.
+Global search (navigation-level)
+Trigger
+Search icon in global nav. Click expands to full search overlay or inline expansion.
+Input
+Input/Search variant · full-width · placeholder: 'Search family members…' · Avenir 400 · 14px
+Results
+Person Summary Cards (compact horizontal) · up to 8 results visible before scroll · grouped if needed: 'Direct family' · 'Extended family'
+No results
+Empty State/Search variant · 'No one named [query] found' · 'Add [query] as a new person?' link
+Recent
+Before first character typed: 'Recently viewed' section with 4 compact Person cards
+Keyboard
+Arrow keys navigate result list · Enter selects · Escape closes
+Inline filter (list contexts)
+Placement
+Above the list it filters · full width or right-aligned depending on layout · Input/Search variant without overlay
+Behavior
+Live filter as user types (debounce 200ms) · no submit button · clear button appears when query present
+Results
+List filters in place · no navigation · count shown: 'Showing 4 of 18 members'
+No results
+List empties · Empty State/Search variant inline · 'Clear search' link
+Filter chips
+Below the search input when filtering by attribute is available: Relationship type chips (Parent, Sibling, etc.) · Generation chips (Parents, Grandparents, etc.). Each chip: Tag/Clickable variant. Active chip: bg Surface-3, border-active (Gold). Multiple chips: AND filter (show members matching all selected attributes).
+Responsive behavior
+Desktop: inline filter with chips visible.
+Mobile: search input full-width. Chips collapse to 'Filter' button → filter drawer.
+Tone: Search in this context is searching for people you know or half-know. Results should show enough context — name, dates, relationship — to be recognized, not just matched. A result that says 'Margaret Walsh, 1932–2011, Your great-grandmother' is categorically different from one that just says 'Margaret Walsh'.
+A11y: Search input: role='combobox' when results dropdown is active. Results list: role='listbox', each result: role='option'. Live count update: aria-live='polite'. Filter chips: role='checkbox' or aria-pressed when toggle behavior. Keyboard navigation through results: same as Select component ARIA pattern.

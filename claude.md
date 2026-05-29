@@ -1,4 +1,4 @@
-# MyNamesake — Claude Code Project Memory
+# Prosapiam — Claude Code Project Memory
 
 > This file is read by Claude Code at the start of every session.
 > It is the single source of truth for the entire project — architecture, design system, conventions, and build status.
@@ -8,7 +8,7 @@
 
 ## What This App Is
 
-MyNamesake is a consumer web app for building beautiful family trees and preserving family memories. Users can:
+Prosapiam is a consumer web app for building beautiful family trees and preserving family memories. Users can:
 
 - Build a visual, interactive family tree
 - Click any person to open their full profile page
@@ -867,7 +867,7 @@ export const load: LayoutServerLoad = async ({ cookies }) => {
 
 ## Email Templates (Resend)
 
-Build with React Email or plain HTML. All emails use the MyNamesake visual system — Young Serif headlines, Cormorant Garamond body, League Spartan UI text, Parchment backgrounds, Ink text.
+Build with React Email or plain HTML. All emails use the Prosapiam visual system — Young Serif headlines, Cormorant Garamond body, League Spartan UI text, Parchment backgrounds, Ink text.
 
 **Required templates:**
 1. Welcome — on signup
@@ -967,7 +967,7 @@ LEMONSQUEEZY_WEBHOOK_SECRET=
 
 # Resend (private)
 RESEND_API_KEY=
-RESEND_FROM_EMAIL=hello@mynamesake.com
+RESEND_FROM_EMAIL=hello@prosapiam.com
 
 # PostHog (public)
 PUBLIC_POSTHOG_KEY=
@@ -1107,3 +1107,34 @@ Before any production deployment:
 - [ ] Account / settings page
 - [ ] Admin dashboard
 - [ ] Vercel deployment
+
+## Design System (Prosapiam)
+
+The product's visual + content system lives in `design_handoff_prosapiam/`. **Read
+`design_handoff_prosapiam/START_HERE.md` before building or restyling any UI.**
+
+- **Tokens:** all design values are CSS custom properties in
+  `design_handoff_prosapiam/design-system/colors_and_type.css` → installed as
+  `src/lib/styles/tokens.css`, imported once in `src/routes/+layout.svelte`. Never hardcode a
+  color, size, radius, or duration — reference a `--token`.
+- **Reference UI** in `design_handoff_prosapiam/reference-ui/` is a **React fidelity mock** — LOOK
+  ONLY. Never import from it and never ship it. The core atoms are already ported to **Svelte 5**
+  in `design_handoff_prosapiam/svelte/lib/components/ui/` — copy those into `src/lib/components/ui/`.
+- **Build spec:** `design_handoff_prosapiam/spec/ComponentBrief.txt` (grep by component name) and
+  `spec/DesignSpec.txt` (authoritative). If anything disagrees, the spec wins.
+
+### Non-negotiables
+- Never `#FFF` page bg (Parchment `#F7F4EE` floor) · never `#000` text (Ink `#1C1A17`).
+- No gradients / background images / backdrop-blur on product chrome. No emoji.
+- No shadows on cards/modals/panels (depth is tonal). Only floating UI gets the one allowed shadow.
+- 0.5px hairline borders by default. Two typefaces, never on one line: Plus Jakarta Sans (UI, max
+  weight 500) and Cormorant Garamond (story only, ≥14px, line-height ≥1.7, never bold/ALL-CAPS).
+- Gold `#8C7355` is an accent, never a large fill. Sage = living/success, Terracotta = deceased/error
+  (never red). Photography is the only full-color element.
+- Motion ease-out only `cubic-bezier(0.22,1,0.36,1)`; no bounce/spring/loop; reduced-motion fallback required.
+- **Voice:** editorial, second-person, specific. Living/Deceased, Given/Family name, "About this person."
+  Empty states are invitations ("The first memory you add will live here."), never error-toned.
+
+### Product name
+The product is **Prosapiam**. Use the wordmark SVGs in `static/` (`logo-wordmark.svg`,
+`logo-lockup.svg`, `logo-mark.svg`) — never a text string or emoji.

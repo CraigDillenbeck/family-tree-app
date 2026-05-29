@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 56" width="360" height="56">
+  <g fill="none" stroke="#1C1A17" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="24" cy="14" r="3"></circle>
+    <path d="M24 17 L24 24"></path>
+    <path d="M14 32 L24 24 L34 32"></path>
+    <circle cx="14" cy="34" r="3"></circle>
+    <circle cx="34" cy="34" r="3"></circle>
+    <path d="M14 37 L14 42"></path>
+    <path d="M34 37 L34 42"></path>
+    <circle cx="14" cy="44" r="2"></circle>
+    <circle cx="34" cy="44" r="2"></circle>
+  </g>
+  <text x="60" y="36" font-family="Plus Jakarta Sans, sans-serif" font-weight="300" font-size="28" letter-spacing="-0.4" fill="#1C1A17">prosapiam</text>
+</svg>

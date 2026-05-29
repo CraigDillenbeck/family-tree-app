@@ -1,0 +1,849 @@
+
+PROSAPIAM
+Design System Spec
+
+Version 1.1  ·  Implementation Reference
+Derived from Design Foundations v1.0
+
+This document is the implementation layer above the foundations. It converts visual principles into explicit design tokens, interaction states, accessibility guardrails, and a Figma structure ready for component build-out. The emotional intent of the foundations is unchanged — this document makes it buildable.
+
+Contents
+01  Rule Hierarchy
+02  Design Tokens
+03  Interactive State Rules
+04  Accessibility Guardrails
+05  Practical Implementation Notes
+06  Figma File Structure
+
+SECTION 01
+Rule Hierarchy
+Not all design rules carry equal weight. This section classifies every foundational rule into one of three tiers so that designers and engineers can make informed decisions under time pressure, platform constraints, or edge cases — without silently eroding the system.
+
+Tier classification
+NON-NEGOTIABLE
+Core to brand identity or emotional integrity. Cannot be overridden without a system-level decision and a new version of this document. Violations here are regressions, not exceptions.
+DEFAULT
+The correct choice in the vast majority of contexts. May be overridden in specific, documented situations where a clear rationale exists. Exceptions must be logged.
+EXCEPTION-OK
+A strong preference with known, acceptable edge cases. The exception path is defined here. Do not invent new exceptions — use only those listed.
+
+Typography rules
+Rule
+Tier
+Scope
+Notes
+Rule
+Tier
+Scope
+Notes
+Adobe Caslon for story/narrative text only
+NON-NEGOTIABLE
+All
+Never appears in navigation, buttons, labels, or metadata
+Avenir Next for all UI chrome
+NON-NEGOTIABLE
+All
+Never swapped for another sans in the UI layer
+Caslon minimum 14px
+NON-NEGOTIABLE
+All
+Below this, Caslon becomes illegible and off-brand
+Max Avenir weight: 500
+DEFAULT
+UI
+Exception: Avenir Next 600 permitted on inverse (Ink) surfaces only. See §05.
+No Caslon bold
+NON-NEGOTIABLE
+All
+Bold weight destroys Caslon's warmth in this system
+No Caslon ALL CAPS
+NON-NEGOTIABLE
+All
+Absolutely not permitted at any size
+No typeface mixing on same line
+NON-NEGOTIABLE
+All
+The register shift must be at element boundary, not inline
+Caslon line-height min 1.7
+DEFAULT
+Story
+Exception: large display sizes (32px+) may use 1.2–1.4
+ALL CAPS labels max 14px
+DEFAULT
+UI
+Larger caps read as aggressive; use title case above 14px
+
+Color rules
+Rule
+Tier
+Scope
+Notes
+Never use pure white (#FFF) as page background
+NON-NEGOTIABLE
+All
+Parchment #F7F4EE is the minimum warmth floor
+Never use pure black (#000) for text
+NON-NEGOTIABLE
+All
+Ink #1C1A17 only
+No drop shadows anywhere in the UI
+DEFAULT
+UI
+Exception: floating elements (tooltips, dropdowns) may use a single, warm shadow. See §05.
+No gradients in UI layer
+NON-NEGOTIABLE
+UI
+Gradients are marketing-layer only. Never in product UI.
+Tonal layering only for depth
+DEFAULT
+UI
+Exception: modal overlay uses semi-transparent Ink scrim. See §05.
+Gold is an accent only
+DEFAULT
+All
+Never use Gold as a fill for large areas; it overwhelms the warmth balance
+Photography is the only full-color element
+DEFAULT
+UI
+Exception: user-generated content (video thumbnails, custom media)
+No new colors without updating this document
+NON-NEGOTIABLE
+All
+Color expansion requires a system decision, not a one-off
+
+Border & surface rules
+Rule
+Tier
+Scope
+Notes
+0.5px borders only
+DEFAULT
+UI
+Exception: focus rings (2px), featured card accent (1px). See §05.
+Warm Light or border token color only
+DEFAULT
+UI
+Exception: semantic borders (Terracotta for error, Gold for focus active)
+No full box-shadows on cards
+NON-NEGOTIABLE
+Cards
+Tonal fill contrast only
+Radius from defined scale only
+DEFAULT
+All
+No arbitrary radius values outside the token scale
+
+Motion rules
+Rule
+Tier
+Scope
+Notes
+No bounce or spring easing
+NON-NEGOTIABLE
+All
+Ease-out only: cubic-bezier(0.22, 1, 0.36, 1)
+prefers-reduced-motion fallback required
+NON-NEGOTIABLE
+All
+All animations must have a no-motion equivalent
+No looping animations (except skeleton pulse)
+DEFAULT
+UI
+Exception: skeleton loading state uses a gentle opacity pulse
+No scroll-triggered animation
+DEFAULT
+UI
+Exception: marketing/landing pages only, with reduced-motion fallback
+SECTION 02
+Design Tokens
+All tokens below are implementation-ready. CSS custom property names are the canonical reference. Figma variable names should mirror these exactly. Token names follow the pattern: category-role-variant.
+Tokens are the contract between design and engineering. When a token changes, it changes everywhere. Never hard-code a value that has a token.
+Color tokens — Base palette
+
+
+
+
+
+
+color-ink
+#1C1A17
+Primary text
+color-ink-soft
+#3D3A35
+Body text
+color-warm-mid
+#7A6F63
+Tertiary text
+color-warm-light
+#C4B9A8
+Borders, hints
+color-parchment
+#F7F4EE
+Page background
+
+
+
+
+
+
+color-surface-1
+#EDE8E0
+Cards, panels
+color-surface-2
+#E5DDD2
+Inputs, sidebars
+color-surface-3
+#D9D0C4
+Hover fills
+color-gold
+#8C7355
+Accent, CTA
+color-gold-light
+#BFA882
+Gold tint fills
+
+
+
+
+
+
+color-sage
+#5A6B5C
+Success, living
+color-sage-tint
+#E4EDE5
+Success bg fill
+color-terra
+#8C4A38
+Error, alert
+color-terra-tint
+#F2E4E1
+Error bg fill
+color-border
+#D6CFC4
+Default border
+
+Color tokens — Semantic roles
+--color-bg-page
+#F7F4EE  —  page background; always Parchment
+--color-bg-surface-1
+#EDE8E0  —  cards, content panels
+--color-bg-surface-2
+#E5DDD2  —  form inputs, sidebar fills
+--color-bg-surface-3
+#D9D0C4  —  hover states on surface-1 elements
+--color-bg-inverse
+#1C1A17  —  navigation bar, footer, modal scrim
+--color-bg-inverse-muted
+rgba(28,26,23,0.40)  —  modal overlay scrim
+--color-text-primary
+#1C1A17  —  headings, display text
+--color-text-body
+#3D3A35  —  body text, prose, story
+--color-text-secondary
+#7A6F63  —  captions, metadata, supporting
+--color-text-hint
+#C4B9A8  —  placeholder text, disabled
+--color-text-inverse
+#F7F4EE  —  text on Ink backgrounds
+--color-text-inverse-muted
+#C4B9A8  —  secondary text on Ink backgrounds
+--color-accent
+#8C7355  —  primary CTA, active states, gold
+--color-accent-light
+#BFA882  —  hover state on accent elements
+--color-success
+#5A6B5C  —  living status, positive states
+--color-success-bg
+#E4EDE5  —  success background fill
+--color-error
+#8C4A38  —  validation errors, alerts
+--color-error-bg
+#F2E4E1  —  error background fill
+--color-border-default
+#D6CFC4  —  default card, input, divider borders
+--color-border-subtle
+rgba(28,26,23,0.07)  —  very soft dividers
+--color-border-strong
+#C4B9A8  —  hover borders, stronger dividers
+--color-border-active
+#8C7355  —  focused input, selected state
+--color-border-inverse
+rgba(247,244,238,0.15)  —  borders on Ink bg
+
+Typography tokens
+--font-display
+'Avenir Next', 'Arial', sans-serif
+--font-body
+'Adobe Caslon Pro', 'Georgia', serif
+--font-size-display-xl
+56px  —  hero headings, marketing only
+--font-size-display-l
+40px  —  large headings
+--font-size-h1
+28px  —  page-level headings
+--font-size-h2
+20px  —  section headings
+--font-size-h3
+15px  —  subsection headings
+--font-size-body-story
+17px  —  Caslon story/narrative text
+--font-size-body-ui
+15px  —  Avenir UI body copy
+--font-size-label
+11px  —  ALL CAPS labels
+--font-size-caption
+12px  —  captions, metadata
+--font-size-meta
+11px  —  timestamps, relationship labels
+--font-weight-light
+300   —  display headlines only
+--font-weight-regular
+400   —  all body and standard text
+--font-weight-medium
+500   —  headings, labels, emphasis (UI max weight)
+--font-weight-semibold
+600   —  inverse surfaces only (exception, see §05)
+--line-height-tight
+1.1   —  display text, large headings
+--line-height-heading
+1.25  —  H1 and H2
+--line-height-ui
+1.55  —  Avenir UI body copy
+--line-height-story
+1.75  —  Caslon narrative text (minimum)
+--letter-spacing-tight
+-0.02em  —  display XL
+--letter-spacing-base
+0em      —  all body and heading text
+--letter-spacing-label
+0.10em   —  ALL CAPS labels
+--reading-width
+680px    —  max-width for all Caslon story text
+
+Spacing tokens
+--space-1
+4px   —  tight internal gaps: icon+label, tag padding
+--space-2
+8px   —  small component gaps: button icon margin, inline gap
+--space-3
+12px  —  compact gaps: form field internal, badge spacing
+--space-4
+16px  —  standard component gap: card internal sections
+--space-6
+24px  —  section dividers within cards, field groups
+--space-8
+32px  —  between card components on a page
+--space-12
+48px  —  primary section rhythm
+--space-16
+64px  —  header to content gap
+--space-20
+80px  —  page margin (desktop)
+--space-24
+96px  —  hero section vertical padding
+--space-30
+120px —  marketing vertical rhythm
+
+Border radius tokens
+--radius-none
+0px    —  hard edge: table cells, inline dividers
+--radius-xs
+2px    —  badges, tags, chips, status dots
+--radius-sm
+4px    —  buttons, inputs, icon containers
+--radius-md
+6px    —  small cards, dropdowns, tooltips
+--radius-lg
+10px   —  standard cards, modals, panels
+--radius-xl
+16px   —  profile photo crops, marketing cards
+--radius-full
+9999px —  avatars (circles), toggle switches only
+
+Border tokens
+--border-default
+0.5px solid #D6CFC4  —  cards, dividers, inputs at rest
+--border-subtle
+0.5px solid rgba(28,26,23,0.07)  —  very light dividers
+--border-strong
+0.5px solid #C4B9A8  —  hover borders, emphasized dividers
+--border-active
+0.5px solid #8C7355  —  focused inputs, selected states
+--border-error
+0.5px solid #8C4A38  —  form validation errors
+--border-inverse
+0.5px solid rgba(247,244,238,0.15)  —  on Ink backgrounds
+--border-focus-ring
+2px solid rgba(28,26,23,0.20)  —  keyboard focus (exception, see §05)
+--border-featured
+1px solid #8C7355  —  featured card accent (exception, see §05)
+
+Motion tokens
+--ease
+cubic-bezier(0.22, 1, 0.36, 1)  —  all motion; ease-out only
+--dur-instant
+0ms    —  reduced-motion fallback for all transitions
+--dur-fast
+150ms  —  hover states, icon swaps, small toggles
+--dur-base
+280ms  —  modals, tooltips, standard transitions
+--dur-slow
+480ms  —  page transitions, panel slides, load reveals
+--dur-long
+700ms  —  tree zoom, large layout shifts, marketing reveals
+--stagger-delay
+40ms   —  per-item delay in staggered list reveals
+
+Layout / grid tokens
+--grid-columns-mobile
+4
+--grid-columns-tablet
+8
+--grid-columns-desktop
+12
+--grid-gutter-mobile
+16px
+--grid-gutter-tablet
+20px
+--grid-gutter-desktop
+24px
+--grid-margin-mobile
+24px
+--grid-margin-tablet
+40px
+--grid-margin-desktop
+80px
+--grid-max-width
+1280px  —  centered container, wide breakpoint
+--reading-max-width
+680px   —  Caslon narrative text constraint
+--breakpoint-mobile
+0–767px
+--breakpoint-tablet
+768–1023px
+--breakpoint-desktop
+1024–1439px
+--breakpoint-wide
+1440px+
+SECTION 03
+Interactive State Rules
+Every interactive component has a defined appearance for each state. These rules are the source of truth for both Figma variants and CSS implementation. States not listed here should not be invented without a system update.
+Buttons
+Three variants: Primary (filled Ink), Secondary (outlined), Ghost (text underline). All buttons use Avenir Next 500, 13px, 4px radius. No border-radius variations between variants.
+
+State
+Primary
+Secondary / Ghost
+Default
+Primary: bg Ink, text Parchment, no border
+Secondary: bg transparent, border-default, text Ink  ·  Ghost: no bg, no border, text Ink, underline offset 3px
+Hover
+Primary: opacity 0.85, 150ms
+Secondary: bg Surface-1, border-strong  ·  Ghost: opacity 0.70
+Active
+Primary: scale(0.98), 100ms
+Secondary: scale(0.98)  ·  Ghost: scale(0.98)
+Focus
+All: focus-ring token (2px solid Ink at 20%)
+Focus ring must be visible on all background surfaces
+Disabled
+All: opacity 0.40, cursor not-allowed
+Never hidden. Never visually removed. Still occupies space.
+Loading
+Primary: spinner replaces label, bg Ink
+Spinner: 16px, Parchment, 1s rotation, no bounce
+
+Form inputs
+Text inputs, textareas, and selects. All use Avenir Next 400, 14px, 4px radius, Surface-2 fill, border-default. Label always above (never floating). Error message always below in Terracotta, 12px Avenir.
+
+State
+Appearance
+
+Default
+bg Surface-2, border-default (0.5px), text Ink, placeholder Warm-Light
+
+Hover
+border-strong — border darkens to #C4B9A8, no fill change, 150ms
+
+Focus
+border-active (Gold 0.5px) + focus-ring (2px Ink at 20%), bg white
+
+Error
+border-error (Terracotta 0.5px), error-bg fill, error message below
+
+Disabled
+opacity 0.40, bg Surface-2, cursor not-allowed, no hover state
+
+Read-only
+bg Surface-1 (lighter), border-subtle, text Ink-Soft, no focus ring
+
+Loading
+Skeleton pulse on fill: Surface-2 → Surface-3 → Surface-2, 1.2s loop
+
+
+Cards
+Standard content cards. bg Surface-1 or white, border-default, radius-lg. Interactive cards (person cards, memory cards) have hover and active states. Static display cards (summary cards, stat cards) do not.
+
+State
+Appearance
+
+Default
+bg Surface-1, border-default (0.5px), radius-lg, no shadow
+
+Hover
+bg Surface-3 (#D9D0C4), border-strong, 150ms — no scale, no elevation
+
+Active
+bg Surface-3, border-active (Gold), scale(0.995), 100ms
+
+Focus
+focus-ring (2px Ink at 20%) around card boundary
+
+Featured
+border-featured: 1px Gold — only exception to 0.5px rule for cards
+
+Disabled
+opacity 0.40 — used only when a card is not yet accessible to user
+
+Loading
+Skeleton: Surface-2 fill, animated opacity pulse, preserve card shape
+
+
+Tabs
+Navigation and in-page tabs. Avenir Next 500, 13px. Underline style only — no background-fill tab variants. Active tab: Ink text, 2px Gold underline. Inactive: Warm-Mid text, no underline.
+
+State
+Appearance
+
+Default (inactive)
+text Warm-Mid, no underline, no background
+
+Hover
+text Ink-Soft, 0.5px border-subtle underline, 150ms
+
+Active
+text Ink, 2px solid Gold underline, font-weight 500
+
+Focus
+focus-ring around tab label, 2px Ink at 20%
+
+Disabled
+opacity 0.35, cursor not-allowed, no hover state
+
+
+Links
+In-text links and standalone navigation links. In-text (Caslon context): Ink-Soft, underline, underline-offset 3px, no color change on hover — opacity only. Standalone links (Avenir context): Ink, underline, same hover behavior.
+
+State
+Appearance
+
+Default
+Ink-Soft (in Caslon), Ink (in Avenir). Underline. Offset 3px.
+
+Hover
+opacity 0.70, 150ms — never a color shift, never underline removal
+
+Active
+opacity 0.55, 100ms
+
+Focus
+focus-ring (2px Ink at 20%), underline retained
+
+Visited
+Warm-Mid color — subtle indication, never jarring
+
+External
+Small external icon (12px) after link text, Warm-Light color
+
+SECTION 04
+Accessibility Guardrails
+Accessibility in Prosapiam is not a compliance checklist. It is a quality bar. A product designed around memory and family must be usable by people of all ages, including those with visual impairments, motor limitations, or who depend on assistive technology. These rules are non-negotiable.
+Contrast requirements
+WCAG 2.1 AA is the minimum. WCAG AAA is the target for body text. The warm palette creates specific contrast challenges that must be verified at every level.
+
+Pair
+Ratio
+Level
+Notes
+Pair
+Ratio
+Level
+Notes
+Ink #1C1A17 on Parchment #F7F4EE
+14.6:1
+AAA
+Primary text — exceeds requirement
+Ink-Soft #3D3A35 on Parchment
+10.8:1
+AAA
+Story body text — exceeds requirement
+Warm-Mid #7A6F63 on Parchment
+4.6:1
+AA
+Captions/metadata — meets AA, fails AAA. Minimum size 12px.
+Warm-Light #C4B9A8 on Parchment
+2.1:1
+FAIL
+Placeholder only — never use for readable text
+Parchment #F7F4EE on Ink #1C1A17
+14.6:1
+AAA
+Inverse surfaces — exceeds requirement
+Gold #8C7355 on Parchment
+3.4:1
+AA*
+Large text only (18px+ or 14px bold). Never for body copy.
+Gold #8C7355 on Surface-1
+3.0:1
+FAIL
+Never use Gold text on Surface-1 fill
+Ink on Surface-1 #EDE8E0
+11.9:1
+AAA
+Card body text — safe
+Sage #5A6B5C on Sage-Tint #E4EDE5
+4.7:1
+AA
+Badge text on badge fill — safe at 11px+
+Terra #8C4A38 on Terra-Tint #F2E4E1
+4.4:1
+AA
+Error text on error fill — safe at 11px+
+
+Gold text on any surface requires verification. It is the single most common contrast failure in warm palettes. When using Gold for CTA labels or accent text, check the specific background value — Parchment, Surface-1, and Surface-2 all give different results.
+
+Minimum text sizes
+Caslon narrative text
+17px minimum — no exceptions. This is both an a11y and brand rule.
+Avenir UI body
+13px minimum for interactive elements. 11px for metadata only (non-interactive).
+ALL CAPS labels
+11px minimum at 0.10em letter-spacing. Below 11px, ALL CAPS becomes illegible.
+Error messages
+12px minimum, always visible (never hidden until interaction).
+Tooltip / overlay text
+12px minimum. Never truncate tooltip text on small screens.
+Touch target labels
+13px minimum for any label adjacent to a touch target.
+
+Focus visibility
+Focus ring style
+--border-focus-ring: 2px solid rgba(28,26,23,0.20)
+Focus ring offset
+2px offset from the element boundary — never overlapping content
+Focus visibility check
+Ring must be visible on: Parchment, Surface-1, Surface-2, white. Verify on each.
+Focus on inverse
+On Ink backgrounds: 2px solid rgba(247,244,238,0.40) — Parchment ring
+No custom focus removal
+Never override :focus-visible with outline: none without a replacement
+Tab order
+Must follow visual reading order. No tabIndex > 0 except for modal traps.
+Skip links
+Required on all pages with navigation. Visually hidden until focused.
+
+Reduced motion
+All motion in this system must respect the prefers-reduced-motion media query. This is a non-negotiable requirement, not a progressive enhancement.
+
+Implementation pattern
+@media (prefers-reduced-motion: reduce) { * { transition-duration: 0ms !important; animation-duration: 0ms !important; } }
+Page transitions
+Reduce: instant swap, no fade or slide. Content appears immediately.
+Card reveal animations
+Reduce: elements appear in final position, no rise or stagger.
+Loading skeletons
+Reduce: static fill at Surface-2 — no pulse animation.
+Tree pan/zoom
+Reduce: instant transform, no interpolated motion.
+Modal open/close
+Reduce: instant opacity toggle, no fade duration.
+
+Touch targets
+Minimum touch target
+44×44px — applies to all interactive elements on mobile
+Buttons
+Min height 44px on mobile (desktop: 36px is acceptable)
+Icon-only buttons
+44×44px tap area required even if visual size is 24px. Use padding.
+Form inputs
+Min height 44px on mobile. Desktop: 36px acceptable.
+Navigation items
+Min height 44px, full-width tap area in mobile nav
+Links in body text
+Min 24px tall tap area via line-height. Caslon at 1.75 line-height naturally satisfies this at 17px.
+Tree node touch targets
+Min 44×44px per node on mobile. Node labels must not overlap.
+Spacing between targets
+Min 8px between adjacent touch targets to prevent mis-taps.
+
+Screen reader considerations
+Family tree
+SVG tree must have ARIA labels per node. Provide a list-view alternative.
+Photo uploads
+All uploaded photos require alt text input. Field is required, not optional.
+Memory entries
+Caslon story text needs no special treatment — it is standard prose.
+Dates and times
+Use <time> element with machine-readable datetime attribute.
+Status badges
+Sage = 'Living', Terra = 'Deceased'. Include sr-only text for badges.
+Modal dialogs
+Focus trap required. aria-modal, aria-labelledby, aria-describedby.
+Loading states
+aria-busy='true' on loading containers. aria-live='polite' for updates.
+SECTION 05
+Practical Implementation Notes
+This section pressure-tests the rules from the foundations document. Each potentially fragile rule is examined for real-world feasibility, then classified as truly non-negotiable or given a carefully controlled exception path.
+0.5px borders
+The rule
+All UI borders are 0.5px. 1px borders are too heavy in this palette and read as interface rather than craft.
+The pressure point
+0.5px borders render inconsistently across devices. On non-retina (1x pixel density) screens, 0.5px rounds up to 1px or renders at ~50% opacity — which can appear invisible or inconsistent. On retina (2x+) screens, 0.5px renders correctly as a hairline.
+Resolution
+Non-negotiable on retina displays (target majority). On 1x displays, accept the 1px rounding — the border reads slightly heavier but remains functional. Do not detect screen density and serve different values; the complexity is not worth it. The correct implementation is: border: 0.5px solid var(--color-border-default). No media query override needed.
+Controlled exceptions
+Two exceptions are permitted and must use the --border-featured or --border-focus-ring tokens:
+Focus rings: 2px solid rgba(28,26,23,0.20) — accessibility requirement overrides aesthetic preference.
+Featured card accent (e.g. 'Recommended plan' on pricing pages): 1px solid Gold. One side only.
+
+No-shadow policy
+The rule
+No drop shadows anywhere in the UI layer. Depth is expressed through tonal surface contrast only.
+The pressure point
+Floating elements — dropdown menus, tooltips, date pickers, command palettes — genuinely benefit from shadows because they need to visually separate from arbitrary content beneath them. Tonal contrast alone does not solve occlusion.
+Resolution
+One exception is permitted for floating/detached UI layers only. The shadow must use a warm ink value (never cool gray or black), be very subtle, and follow this exact spec:
+box-shadow: 0 4px 16px rgba(28,26,23,0.10), 0 1px 4px rgba(28,26,23,0.06)
+This exception applies to: dropdown menus, tooltip poppers, date picker calendars, command palettes, and context menus. It does not apply to cards, modals, panels, or any element anchored in the layout flow.
+Modals use the --color-bg-inverse-muted scrim (rgba Ink at 40%) behind the modal card, which is anchored in a centered flex container. No shadow on the modal card itself.
+
+Avenir Next maximum weight 500
+The rule
+Avenir Next 500 (medium) is the maximum weight used in the product UI. Weight 600+ is not permitted because it reads as heavy against the warm palette.
+The pressure point
+On inverse surfaces (Ink background), weight 500 can appear thin because the contrast inverts. Parchment text on Ink at weight 500 can look lighter than intended — particularly at small sizes and on some screens.
+Resolution
+Exception permitted on inverse surfaces only: Avenir Next 600 (semibold) may be used for primary labels and headings on Ink backgrounds (navigation bar, footer, inverse hero panels). This exception does not extend to the main product UI — only inverse surfaces. Token: --font-weight-semibold: 600; usage scope: inverse context only.
+
+Tonal layering only for depth
+The rule
+Z-axis depth is expressed entirely through surface tonal value (Parchment → Surface-1 → Surface-2 → Surface-3). No elevation shadows.
+The pressure point
+The tonal system works well when surfaces share a background. It breaks when a floating panel must appear over a photograph or a rich media area — a Surface-1 card over a dark photograph may not read as elevated at all.
+Resolution
+Two controlled patterns for non-neutral background contexts:
+Panel over photograph: use Surface-1 at full opacity with border-default. Accept that it may not look 'elevated' — treat it as a crop/frame instead.
+Overlay over unknown content (e.g. image lightbox controls): use Ink background at 85% opacity with Parchment text. This is legible over any content.
+The floating element shadow exception (defined above) also helps in these contexts.
+
+Adobe Caslon web rendering
+The consideration
+Adobe Caslon Pro is a premium font requiring a valid Adobe Fonts license. It must be loaded via Adobe Fonts (Typekit) CDN, which introduces a dependency on an external service. Flash of unstyled text (FOUT) and font load failures must be handled.
+Resolution
+Font loading strategy
+font-display: swap — text renders in Georgia fallback immediately, swaps to Caslon when loaded. Georgia is an acceptable fallback — warm, serif, readable.
+CSS fallback stack
+'Adobe Caslon Pro', Georgia, 'Times New Roman', serif
+FOUT mitigation
+Georgia at 17px / 1.75 line-height is close enough to Caslon that layout shift is minimal. Do not use font-display: block.
+License check
+Verify the Adobe Fonts plan covers web use and the domain is registered. This is a hard dependency — do not launch without it confirmed.
+SSR / preload
+Preload the Roman (regular) cut only. Italic is lazy-loaded. Bold cut is not needed (Caslon bold is not used in this system).
+
+0.5px borders in CSS vs Figma
+The consideration
+Figma does not support 0.5px strokes natively — minimum is 1px. This creates a disconnect between design files and implementation.
+Resolution
+Figma workaround
+Use 1px stroke at 50% opacity in Figma. Name the style 'Border/Default' and note in the style description that it renders as 0.5px in CSS. Never annotate '1px border' in specs.
+CSS implementation
+border: 0.5px solid var(--color-border-default) — correct and intentional.
+Handoff note
+All design specs should include a standing note: 'Figma borders shown at 1px/50% opacity. All borders implement as 0.5px in CSS.'
+SECTION 06
+Figma File Structure
+The following structure governs the Prosapiam Figma workspace. All pages, their purpose, and naming conventions are defined here. This structure should be created before any components are built and treated as read-only convention once the system is in active use.
+One source file. All design work references the system file via Figma's publish/subscribe model. Screen design files import components from the system. Do not duplicate component definitions across files.
+File: Prosapiam — Design System
+The canonical system file. Contains all foundations, tokens, and components. Published as a team library. All screen design files link to this file.
+
+Page 1 — Cover
+File title, version, last updated date, owner. Quick links to key pages. Not a design surface — administrative only.
+Page 2 — Foundations
+Color swatches (all semantic roles labeled). Typography specimens (all scale levels, both typefaces, showing correct usage). Spacing scale visualization. Border radius reference. Surface hierarchy diagram. This page is documentation, not components.
+Page 3 — Tokens
+Figma Variables panel (local variables mirroring the CSS token list). Color variables: all --color-* tokens as Figma Color Styles. Text styles: all --font-* combinations as Figma Text Styles. Effect styles: border-focus-ring, featured-border. No layout components on this page — it is a variable/style registry only.
+Page 4 — Components
+All published components organized in sections: Primitives (Button, Input, Badge, Tag, Avatar, Divider, Icon). Layout (Card, Panel, Modal, Drawer, Sidebar). Navigation (Nav Bar, Tabs, Breadcrumb, Mobile Nav). Content (Person Card, Memory Card, Tree Node, Media Card). Forms (Form Group, Field, Select, Textarea, Checkbox, Radio, Toggle). Each component shows all variants and all states.
+Page 5 — Patterns
+Composed UI patterns that repeat across screens but are not single components: Profile header pattern. Memory entry layout. Empty state variants. Loading skeleton patterns. Error state patterns. Form page structure. Modal with form. Confirmation dialogs. These are not published as components — they are reference compositions.
+Page 6 — Screens
+Full screen designs organized by user flow: Marketing / Landing. Auth (Sign up, Sign in, Forgot password). Onboarding. Dashboard. Family Tree view. Person Profile. Memory Entry (view, create, edit). Media gallery. Settings. Each screen at desktop and mobile breakpoints.
+Page 7 — Exploration / Archive
+Discarded directions, experiments, and version history. Nothing on this page should be referenced by screen designs. Date-stamp all entries. Archive, never delete — decisions may need revisiting.
+
+Naming conventions
+Consistent naming across Figma, tokens, and code is the contract that makes handoff trustworthy. These conventions are mandatory.
+
+Components
+PascalCase. Full category prefix. Examples: Button/Primary, Card/Person, Input/Text
+Variants
+Property=Value pairs in Figma variant panel. State=Default|Hover|Active|Focus|Disabled|Loading|Error
+Color styles
+Mirror CSS token names. Slash-separated: Color/Text/Primary, Color/Surface/1, Color/Accent
+Text styles
+Mirror CSS roles: Type/Display/XL, Type/H1, Type/Body/Story, Type/Label, Type/Caption
+Spacing
+In annotations only: Space/4 = 16px, Space/8 = 32px etc. (number = multiplier, not px value)
+Layers
+Descriptive, lowercase, hyphenated. 'profile-photo', 'card-header', 'nav-link-label'. Never 'Rectangle 47'.
+Frames
+Screen frames: [Breakpoint]/[Section]/[State]. Example: Desktop/Profile/Default
+Auto-layout
+All components use auto-layout. No fixed-position components except overlays.
+
+Variable / token structure in Figma
+Figma Variables should be organized in collections that mirror the CSS token groups. Use modes for light/dark theme switching.
+
+Collection: Color
+All --color-* tokens. Two modes: Light (default) and Dark. Every color variable has both mode values defined before the component library is published.
+Collection: Typography
+Font size, weight, line-height, letter-spacing tokens as Number variables. Font family as String variables. Reference these in Text Styles, not directly in components.
+Collection: Spacing
+All --space-* tokens as Number variables. Used in auto-layout padding and gap values across all components.
+Collection: Radius
+All --radius-* tokens as Number variables.
+Collection: Motion
+Duration and easing as String variables. Note: Figma does not support custom easing in prototypes — these are documentation tokens for handoff, not live prototype values.
+
+Component build order
+Build in this sequence. Each tier depends on the previous.
+
+Tier 1 — Primitives
+Color variables, text styles, effect styles. Then: Divider, Badge, Tag, Avatar, Icon wrapper.
+Tier 2 — Form elements
+Button (all variants + states), Input, Select, Textarea, Checkbox, Radio, Toggle.
+Tier 3 — Layout
+Card (all variants), Panel, Modal shell, Drawer shell.
+Tier 4 — Navigation
+Nav Bar (desktop + mobile), Tabs, Breadcrumb.
+Tier 5 — Content cards
+Person Card, Memory Card, Tree Node, Media Card.
+Tier 6 — Patterns
+Patterns page only — no component publication.
+Tier 7 — Screens
+Full screen compositions using all prior tiers.
+
+Figma to frontend handoff checklist
+Before any component is handed off to engineering, verify:
+All layer names are descriptive and match the component naming convention.
+All colors reference a Figma Color Style — no hard-coded hex values in components.
+All text uses a Text Style — no manually set font values.
+All spacing uses auto-layout with token-referenced gap and padding values.
+All states are present as Figma variants: Default, Hover, Active, Focus, Disabled.
+Border values are annotated with the CSS token name and the note about 0.5px implementation.
+The component has been reviewed against the §03 state rules in this document.
+The component has been reviewed against the §04 accessibility guardrails.
+Dark mode variants exist for all components (or a note explains why they don't differ).

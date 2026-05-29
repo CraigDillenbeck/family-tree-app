@@ -1,10 +1,10 @@
 <svelte:head>
-  <title>MyNamesake — Your family's story, beautifully told</title>
+  <title>Prosapiam — Your family's story, beautifully told</title>
 </svelte:head>
 
 <div class="page">
   <header class="header">
-    <span class="wordmark">🌳 MyNamesake</span>
+    <img src="/logo-lockup.svg" alt="Prosapiam" class="wordmark-img" height="32" />
     <nav>
       <a href="/login">Sign in</a>
       <a href="/signup" class="btn-cta">Get started</a>
@@ -32,12 +32,7 @@
     padding: 1rem 2rem;
   }
 
-  .wordmark {
-    font-size: 1.1rem;
-    font-weight: 700;
-    color: #3d2000;
-    letter-spacing: -0.02em;
-  }
+  .wordmark-img { display: block; }
 
   nav {
     display: flex;

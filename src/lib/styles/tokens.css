@@ -1,0 +1,299 @@
+/* ============================================================
+   PROSAPIAM — Design Tokens
+   Colors, Type, Spacing, Radius, Borders, Motion, Layout
+   Source of truth: Prosapiam_DesignSpec_v1.1
+   ============================================================ */
+
+/* ----- Web fonts -----
+   Story/narrative face: Cormorant Garamond (self-hosted from /fonts).
+   UI face: Plus Jakarta Sans (self-hosted from /fonts).
+*/
+
+@font-face { font-family:'Plus Jakarta Sans'; font-style:normal; font-weight:200; font-display:swap; src:url('/fonts/PlusJakartaSans-ExtraLight.ttf') format('truetype'); }
+@font-face { font-family:'Plus Jakarta Sans'; font-style:italic; font-weight:200; font-display:swap; src:url('/fonts/PlusJakartaSans-ExtraLightItalic.ttf') format('truetype'); }
+@font-face { font-family:'Plus Jakarta Sans'; font-style:normal; font-weight:300; font-display:swap; src:url('/fonts/PlusJakartaSans-Light.ttf') format('truetype'); }
+@font-face { font-family:'Plus Jakarta Sans'; font-style:italic; font-weight:300; font-display:swap; src:url('/fonts/PlusJakartaSans-LightItalic.ttf') format('truetype'); }
+@font-face { font-family:'Plus Jakarta Sans'; font-style:normal; font-weight:400; font-display:swap; src:url('/fonts/PlusJakartaSans-Regular.ttf') format('truetype'); }
+@font-face { font-family:'Plus Jakarta Sans'; font-style:italic; font-weight:400; font-display:swap; src:url('/fonts/PlusJakartaSans-Italic.ttf') format('truetype'); }
+@font-face { font-family:'Plus Jakarta Sans'; font-style:normal; font-weight:500; font-display:swap; src:url('/fonts/PlusJakartaSans-Medium.ttf') format('truetype'); }
+@font-face { font-family:'Plus Jakarta Sans'; font-style:italic; font-weight:500; font-display:swap; src:url('/fonts/PlusJakartaSans-MediumItalic.ttf') format('truetype'); }
+@font-face { font-family:'Plus Jakarta Sans'; font-style:normal; font-weight:600; font-display:swap; src:url('/fonts/PlusJakartaSans-SemiBold.ttf') format('truetype'); }
+@font-face { font-family:'Plus Jakarta Sans'; font-style:italic; font-weight:600; font-display:swap; src:url('/fonts/PlusJakartaSans-SemiBoldItalic.ttf') format('truetype'); }
+@font-face { font-family:'Plus Jakarta Sans'; font-style:normal; font-weight:700; font-display:swap; src:url('/fonts/PlusJakartaSans-Bold.ttf') format('truetype'); }
+@font-face { font-family:'Plus Jakarta Sans'; font-style:italic; font-weight:700; font-display:swap; src:url('/fonts/PlusJakartaSans-BoldItalic.ttf') format('truetype'); }
+@font-face { font-family:'Plus Jakarta Sans'; font-style:normal; font-weight:800; font-display:swap; src:url('/fonts/PlusJakartaSans-ExtraBold.ttf') format('truetype'); }
+@font-face { font-family:'Plus Jakarta Sans'; font-style:italic; font-weight:800; font-display:swap; src:url('/fonts/PlusJakartaSans-ExtraBoldItalic.ttf') format('truetype'); }
+
+@font-face { font-family:'Cormorant Garamond'; font-style:normal; font-weight:300; font-display:swap; src:url('/fonts/CormorantGaramond-Light.ttf') format('truetype'); }
+@font-face { font-family:'Cormorant Garamond'; font-style:italic; font-weight:300; font-display:swap; src:url('/fonts/CormorantGaramond-LightItalic.ttf') format('truetype'); }
+@font-face { font-family:'Cormorant Garamond'; font-style:normal; font-weight:400; font-display:swap; src:url('/fonts/CormorantGaramond-Regular.ttf') format('truetype'); }
+@font-face { font-family:'Cormorant Garamond'; font-style:italic; font-weight:400; font-display:swap; src:url('/fonts/CormorantGaramond-Italic.ttf') format('truetype'); }
+@font-face { font-family:'Cormorant Garamond'; font-style:normal; font-weight:500; font-display:swap; src:url('/fonts/CormorantGaramond-Medium.ttf') format('truetype'); }
+@font-face { font-family:'Cormorant Garamond'; font-style:italic; font-weight:500; font-display:swap; src:url('/fonts/CormorantGaramond-MediumItalic.ttf') format('truetype'); }
+@font-face { font-family:'Cormorant Garamond'; font-style:normal; font-weight:600; font-display:swap; src:url('/fonts/CormorantGaramond-SemiBold.ttf') format('truetype'); }
+@font-face { font-family:'Cormorant Garamond'; font-style:italic; font-weight:600; font-display:swap; src:url('/fonts/CormorantGaramond-SemiBoldItalic.ttf') format('truetype'); }
+@font-face { font-family:'Cormorant Garamond'; font-style:normal; font-weight:700; font-display:swap; src:url('/fonts/CormorantGaramond-Bold.ttf') format('truetype'); }
+@font-face { font-family:'Cormorant Garamond'; font-style:italic; font-weight:700; font-display:swap; src:url('/fonts/CormorantGaramond-BoldItalic.ttf') format('truetype'); }
+
+:root {
+  /* ---------- COLOR — base palette ---------- */
+  --color-ink:           #1C1A17;
+  --color-ink-soft:      #3D3A35;
+  --color-warm-mid:      #7A6F63;
+  --color-warm-light:    #C4B9A8;
+  --color-parchment:     #F7F4EE;
+
+  --color-surface-1:     #EDE8E0;
+  --color-surface-2:     #E5DDD2;
+  --color-surface-3:     #D9D0C4;
+
+  --color-gold:          #8C7355;
+  --color-gold-light:    #BFA882;
+
+  --color-sage:          #5A6B5C;
+  --color-sage-tint:     #E4EDE5;
+  --color-terra:         #8C4A38;
+  --color-terra-tint:    #F2E4E1;
+
+  --color-border:        #D6CFC4;
+
+  /* ---------- COLOR — semantic roles ---------- */
+  --color-bg-page:           #F7F4EE;
+  --color-bg-surface-1:      #EDE8E0;
+  --color-bg-surface-2:      #E5DDD2;
+  --color-bg-surface-3:      #D9D0C4;
+  --color-bg-inverse:        #1C1A17;
+  --color-bg-inverse-muted:  rgba(28,26,23,0.40);
+
+  --color-text-primary:        #1C1A17;
+  --color-text-body:           #3D3A35;
+  --color-text-secondary:      #7A6F63;
+  --color-text-hint:           #C4B9A8;
+  --color-text-inverse:        #F7F4EE;
+  --color-text-inverse-muted:  #C4B9A8;
+
+  --color-accent:        #8C7355;
+  --color-accent-light:  #BFA882;
+
+  --color-success:       #5A6B5C;
+  --color-success-bg:    #E4EDE5;
+  --color-error:         #8C4A38;
+  --color-error-bg:      #F2E4E1;
+
+  --color-border-default:  #D6CFC4;
+  --color-border-subtle:   rgba(28,26,23,0.07);
+  --color-border-strong:   #C4B9A8;
+  --color-border-active:   #8C7355;
+  --color-border-inverse:  rgba(247,244,238,0.15);
+
+  /* ---------- TYPOGRAPHY ---------- */
+  --font-display: 'Plus Jakarta Sans', 'Helvetica Neue', Arial, sans-serif;
+  --font-body:    'Cormorant Garamond', Georgia, 'Times New Roman', serif;
+
+  --font-size-display-xl:  56px;
+  --font-size-display-l:   40px;
+  --font-size-h1:          28px;
+  --font-size-h2:          20px;
+  --font-size-h3:          15px;
+  --font-size-body-story:  17px;
+  --font-size-body-ui:     15px;
+  --font-size-label:       11px;
+  --font-size-caption:     12px;
+  --font-size-meta:        11px;
+
+  --font-weight-light:     300;
+  --font-weight-regular:   400;
+  --font-weight-medium:    500;
+  --font-weight-semibold:  600; /* inverse surfaces only */
+
+  --line-height-tight:    1.1;
+  --line-height-heading:  1.25;
+  --line-height-ui:       1.55;
+  --line-height-story:    1.75;
+
+  --letter-spacing-tight: -0.02em;
+  --letter-spacing-base:  0em;
+  --letter-spacing-label: 0.10em;
+
+  --reading-width:        680px;
+
+  /* ---------- SPACING ---------- */
+  --space-1:  4px;
+  --space-2:  8px;
+  --space-3:  12px;
+  --space-4:  16px;
+  --space-6:  24px;
+  --space-8:  32px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --space-20: 80px;
+  --space-24: 96px;
+  --space-30: 120px;
+
+  /* ---------- RADIUS ---------- */
+  --radius-none: 0px;
+  --radius-xs:   2px;
+  --radius-sm:   4px;
+  --radius-md:   6px;
+  --radius-lg:   10px;
+  --radius-xl:   16px;
+  --radius-full: 9999px;
+
+  /* ---------- BORDERS ---------- */
+  --border-default:    0.5px solid #D6CFC4;
+  --border-subtle:     0.5px solid rgba(28,26,23,0.07);
+  --border-strong:     0.5px solid #C4B9A8;
+  --border-active:     0.5px solid #8C7355;
+  --border-error:      0.5px solid #8C4A38;
+  --border-inverse:    0.5px solid rgba(247,244,238,0.15);
+  --border-focus-ring: 2px solid rgba(28,26,23,0.20);
+  --border-featured:   1px solid #8C7355;
+
+  /* ---------- MOTION ---------- */
+  --ease:         cubic-bezier(0.22, 1, 0.36, 1);
+  --dur-instant:  0ms;
+  --dur-fast:     150ms;
+  --dur-base:     280ms;
+  --dur-slow:     480ms;
+  --dur-long:     700ms;
+  --stagger-delay: 40ms;
+
+  /* ---------- LAYOUT ---------- */
+  --grid-columns-mobile:  4;
+  --grid-columns-tablet:  8;
+  --grid-columns-desktop: 12;
+  --grid-gutter-mobile:   16px;
+  --grid-gutter-tablet:   20px;
+  --grid-gutter-desktop:  24px;
+  --grid-margin-mobile:   24px;
+  --grid-margin-tablet:   40px;
+  --grid-margin-desktop:  80px;
+  --grid-max-width:       1280px;
+  --reading-max-width:    680px;
+
+  /* ---------- ELEVATION (floating only — see Spec §05) ---------- */
+  --shadow-floating: 0 4px 16px rgba(28,26,23,0.10), 0 1px 4px rgba(28,26,23,0.06);
+}
+
+/* ----------------------------------------------------------
+   Semantic element styles — opt-in via class on a wrapper
+   (e.g. <article class="mn-prose">)
+   ---------------------------------------------------------- */
+
+.mn-base, body.mn-base {
+  background: var(--color-bg-page);
+  color: var(--color-text-body);
+  font-family: var(--font-display);
+  font-size: var(--font-size-body-ui);
+  font-weight: var(--font-weight-regular);
+  line-height: var(--line-height-ui);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Headings — Plus Jakarta Sans (UI typeface) */
+.mn-display-xl {
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-light);
+  font-size: var(--font-size-display-xl);
+  line-height: var(--line-height-tight);
+  letter-spacing: var(--letter-spacing-tight);
+  color: var(--color-text-primary);
+}
+.mn-display-l {
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-light);
+  font-size: var(--font-size-display-l);
+  line-height: var(--line-height-tight);
+  letter-spacing: -0.01em;
+  color: var(--color-text-primary);
+}
+.mn-h1 {
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-medium);
+  font-size: var(--font-size-h1);
+  line-height: var(--line-height-heading);
+  color: var(--color-text-primary);
+}
+.mn-h2 {
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-medium);
+  font-size: var(--font-size-h2);
+  line-height: var(--line-height-heading);
+  color: var(--color-text-primary);
+}
+.mn-h3 {
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-medium);
+  font-size: var(--font-size-h3);
+  line-height: 1.4;
+  color: var(--color-text-primary);
+}
+
+/* Body — Plus Jakarta UI body */
+.mn-body-ui {
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-regular);
+  font-size: var(--font-size-body-ui);
+  line-height: var(--line-height-ui);
+  color: var(--color-text-body);
+}
+
+/* Story — Cormorant Garamond */
+.mn-body-story {
+  font-family: var(--font-body);
+  font-weight: var(--font-weight-regular);
+  font-size: var(--font-size-body-story);
+  line-height: var(--line-height-story);
+  color: var(--color-text-body);
+  max-width: var(--reading-max-width);
+}
+.mn-body-story em,
+.mn-story-italic {
+  font-family: var(--font-body);
+  font-style: italic;
+}
+
+/* Labels — ALL CAPS */
+.mn-label {
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-medium);
+  font-size: var(--font-size-label);
+  letter-spacing: var(--letter-spacing-label);
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+}
+
+.mn-caption {
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-regular);
+  font-size: var(--font-size-caption);
+  color: var(--color-text-secondary);
+}
+
+.mn-meta {
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-regular);
+  font-size: var(--font-size-meta);
+  color: var(--color-text-secondary);
+}
+
+/* Links */
+.mn-link {
+  color: var(--color-text-primary);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-thickness: 0.5px;
+  transition: opacity var(--dur-fast) var(--ease);
+}
+.mn-link:hover { opacity: 0.70; }
+.mn-link:active { opacity: 0.55; }
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    transition-duration: 0ms !important;
+    animation-duration: 0ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}

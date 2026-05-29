@@ -7,14 +7,13 @@
 </script>
 
 <svelte:head>
-  <title>Create account — MyNamesake</title>
+  <title>Create account — Prosapiam</title>
 </svelte:head>
 
 <div class="page">
   <div class="card">
     <div class="brand">
-      <div class="logo">🌳</div>
-      <h1>MyNamesake</h1>
+      <img src="/logo-lockup.svg" alt="Prosapiam" class="brand-lockup" />
       <p class="tagline">Start your family's story today</p>
     </div>
 
@@ -106,18 +105,11 @@
     margin-bottom: 2rem;
   }
 
-  .logo {
-    font-size: 2.75rem;
-    line-height: 1;
-    margin-bottom: 0.5rem;
-  }
-
-  .brand h1 {
-    font-size: 1.75rem;
-    font-weight: 700;
-    color: #3d2000;
-    margin: 0 0 0.35rem;
-    letter-spacing: -0.02em;
+  .brand-lockup {
+    display: block;
+    height: 40px;
+    width: auto;
+    margin: 0 auto 8px;
   }
 
   .tagline {
