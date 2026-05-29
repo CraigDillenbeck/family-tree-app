@@ -83,206 +83,52 @@ The project uses **Svelte 5**. All components must use runes syntax. No Svelte 4
 
 ## Design System
 
-### Typography — Three typefaces, strictly separated
+### Typography — Two typefaces, strictly separated
 
-| Typeface | Role | Never use for |
-| --- | --- | --- |
-| **Young Serif** | Display headlines, hero text, emotional anchors, pullquotes, plan names | UI chrome, buttons, labels, form fields |
-| **Cormorant Garamond** | Narrative text, biographies, memory excerpts, story content | Navigation, buttons, labels, metadata |
-| **League Spartan** | All UI chrome — labels, buttons, tabs, navigation, form fields, captions, badges | Story or narrative content |
+| Typeface | Token | Role | Never use for |
+| --- | --- | --- | --- |
+| **Plus Jakarta Sans** | `--font-display` | All UI chrome — labels, buttons, tabs, navigation, form fields, captions, badges, headings | Story or narrative content |
+| **Cormorant Garamond** | `--font-body` | Narrative text, biographies, memory excerpts, story content, taglines | Navigation, buttons, labels, metadata |
 
 **Non-negotiable typography rules:**
-- Cormorant Garamond minimum **17px always** — never smaller
+- Cormorant Garamond minimum **14px** — never smaller; line-height minimum **1.7**
 - No Cormorant Garamond **bold** — ever
 - No Cormorant Garamond **ALL CAPS** — ever
 - No **typeface mixing on the same line** — register shifts at element boundaries only
-- Young Serif **Light (300)** and **Medium (500)** weights available
-- Cormorant Garamond **italic** reserved for: sign-in panel tagline, memory card excerpts, plan description lines only — everything else regular upright
-- League Spartan **Regular (400)** and **Medium (500)** only — max weight 500
+- Plus Jakarta Sans max weight **500 (Medium)** on light surfaces; **600 (SemiBold)** on inverse (Ink) surfaces only
+- Cormorant Garamond **italic** used for: sign-in tagline, memory card excerpts, dashboard subtext — everything else regular upright
+- `max-width: 680px` on any Cormorant Garamond prose block
 
-**Font loading — @font-face in app.css:**
-```css
-@font-face {
-  font-family: 'Young Serif';
-  src: url('/fonts/YoungSerif-Regular.woff2') format('woff2');
-  font-weight: 300;
-  font-display: swap;
-}
-@font-face {
-  font-family: 'Young Serif';
-  src: url('/fonts/YoungSerif-Medium.woff2') format('woff2');
-  font-weight: 500;
-  font-display: swap;
-}
-@font-face {
-  font-family: 'Cormorant Garamond';
-  src: url('/fonts/CormorantGaramond-Regular.woff2') format('woff2');
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: 'Cormorant Garamond';
-  src: url('/fonts/CormorantGaramond-Italic.woff2') format('woff2');
-  font-weight: 400;
-  font-style: italic;
-  font-display: swap;
-}
-@font-face {
-  font-family: 'League Spartan';
-  src: url('/fonts/LeagueSpartan-Regular.woff2') format('woff2');
-  font-weight: 400;
-  font-display: swap;
-}
-@font-face {
-  font-family: 'League Spartan';
-  src: url('/fonts/LeagueSpartan-Medium.woff2') format('woff2');
-  font-weight: 500;
-  font-display: swap;
-}
-```
+**Font files — self-hosted `.ttf` in `static/fonts/`, declared in `src/lib/styles/tokens.css`:**
 
-Place all font files in `/static/fonts/`.
+Plus Jakarta Sans weights 200–800 (regular + italic each) and Cormorant Garamond weights 300–700 (regular + italic each) are all present. The `@font-face` declarations live in `src/lib/styles/tokens.css` — do not duplicate them in `app.css`.
 
 ### CSS Custom Properties — Complete Token System
 
-All design values live as CSS custom properties in `app.css`. **Never hardcode a color, spacing, radius, or typography value.** Every value has a token. Use it.
+All design values live as CSS custom properties in `src/lib/styles/tokens.css`. **Never hardcode a color, spacing, radius, or typography value.** Every value has a token. Use it.
+
+Key tokens (see `tokens.css` for the complete list):
 
 ```css
-:root {
-  /* ── Colors ── */
-  --color-ink: #1C1A17;
-  --color-ink-soft: #3D3A35;
-  --color-warm-mid: #7A6F63;
-  --color-warm-light: #C4B9A8;
-  --color-parchment: #F7F4EE;
-  --color-surface-1: #EDE8E0;
-  --color-surface-2: #E5DDD2;
-  --color-surface-3: #D9D0C4;
-  --color-gold: #8C7355;
-  --color-gold-light: #BFA882;
-  --color-sage: #5A6B5C;
-  --color-sage-tint: #E4EDE5;
-  --color-terra: #8C4A38;
-  --color-terra-tint: #F2E4E1;
-  --color-border: #D6CFC4;
+/* ── Typography ── */
+--font-display: 'Plus Jakarta Sans', 'Helvetica Neue', Arial, sans-serif;
+--font-body:    'Cormorant Garamond', Georgia, 'Times New Roman', serif;
 
-  /* ── Semantic color roles ── */
-  --color-bg-page: #F7F4EE;
-  --color-bg-surface-1: #EDE8E0;
-  --color-bg-surface-2: #E5DDD2;
-  --color-bg-surface-3: #D9D0C4;
-  --color-bg-inverse: #1C1A17;
-  --color-bg-inverse-muted: rgba(28,26,23,0.40);
-  --color-text-primary: #1C1A17;
-  --color-text-body: #3D3A35;
-  --color-text-secondary: #7A6F63;
-  --color-text-hint: #C4B9A8;
-  --color-text-inverse: #F7F4EE;
-  --color-text-inverse-muted: #C4B9A8;
-  --color-accent: #8C7355;
-  --color-accent-light: #BFA882;
-  --color-success: #5A6B5C;
-  --color-success-bg: #E4EDE5;
-  --color-error: #8C4A38;
-  --color-error-bg: #F2E4E1;
-  --color-border-default: #D6CFC4;
-  --color-border-subtle: rgba(28,26,23,0.07);
-  --color-border-strong: #C4B9A8;
-  --color-border-active: #8C7355;
-  --color-border-inverse: rgba(247,244,238,0.15);
-  --color-border-focus-ring: rgba(28,26,23,0.20);
+--font-weight-light:    300;
+--font-weight-regular:  400;
+--font-weight-medium:   500;
+--font-weight-semibold: 600; /* inverse/Ink surfaces only */
 
-  /* ── Typography ── */
-  --font-display: 'Young Serif', Georgia, serif;
-  --font-body: 'Cormorant Garamond', Georgia, serif;
-  --font-ui: 'League Spartan', Arial, sans-serif;
+/* ── Spacing (no --space-5 or --space-10 — skip those values) ── */
+--space-1:4px  --space-2:8px  --space-3:12px  --space-4:16px
+--space-6:24px  --space-8:32px  --space-12:48px  --space-16:64px
+--space-20:80px  --space-24:96px  --space-30:120px
 
-  --font-size-display-xl: 56px;
-  --font-size-display-l: 40px;
-  --font-size-h1: 28px;
-  --font-size-h2: 20px;
-  --font-size-h3: 15px;
-  --font-size-body-story: 17px;
-  --font-size-body-ui: 15px;
-  --font-size-label: 11px;
-  --font-size-caption: 12px;
-  --font-size-meta: 11px;
-
-  --font-weight-light: 300;
-  --font-weight-regular: 400;
-  --font-weight-medium: 500;
-
-  --line-height-tight: 1.1;
-  --line-height-heading: 1.25;
-  --line-height-ui: 1.55;
-  --line-height-story: 1.75;
-
-  --letter-spacing-tight: -0.02em;
-  --letter-spacing-base: 0em;
-  --letter-spacing-label: 0.10em;
-
-  --reading-width: 680px;
-
-  /* ── Spacing ── */
-  --space-1: 4px;
-  --space-2: 8px;
-  --space-3: 12px;
-  --space-4: 16px;
-  --space-6: 24px;
-  --space-8: 32px;
-  --space-12: 48px;
-  --space-16: 64px;
-  --space-20: 80px;
-  --space-24: 96px;
-  --space-30: 120px;
-
-  /* ── Border radius ── */
-  --radius-none: 0px;
-  --radius-xs: 2px;
-  --radius-sm: 4px;
-  --radius-md: 6px;
-  --radius-lg: 10px;
-  --radius-xl: 16px;
-  --radius-full: 9999px;
-
-  /* ── Borders ── */
-  --border-default: 0.5px solid #D6CFC4;
-  --border-subtle: 0.5px solid rgba(28,26,23,0.07);
-  --border-strong: 0.5px solid #C4B9A8;
-  --border-active: 0.5px solid #8C7355;
-  --border-error: 0.5px solid #8C4A38;
-  --border-inverse: 0.5px solid rgba(247,244,238,0.15);
-  --border-focus-ring: 2px solid rgba(28,26,23,0.20);
-  --border-featured: 1px solid #8C7355;
-
-  /* ── Motion ── */
-  --ease: cubic-bezier(0.22, 1, 0.36, 1);
-  --dur-instant: 0ms;
-  --dur-fast: 150ms;
-  --dur-base: 280ms;
-  --dur-slow: 480ms;
-  --dur-long: 700ms;
-  --stagger-delay: 40ms;
-}
-
-/* ── Base styles ── */
-html {
-  background-color: var(--color-bg-page);
-  color: var(--color-text-primary);
-  font-family: var(--font-ui);
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-/* ── Reduced motion — always respected ── */
-@media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
-    animation-duration: 0ms !important;
-    transition-duration: 0ms !important;
-  }
-}
+/* ── Elevation (floating UI only — dropdowns, tooltips) ── */
+--shadow-floating: 0 4px 16px rgba(28,26,23,.10), 0 1px 4px rgba(28,26,23,.06);
 ```
+
+The base `.mn-base` class (set on the root shell) applies parchment background, Plus Jakarta Sans, and antialiasing. The `prefers-reduced-motion` zero-duration override is included in `tokens.css`.
 
 ### Non-Negotiable Design Rules
 
@@ -290,11 +136,11 @@ Violations here are regressions, not exceptions:
 
 - **Never use pure white (#FFF)** as any background — Parchment `#F7F4EE` is the minimum
 - **Never use pure black (#000)** for any text — Ink `#1C1A17` only
-- **No drop shadows** anywhere in the UI — no `box-shadow` on any component
-- **No gradients** anywhere in the UI
+- **No drop shadows** on cards/modals/panels — depth is tonal. Only `--shadow-floating` is permitted, for dropdowns and tooltips only
+- **No gradients** on product chrome. The tree canvas background (dot grid) is content, not chrome — the one exception
 - **No border-radius values** outside the defined scale
 - **No colors** outside the defined token system
-- **No new typefaces** — Young Serif, Cormorant Garamond, League Spartan only
+- **No new typefaces** — Plus Jakarta Sans and Cormorant Garamond only
 
 ### Using Tokens in Svelte Components
 
@@ -315,7 +161,7 @@ Violations here are regressions, not exceptions:
   }
 
   .label {
-    font-family: var(--font-ui);
+    font-family: var(--font-display);
     font-size: var(--font-size-label);
     font-weight: var(--font-weight-medium);
     letter-spacing: var(--letter-spacing-label);
@@ -339,11 +185,12 @@ Violations here are regressions, not exceptions:
 
 ```
 src/
-├── app.css                         — tokens, fonts, base styles (source of truth)
 ├── app.html                        — root HTML template
 ├── app.d.ts                        — locals type declarations
 ├── hooks.server.ts                 — Supabase session refresh on every request
 ├── lib/
+│   ├── styles/
+│   │   └── tokens.css              — ALL tokens, fonts, base styles (source of truth — imported once in root layout)
 │   ├── server/
 │   │   ├── supabase.ts             — Service-role client (NEVER import in .svelte or client .ts)
 │   │   └── auth.ts                 — getUser(), requireAuth() helpers
@@ -378,9 +225,10 @@ src/
 │   ├── (marketing)/                — Public pages, no auth required
 │   │   └── +page.svelte            — Landing page
 │   ├── (auth)/                     — Login, signup, OAuth callback
-│   │   ├── signin/
-│   │   ├── signup/
-│   │   └── forgot-password/
+│   │   ├── login/                  — Email + password sign-in (+ Google OAuth action)
+│   │   ├── signup/                 — Account creation
+│   │   ├── forgot-password/        — (not yet built)
+│   │   └── auth/callback/          — Supabase OAuth redirect handler
 │   ├── (app)/                      — All protected routes (auto-guarded)
 │   │   ├── +layout.server.ts       — Redirects to /signin if no session
 │   │   ├── dashboard/
@@ -408,7 +256,10 @@ src/
 │   ├── +layout.server.ts           — ADMIN_PASSWORD check
 │   └── +page.svelte
 static/
-└── fonts/                          — All .woff2 font files
+├── fonts/                          — All .ttf font files (Plus Jakarta Sans + Cormorant Garamond)
+├── logo-mark.svg                   — Brand mark only
+├── logo-wordmark.svg               — Wordmark only
+└── logo-lockup.svg                 — Mark + wordmark together
 supabase/
 └── migrations/                     — SQL migration files
 ```
@@ -799,49 +650,51 @@ export function prefersReducedMotion(): boolean {
 
 Build in this order. Each component fully built and tested before moving to the next. Do not build screens before their components are complete.
 
-**Phase 1 — Foundation:**
-1. `app.css` — all tokens, fonts, base styles
-2. Root `+layout.svelte` — Supabase session, PostHog init, Sentry init
-3. Layout components — AppLayout (with nav), AuthLayout, AdminLayout
+**Phase 1 — Foundation: ✓ COMPLETE**
+1. `src/lib/styles/tokens.css` — all tokens, fonts, base styles ✓
+2. Root `+layout.svelte` — Supabase session, tokens imported, `.mn-base` shell ✓ (PostHog + Sentry init still TODO)
+3. TopNav (AppLayout) ✓ — AuthLayout and AdminLayout not yet built
 
-**Phase 2 — Core UI components** (reference Component Library Brief):
-4. `Button.svelte` — Primary, Secondary, Ghost, Destructive + all states
-5. `Input.svelte` — all variants + all states
-6. `Textarea.svelte`
-7. `Select.svelte`
-8. `Checkbox.svelte` · `Radio.svelte` · `Toggle.svelte`
-9. `Badge.svelte` — all semantic variants
-10. `Tag.svelte` — Static, Dismissible, Clickable
-11. `Avatar.svelte` — all sizes, photo + initials fallback, deceased tint
-12. `Divider.svelte` — all variants including with-label
-13. `Tabs.svelte` — underline variant, Gold active indicator
-14. `Card.svelte` — base component
-15. `Modal.svelte` — focus trap, reduced motion aware
-16. `Drawer.svelte` — right edge and bottom sheet variants
-17. `Tooltip.svelte`
-18. `Dropdown.svelte` — keyboard navigation
-19. `EmptyState.svelte` — full screen and section level
-20. `LoadingSkeleton.svelte` — opacity pulse
-21. `Alert.svelte` — all semantic variants
-22. `Toast.svelte` — Terra error, Sage success
+**Phase 2 — Core UI atoms:**
+4. `Button.svelte` ✓
+5. `Input.svelte` ✓
+6. `Avatar.svelte` ✓
+7. `Badge.svelte` ✓
+8. `Tag.svelte` ✓
+9. `Card.svelte` ✓
+10. `Tabs.svelte` ✓
+11. `Icon.svelte` ✓
+12. `TopNav.svelte` ✓
+13. `Textarea.svelte`
+14. `Select.svelte`
+15. `Checkbox.svelte` · `Radio.svelte` · `Toggle.svelte`
+16. `Divider.svelte` — all variants including with-label
+17. `Modal.svelte` — focus trap, reduced motion aware
+18. `Drawer.svelte` — reusable right-edge and bottom-sheet variants
+19. `Tooltip.svelte`
+20. `Dropdown.svelte` — keyboard navigation
+21. `EmptyState.svelte` — full screen and section level
+22. `LoadingSkeleton.svelte` — opacity pulse
+23. `Alert.svelte` — all semantic variants
+24. `Toast.svelte` — Terra error, Sage success
 
-**Phase 3 — Product patterns** (reference Component Library Brief Part II):
-23. `PersonSummaryCard.svelte` (P03) — interactive, static, compact variants
-24. `MemoryStoryCard.svelte` (P05) — standard, with media, featured, compact
-25. `PersonProfileHeader.svelte` (P04) — living and deceased variants
-26. `FamilyTreeNode.svelte` (P01) — all zoom levels and states
-27. `RelationshipConnector.svelte` (P02) — all types and states
-28. `ProfileTimeline.svelte` (P11) — with year dividers
+**Phase 3 — Product patterns** (reference `spec/ComponentBrief.txt`):
+25. `PersonSummaryCard.svelte` (P03) — interactive, static, compact variants
+26. `MemoryStoryCard.svelte` (P05) — standard, with media, featured, compact
+27. `PersonProfileHeader.svelte` (P04) — living and deceased variants
+28. `FamilyTreeNode.svelte` (P01) — all zoom levels and states
+29. `RelationshipConnector.svelte` (P02) — all types and states
+30. `ProfileTimeline.svelte` (P11) — with year dividers
 
 **Phase 4 — Screens:**
-29. Landing page `(marketing)/+page.svelte` — all sections, pricing
-30. S1 — `(auth)/signin` and `(auth)/signup`
-31. S2 — `(app)/dashboard` — multi-tree support, tree switcher
-32. S4 — `(app)/trees/[treeId]/persons/[personId]` — all four tabs
-33. S3 — `(app)/trees/[treeId]` — canvas
-34. Onboarding flow — post-signup, first tree creation
-35. `(app)/account` — profile, plan, billing, storage usage
-36. `admin/` — founder dashboard
+31. Landing page `(marketing)/+page.svelte` — all sections, pricing
+32. S1 — `(auth)/login` and `(auth)/signup` ✓ (forgot-password TODO)
+33. S2 — `(app)/dashboard` ✓ surface (data layer TODO)
+34. S3 — `(app)/trees/[treeId]` ✓ surface (data layer + @xyflow/svelte TODO)
+35. S4 — `(app)/trees/[treeId]/persons/[personId]` ✓ surface (data layer TODO)
+36. Onboarding flow — post-signup, first tree creation
+37. `(app)/account` — profile, plan, billing, storage usage
+38. `admin/` — founder dashboard
 
 ---
 
@@ -867,7 +720,7 @@ export const load: LayoutServerLoad = async ({ cookies }) => {
 
 ## Email Templates (Resend)
 
-Build with React Email or plain HTML. All emails use the Prosapiam visual system — Young Serif headlines, Cormorant Garamond body, League Spartan UI text, Parchment backgrounds, Ink text.
+Build with React Email or plain HTML. All emails use the Prosapiam visual system — Plus Jakarta Sans for UI text and headings, Cormorant Garamond for body/narrative text, Parchment backgrounds, Ink text.
 
 **Required templates:**
 1. Welcome — on signup
@@ -1087,24 +940,30 @@ Before any production deployment:
 - [x] Project scaffolded — SvelteKit 5, TypeScript, Vercel adapter
 - [x] Supabase configured — SSR client, server client, hooks
 - [x] Google OAuth — configured in Supabase, tested and working
-- [x] Design system — fully specified in Claude Design (all tokens, components, screens)
+- [x] Design system — tokens, fonts, atoms delivered via design handoff
 - [x] GitHub repository connected
-- [ ] CSS token system implemented in app.css
-- [ ] Font files added to /static/fonts/
-- [ ] Auth flow complete end to end (signin, signup, forgot password)
-- [ ] Lemon Squeezy — packages installed, integration built
-- [ ] PostHog — installed and initialized
-- [ ] Sentry — installed and initialized
-- [ ] Landing page built
-- [ ] S1 — Sign In / Create Account
-- [ ] S2 — Dashboard (multi-tree)
-- [ ] S3 — Family Tree Canvas
-- [ ] S4 — Person Profile Page
-- [ ] Media upload flow
+- [x] CSS token system — `src/lib/styles/tokens.css`, imported in root layout
+- [x] Font files — 24 `.ttf` files in `static/fonts/`
+- [x] Core UI atoms — Button, Input, Avatar, Badge, Tag, Card, Tabs, Icon, TopNav
+- [x] S1 — Login + Signup screens (styled; forgot-password not yet built)
+- [x] S2 — Dashboard surface (styled; data layer is stub)
+- [x] S3 — Family Tree Canvas surface (styled; data layer is stub; @xyflow/svelte not yet integrated)
+- [x] S4 — Person Profile surface (styled; data layer is stub)
+- [ ] Remaining Phase 2 atoms — Textarea, Select, Checkbox/Radio/Toggle, Divider, Modal, Drawer, Tooltip, Dropdown, EmptyState, LoadingSkeleton, Alert, Toast
+- [ ] Phase 3 product patterns — PersonSummaryCard, MemoryStoryCard, PersonProfileHeader, FamilyTreeNode, RelationshipConnector, ProfileTimeline
+- [ ] Data layer — Supabase loads wired into S2/S3/S4 server files
+- [ ] Auth flow — forgot-password route
+- [ ] @xyflow/svelte + dagre — interactive tree canvas
+- [ ] Landing page
+- [ ] Onboarding flow — post-signup, first tree creation
 - [ ] Memory editor
+- [ ] Media upload flow
 - [ ] Collaborator invitations
 - [ ] Activity log
 - [ ] Account / settings page
+- [ ] Lemon Squeezy — install, integration, webhook handler
+- [ ] PostHog — install and initialize
+- [ ] Sentry — install and initialize
 - [ ] Admin dashboard
 - [ ] Vercel deployment
 
