@@ -1,8 +1,20 @@
 <script lang="ts">
   import type { PageData } from './$types'
+  import Card from '$lib/components/ui/Card.svelte'
+  import Button from '$lib/components/ui/Button.svelte'
+
   let { data }: { data: PageData } = $props()
 
-  const name = $derived(data.user?.user_metadata?.full_name ?? data.user?.email ?? 'there')
+  const givenName = $derived(
+    data.user?.user_metadata?.full_name?.split(' ')[0]
+    ?? data.user?.email?.split('@')[0]
+    ?? 'there'
+  )
+
+  const today = $derived(
+    new Intl.DateTimeFormat('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
+      .format(new Date())
+  )
 </script>
 
 <svelte:head>
@@ -10,105 +22,193 @@
 </svelte:head>
 
 <div class="page">
-  <header class="header">
-    <div class="brand">
-      <img src="/logo-wordmark.svg" alt="Prosapiam" class="wordmark-img" height="28" />
-    </div>
-    <form method="POST" action="/api/auth/signout">
-      <button type="submit" class="btn-signout">Sign out</button>
-    </form>
-  </header>
+  <div class="inner">
 
-  <main class="main">
     <div class="welcome">
-      <h1>Welcome, {name} 👋</h1>
-      <p>Your family trees will appear here. Let's build something beautiful.</p>
-      <a href="/trees/new" class="btn-primary">Create your first tree</a>
+      <p class="dateline">{today}</p>
+      <h1>Welcome back, {givenName}.</h1>
+      <p class="subtext">Begin with yourself — your tree is ready to grow.</p>
     </div>
-  </main>
+
+    <div class="grid">
+
+      <div class="col-main">
+        <Card style="padding: 0">
+          <div class="card-head">
+            <span class="section-label">Recent activity</span>
+            <Button variant="ghost" size="sm">See all</Button>
+          </div>
+          <div class="empty-area">
+            <p class="empty-text">No activity yet. Your tree's story begins here.</p>
+          </div>
+        </Card>
+
+        <Card style="padding: 0">
+          <div class="card-head">
+            <span class="section-label">Latest memory</span>
+            <Button variant="ghost" size="sm">Add memory</Button>
+          </div>
+          <div class="empty-area">
+            <p class="empty-text">The first memory you add will live here.</p>
+          </div>
+        </Card>
+      </div>
+
+      <div class="col-side">
+        <a href="/trees/new" class="tree-card-link">
+          <Card interactive>
+            <p class="section-label">Your tree</p>
+            <p class="tree-count">0</p>
+            <p class="tree-meta">family members</p>
+            <span class="begin-cta">Begin your tree →</span>
+          </Card>
+        </a>
+
+        <Card>
+          <p class="section-label">Quick add</p>
+          <div class="quick-add">
+            <Button>Add a person</Button>
+            <Button variant="secondary">Add a memory</Button>
+            <Button variant="secondary">Upload media</Button>
+          </div>
+        </Card>
+      </div>
+
+    </div>
+  </div>
 </div>
 
 <style>
   .page {
-    min-height: 100vh;
-    background: linear-gradient(135deg, #fdf6ec 0%, #fef9f0 50%, #fdf3e3 100%);
-    font-family: system-ui, -apple-system, sans-serif;
+    background: var(--color-bg-page);
+    min-height: calc(100vh - 52px);
+    padding: var(--space-12) var(--space-20);
   }
 
-  .header {
+  .inner {
+    max-width: 1120px;
+    margin: 0 auto;
+  }
+
+  /* ── Welcome ── */
+  .welcome { margin-bottom: var(--space-8); }
+
+  .dateline {
+    font-family: var(--font-body);
+    font-size: 13px;
+    font-style: italic;
+    color: var(--color-text-secondary);
+    margin: 0 0 var(--space-1) 0;
+  }
+
+  h1 {
+    font-family: var(--font-display);
+    font-size: var(--font-size-display-l);
+    font-weight: var(--font-weight-light);
+    letter-spacing: -0.01em;
+    line-height: var(--line-height-tight);
+    color: var(--color-text-primary);
+    margin: 0 0 var(--space-2) 0;
+  }
+
+  .subtext {
+    font-family: var(--font-body);
+    font-size: var(--font-size-body-ui);
+    font-style: italic;
+    line-height: var(--line-height-story);
+    color: var(--color-text-body);
+    max-width: 560px;
+    margin: 0;
+  }
+
+  /* ── Grid ── */
+  .grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: var(--space-6);
+    align-items: start;
+  }
+
+  .col-main,
+  .col-side {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-6);
+  }
+
+  /* ── Card internals ── */
+  .card-head {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 1rem 2rem;
-    background: #fff;
-    border-bottom: 1px solid #f0dfc0;
+    padding: 18px var(--space-6);
+    border-bottom: var(--border-default);
   }
 
-  .brand {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
+  .section-label {
+    display: block;
+    font-family: var(--font-display);
+    font-size: var(--font-size-label);
+    font-weight: var(--font-weight-medium);
+    letter-spacing: var(--letter-spacing-label);
+    text-transform: uppercase;
+    color: var(--color-text-secondary);
+    margin: 0 0 var(--space-2) 0;
   }
 
-  .wordmark-img { display: block; }
+  .card-head .section-label { margin: 0; }
 
-  .btn-signout {
-    background: none;
-    border: 1.5px solid #e8d5b4;
-    border-radius: 0.5rem;
-    color: #9a6a2a;
-    cursor: pointer;
-    font-size: 0.875rem;
-    font-weight: 500;
-    padding: 0.4rem 0.875rem;
-    transition: border-color 0.15s, color 0.15s;
-  }
-
-  .btn-signout:hover {
-    border-color: #c8842a;
-    color: #c8842a;
-  }
-
-  .main {
+  .empty-area {
+    padding: var(--space-8) var(--space-6);
     display: flex;
     align-items: center;
     justify-content: center;
-    min-height: calc(100vh - 65px);
-    padding: 2rem;
   }
 
-  .welcome {
+  .empty-text {
+    font-family: var(--font-body);
+    font-size: var(--font-size-body-ui);
+    font-style: italic;
+    color: var(--color-text-hint);
     text-align: center;
-    max-width: 480px;
+    margin: 0;
   }
 
-  .welcome h1 {
-    font-size: 2rem;
-    font-weight: 700;
-    color: #3d2000;
-    margin: 0 0 0.75rem;
-    letter-spacing: -0.02em;
+  /* ── Tree stat card ── */
+  .tree-card-link { text-decoration: none; }
+
+  .tree-count {
+    font-family: var(--font-display);
+    font-size: var(--font-size-display-l);
+    font-weight: var(--font-weight-light);
+    color: var(--color-text-primary);
+    line-height: 1;
+    margin: var(--space-1) 0 0 0;
   }
 
-  .welcome p {
-    color: #9a6a2a;
-    font-size: 1.05rem;
-    margin: 0 0 2rem;
+  .tree-meta {
+    font-family: var(--font-display);
+    font-size: 13px;
+    color: var(--color-text-secondary);
+    margin: var(--space-1) 0 var(--space-4) 0;
   }
 
-  .btn-primary {
-    display: inline-block;
-    padding: 0.75rem 1.75rem;
-    background: #c8842a;
-    color: #fff;
-    border-radius: 0.625rem;
-    font-size: 1rem;
-    font-weight: 600;
-    text-decoration: none;
-    transition: background 0.15s;
+  .begin-cta {
+    font-family: var(--font-display);
+    font-size: 13px;
+    font-weight: var(--font-weight-medium);
+    color: var(--color-accent);
   }
 
-  .btn-primary:hover {
-    background: #a86b1c;
+  /* ── Quick add ── */
+  .quick-add {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+
+  .quick-add :global(button) {
+    width: 100%;
+    justify-content: center;
   }
 </style>

@@ -1,6 +1,8 @@
 <script lang="ts">
   import { enhance } from '$app/forms'
   import type { ActionData } from './$types'
+  import Input from '$lib/components/ui/Input.svelte'
+  import Button from '$lib/components/ui/Button.svelte'
 
   let { form }: { form: ActionData } = $props()
   let loading = $state(false)
@@ -11,72 +13,48 @@
 </svelte:head>
 
 <div class="page">
-  <div class="card">
+  <div class="inner">
+
     <div class="brand">
-      <img src="/logo-lockup.svg" alt="Prosapiam" class="brand-lockup" />
-      <p class="tagline">Start your family's story today</p>
+      <img src="/logo-mark.svg" width="40" height="40" alt="" aria-hidden="true" />
+      <div class="wordmark">prosapiam</div>
+      <p class="tagline">The people who made you, kept.</p>
     </div>
 
-    {#if form?.error}
-      <div class="error-banner" role="alert">{form.error}</div>
-    {/if}
+    <div class="card">
+      <nav class="tabs" aria-label="Account access">
+        <a href="/login" class="tab">Sign in</a>
+        <a href="/signup" class="tab active" aria-current="page">Create account</a>
+      </nav>
 
-    <form
-      method="POST"
-      action="?/signup"
-      use:enhance={() => {
-        loading = true
-        return async ({ update }) => {
-          await update()
-          loading = false
-        }
-      }}
-    >
-      <div class="field">
-        <label for="displayName">Your name</label>
-        <input
-          id="displayName"
-          name="displayName"
-          type="text"
-          autocomplete="name"
-          required
-          placeholder="What should we call you?"
-        />
-      </div>
+      {#if form?.error}
+        <div class="alert" role="alert">{form.error}</div>
+      {/if}
 
-      <div class="field">
-        <label for="email">Email</label>
-        <input
-          id="email"
-          name="email"
-          type="email"
-          autocomplete="email"
-          required
-          placeholder="you@example.com"
-        />
-      </div>
+      <form
+        method="POST"
+        action="?/signup"
+        use:enhance={() => {
+          loading = true
+          return async ({ update }) => { await update(); loading = false }
+        }}
+      >
+        <div class="fields">
+          <Input label="Given name" type="text" name="displayName" autocomplete="given-name" required placeholder="Sarah" />
+          <Input label="Email" type="email" name="email" autocomplete="email" required placeholder="you@example.com" />
+          <Input label="Password" type="password" name="password" autocomplete="new-password" required placeholder="At least 8 characters" />
+          <Button type="submit" size="lg" disabled={loading} style="width:100%;justify-content:center;margin-top:8px">
+            {loading ? 'Creating account…' : 'Create account'}
+          </Button>
+          <p class="consent">By creating an account you agree to keep family stories with the care they deserve.</p>
+        </div>
+      </form>
+    </div>
 
-      <div class="field">
-        <label for="password">Password</label>
-        <input
-          id="password"
-          name="password"
-          type="password"
-          autocomplete="new-password"
-          required
-          minlength="8"
-          placeholder="At least 8 characters"
-        />
-      </div>
-
-      <button class="btn-primary" type="submit" disabled={loading}>
-        {loading ? 'Creating account…' : 'Create account'}
-      </button>
-    </form>
-
-    <p class="switch-link">
-      Already have an account? <a href="/login">Sign in</a>
+    <p class="switch">
+      Already have one? <a href="/login">Sign in</a>
     </p>
+
   </div>
 </div>
 
@@ -86,123 +64,111 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: linear-gradient(135deg, #fdf6ec 0%, #fef9f0 50%, #fdf3e3 100%);
-    padding: 1.5rem;
-    font-family: system-ui, -apple-system, sans-serif;
+    background: var(--color-bg-page);
+    padding: var(--space-12) var(--space-6);
   }
 
-  .card {
-    background: #fff;
-    border-radius: 1.25rem;
-    box-shadow: 0 4px 24px rgba(140, 90, 20, 0.10), 0 1px 4px rgba(140, 90, 20, 0.06);
-    padding: 2.5rem 2rem;
+  .inner {
     width: 100%;
-    max-width: 400px;
+    max-width: 420px;
   }
 
   .brand {
     text-align: center;
-    margin-bottom: 2rem;
+    margin-bottom: var(--space-8);
   }
 
-  .brand-lockup {
-    display: block;
-    height: 40px;
-    width: auto;
-    margin: 0 auto 8px;
+  .wordmark {
+    font-family: var(--font-display);
+    font-weight: var(--font-weight-light);
+    font-size: 32px;
+    letter-spacing: -0.01em;
+    color: var(--color-text-primary);
+    margin-top: var(--space-3);
   }
 
   .tagline {
-    color: #9a6a2a;
-    font-size: 0.9rem;
-    margin: 0;
+    font-family: var(--font-body);
+    font-style: italic;
+    font-size: 14px;
+    color: var(--color-text-secondary);
+    margin: var(--space-2) 0 0 0;
+    line-height: var(--line-height-ui);
   }
 
-  .error-banner {
-    background: #fff3f3;
-    border: 1px solid #f5c6c6;
-    border-radius: 0.6rem;
-    color: #b91c1c;
-    font-size: 0.875rem;
-    padding: 0.75rem 1rem;
-    margin-bottom: 1.25rem;
+  .card {
+    background: var(--color-bg-surface-1);
+    border: var(--border-default);
+    border-radius: var(--radius-lg);
+    padding: var(--space-8);
   }
 
-  .field {
-    margin-bottom: 1rem;
+  .tabs {
+    display: flex;
+    border-bottom: var(--border-default);
+    margin-bottom: var(--space-6);
   }
 
-  label {
-    display: block;
-    font-size: 0.875rem;
-    font-weight: 500;
-    color: #5c3a0a;
-    margin-bottom: 0.375rem;
-  }
-
-  input {
-    width: 100%;
-    padding: 0.65rem 0.875rem;
-    border: 1.5px solid #e8d5b4;
-    border-radius: 0.625rem;
-    font-size: 1rem;
-    color: #3d2000;
-    background: #fffdf9;
-    box-sizing: border-box;
-    transition: border-color 0.15s, box-shadow 0.15s;
-    outline: none;
-  }
-
-  input::placeholder {
-    color: #c4a06a;
-  }
-
-  input:focus {
-    border-color: #c8842a;
-    box-shadow: 0 0 0 3px rgba(200, 132, 42, 0.15);
-  }
-
-  .btn-primary {
-    width: 100%;
-    padding: 0.75rem;
-    background: #c8842a;
-    color: #fff;
-    border: none;
-    border-radius: 0.625rem;
-    font-size: 1rem;
-    font-weight: 600;
-    cursor: pointer;
-    margin-top: 0.5rem;
-    transition: background 0.15s, transform 0.1s;
-  }
-
-  .btn-primary:hover:not(:disabled) {
-    background: #a86b1c;
-  }
-
-  .btn-primary:active:not(:disabled) {
-    transform: scale(0.99);
-  }
-
-  .btn-primary:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-  }
-
-  .switch-link {
+  .tab {
+    flex: 1;
     text-align: center;
-    margin: 1.5rem 0 0;
-    font-size: 0.875rem;
-    color: #9a6a2a;
-  }
-
-  .switch-link a {
-    color: #c8842a;
-    font-weight: 600;
+    font-family: var(--font-display);
+    font-weight: var(--font-weight-medium);
+    font-size: 13px;
+    height: 40px;
+    line-height: 40px;
+    color: var(--color-text-secondary);
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
     text-decoration: none;
+    transition: color var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease);
   }
 
-  .switch-link a:hover {
+  .tab.active {
+    color: var(--color-text-primary);
+    border-bottom-color: var(--color-gold);
+  }
+
+  .tab:not(.active):hover { color: var(--color-text-body); }
+
+  .alert {
+    background: var(--color-error-bg);
+    border: var(--border-error);
+    border-radius: var(--radius-sm);
+    color: var(--color-error);
+    font-family: var(--font-display);
+    font-size: 13px;
+    padding: var(--space-3) var(--space-4);
+    margin-bottom: var(--space-4);
+  }
+
+  .fields {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+  }
+
+  .consent {
+    font-family: var(--font-display);
+    font-size: 12px;
+    color: var(--color-text-secondary);
+    line-height: var(--line-height-ui);
+    margin: 0;
+    text-align: center;
+  }
+
+  .switch {
+    text-align: center;
+    margin: var(--space-6) 0 0 0;
+    font-family: var(--font-display);
+    font-size: 13px;
+    color: var(--color-text-secondary);
+  }
+  .switch a {
+    color: var(--color-text-primary);
     text-decoration: underline;
+    text-underline-offset: 3px;
+    text-decoration-thickness: 0.5px;
+    text-decoration-color: var(--color-border-strong);
   }
 </style>

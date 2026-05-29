@@ -1,6 +1,8 @@
 <script lang="ts">
   import { enhance } from '$app/forms'
   import type { ActionData } from './$types'
+  import Input from '$lib/components/ui/Input.svelte'
+  import Button from '$lib/components/ui/Button.svelte'
 
   let { form }: { form: ActionData } = $props()
   let loading = $state(false)
@@ -12,83 +14,70 @@
 </svelte:head>
 
 <div class="page">
-  <div class="card">
+  <div class="inner">
+
     <div class="brand">
-      <img src="/logo-lockup.svg" alt="Prosapiam" class="brand-lockup" />
-      <p class="tagline">Your family's story, beautifully told</p>
+      <img src="/logo-mark.svg" width="40" height="40" alt="" aria-hidden="true" />
+      <div class="wordmark">prosapiam</div>
+      <p class="tagline">The people who made you, kept.</p>
     </div>
 
-    {#if form?.error}
-      <div class="error-banner" role="alert">{form.error}</div>
-    {/if}
+    <div class="card">
+      <nav class="tabs" aria-label="Account access">
+        <a href="/login" class="tab active" aria-current="page">Sign in</a>
+        <a href="/signup" class="tab">Create account</a>
+      </nav>
 
-    <form
-      method="POST"
-      action="?/login"
-      use:enhance={() => {
-        loading = true
-        return async ({ update }) => {
-          await update()
-          loading = false
-        }
-      }}
-    >
-      <div class="field">
-        <label for="email">Email</label>
-        <input
-          id="email"
-          name="email"
-          type="email"
-          autocomplete="email"
-          required
-          placeholder="you@example.com"
-        />
-      </div>
+      {#if form?.error}
+        <div class="alert" role="alert">{form.error}</div>
+      {/if}
 
-      <div class="field">
-        <label for="password">Password</label>
-        <input
-          id="password"
-          name="password"
-          type="password"
-          autocomplete="current-password"
-          required
-          placeholder="Your password"
-        />
-      </div>
+      <form
+        method="POST"
+        action="?/login"
+        use:enhance={() => {
+          loading = true
+          return async ({ update }) => { await update(); loading = false }
+        }}
+      >
+        <div class="fields">
+          <Input label="Email" type="email" name="email" autocomplete="email" required placeholder="you@example.com" />
+          <div class="pw-row">
+            <Input label="Password" type="password" name="password" autocomplete="current-password" required placeholder="Your password" />
+            <a href="/forgot-password" class="forgot">Forgotten password?</a>
+          </div>
+          <Button type="submit" size="lg" disabled={loading} style="width:100%;justify-content:center;margin-top:8px">
+            {loading ? 'Signing in…' : 'Sign in'}
+          </Button>
+        </div>
+      </form>
 
-      <button class="btn-primary" type="submit" disabled={loading}>
-        {loading ? 'Signing in…' : 'Sign in'}
-      </button>
-    </form>
+      <div class="or"><span>or</span></div>
 
-    <div class="divider"><span>or</span></div>
+      <form
+        method="POST"
+        action="?/oauth"
+        use:enhance={() => {
+          oauthLoading = true
+          return async ({ update }) => { await update(); oauthLoading = false }
+        }}
+      >
+        <button class="google" type="submit" disabled={oauthLoading}>
+          <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
+            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/>
+            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+          </svg>
+          {oauthLoading ? 'Redirecting…' : 'Continue with Google'}
+        </button>
+      </form>
+    </div>
 
-    <form
-      method="POST"
-      action="?/oauth"
-      use:enhance={() => {
-        oauthLoading = true
-        return async ({ update }) => {
-          await update()
-          oauthLoading = false
-        }
-      }}
-    >
-      <button class="btn-google" type="submit" disabled={oauthLoading}>
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-          <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-          <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/>
-          <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-        </svg>
-        {oauthLoading ? 'Redirecting…' : 'Continue with Google'}
-      </button>
-    </form>
-
-    <p class="switch-link">
+    <p class="switch">
       New to Prosapiam? <a href="/signup">Create an account</a>
     </p>
+
   </div>
 </div>
 
@@ -98,173 +87,167 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: linear-gradient(135deg, #fdf6ec 0%, #fef9f0 50%, #fdf3e3 100%);
-    padding: 1.5rem;
-    font-family: system-ui, -apple-system, sans-serif;
+    background: var(--color-bg-page);
+    padding: var(--space-12) var(--space-6);
   }
 
-  .card {
-    background: #fff;
-    border-radius: 1.25rem;
-    box-shadow: 0 4px 24px rgba(140, 90, 20, 0.10), 0 1px 4px rgba(140, 90, 20, 0.06);
-    padding: 2.5rem 2rem;
+  .inner {
     width: 100%;
-    max-width: 400px;
+    max-width: 420px;
   }
 
+  /* ── Brand ── */
   .brand {
     text-align: center;
-    margin-bottom: 2rem;
+    margin-bottom: var(--space-8);
   }
 
-  .brand-lockup {
-    display: block;
-    height: 40px;
-    width: auto;
-    margin: 0 auto 8px;
+  .wordmark {
+    font-family: var(--font-display);
+    font-weight: var(--font-weight-light);
+    font-size: 32px;
+    letter-spacing: -0.01em;
+    color: var(--color-text-primary);
+    margin-top: var(--space-3);
   }
 
   .tagline {
-    color: #9a6a2a;
-    font-size: 0.9rem;
-    margin: 0;
+    font-family: var(--font-body);
+    font-style: italic;
+    font-size: 14px;
+    color: var(--color-text-secondary);
+    margin: var(--space-2) 0 0 0;
+    line-height: var(--line-height-ui);
   }
 
-  .error-banner {
-    background: #fff3f3;
-    border: 1px solid #f5c6c6;
-    border-radius: 0.6rem;
-    color: #b91c1c;
-    font-size: 0.875rem;
-    padding: 0.75rem 1rem;
-    margin-bottom: 1.25rem;
+  /* ── Card ── */
+  .card {
+    background: var(--color-bg-surface-1);
+    border: var(--border-default);
+    border-radius: var(--radius-lg);
+    padding: var(--space-8);
   }
 
-  .field {
-    margin-bottom: 1rem;
+  /* ── Tabs ── */
+  .tabs {
+    display: flex;
+    border-bottom: var(--border-default);
+    margin-bottom: var(--space-6);
   }
 
-  label {
-    display: block;
-    font-size: 0.875rem;
-    font-weight: 500;
-    color: #5c3a0a;
-    margin-bottom: 0.375rem;
+  .tab {
+    flex: 1;
+    text-align: center;
+    font-family: var(--font-display);
+    font-weight: var(--font-weight-medium);
+    font-size: 13px;
+    height: 40px;
+    line-height: 40px;
+    color: var(--color-text-secondary);
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    text-decoration: none;
+    transition: color var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease);
   }
 
-  input {
-    width: 100%;
-    padding: 0.65rem 0.875rem;
-    border: 1.5px solid #e8d5b4;
-    border-radius: 0.625rem;
-    font-size: 1rem;
-    color: #3d2000;
-    background: #fffdf9;
-    box-sizing: border-box;
-    transition: border-color 0.15s, box-shadow 0.15s;
-    outline: none;
+  .tab.active {
+    color: var(--color-text-primary);
+    border-bottom-color: var(--color-gold);
   }
 
-  input::placeholder {
-    color: #c4a06a;
+  .tab:not(.active):hover { color: var(--color-text-body); }
+
+  /* ── Alert ── */
+  .alert {
+    background: var(--color-error-bg);
+    border: var(--border-error);
+    border-radius: var(--radius-sm);
+    color: var(--color-error);
+    font-family: var(--font-display);
+    font-size: 13px;
+    padding: var(--space-3) var(--space-4);
+    margin-bottom: var(--space-4);
   }
 
-  input:focus {
-    border-color: #c8842a;
-    box-shadow: 0 0 0 3px rgba(200, 132, 42, 0.15);
+  /* ── Fields ── */
+  .fields {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
   }
 
-  .btn-primary {
-    width: 100%;
-    padding: 0.75rem;
-    background: #c8842a;
-    color: #fff;
-    border: none;
-    border-radius: 0.625rem;
-    font-size: 1rem;
-    font-weight: 600;
-    cursor: pointer;
-    margin-top: 0.5rem;
-    transition: background 0.15s, transform 0.1s;
+  .pw-row {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
   }
 
-  .btn-primary:hover:not(:disabled) {
-    background: #a86b1c;
+  .forgot {
+    font-family: var(--font-display);
+    font-size: 12px;
+    color: var(--color-text-body);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    text-decoration-thickness: 0.5px;
+    text-decoration-color: var(--color-border-strong);
+    align-self: flex-end;
   }
+  .forgot:hover { color: var(--color-text-primary); }
 
-  .btn-primary:active:not(:disabled) {
-    transform: scale(0.99);
-  }
-
-  .btn-primary:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-  }
-
-  .divider {
+  /* ── OR divider ── */
+  .or {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
-    margin: 1.5rem 0;
-    color: #c4a06a;
-    font-size: 0.8rem;
+    gap: var(--space-3);
+    margin: var(--space-6) 0;
+    color: var(--color-text-hint);
+    font-family: var(--font-display);
+    font-size: 12px;
   }
-
-  .divider::before,
-  .divider::after {
+  .or::before, .or::after {
     content: '';
     flex: 1;
-    height: 1px;
-    background: #f0dfc0;
+    height: 0.5px;
+    background: var(--color-border-default);
   }
 
-  .btn-google {
+  /* ── Google ── */
+  .google {
     width: 100%;
-    padding: 0.7rem;
-    background: #fff;
-    color: #3d2000;
-    border: 1.5px solid #e8d5b4;
-    border-radius: 0.625rem;
-    font-size: 0.95rem;
-    font-weight: 500;
-    cursor: pointer;
+    height: 36px;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 0.6rem;
-    transition: background 0.15s, border-color 0.15s;
+    gap: var(--space-2);
+    background: transparent;
+    border: var(--border-default);
+    border-radius: var(--radius-sm);
+    font-family: var(--font-display);
+    font-weight: var(--font-weight-medium);
+    font-size: 13px;
+    color: var(--color-text-primary);
+    cursor: pointer;
+    transition: background var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease);
   }
-
-  .btn-google:hover:not(:disabled) {
-    background: #fffdf7;
-    border-color: #c8842a;
+  .google:hover:not(:disabled) {
+    background: var(--color-bg-surface-2);
+    border-color: var(--color-border-strong);
   }
+  .google:disabled { opacity: 0.4; cursor: not-allowed; }
 
-  .btn-google:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-  }
-
-  .btn-google svg {
-    width: 1.125rem;
-    height: 1.125rem;
-    flex-shrink: 0;
-  }
-
-  .switch-link {
+  /* ── Switch link ── */
+  .switch {
     text-align: center;
-    margin: 1.5rem 0 0;
-    font-size: 0.875rem;
-    color: #9a6a2a;
+    margin: var(--space-6) 0 0 0;
+    font-family: var(--font-display);
+    font-size: 13px;
+    color: var(--color-text-secondary);
   }
-
-  .switch-link a {
-    color: #c8842a;
-    font-weight: 600;
-    text-decoration: none;
-  }
-
-  .switch-link a:hover {
+  .switch a {
+    color: var(--color-text-primary);
     text-decoration: underline;
+    text-underline-offset: 3px;
+    text-decoration-thickness: 0.5px;
+    text-decoration-color: var(--color-border-strong);
   }
 </style>

@@ -1,5 +1,4 @@
 <script lang="ts">
-  import type { ComponentType, SvelteComponent } from 'svelte';
 
   /**
    * Thin wrapper over lucide-svelte that enforces the system's icon rules:
@@ -17,7 +16,8 @@
     strokeWidth = 1.5,
     title
   }: {
-    icon: ComponentType<SvelteComponent>;
+    // lucide-svelte uses SvelteComponentTyped (Svelte 4 compat); `any` bridges the gap
+    icon: any;
     /** 12 (caption) · 16 (buttons/status) · 20 (nav) · 24 (toolbar/modal) */
     size?: 12 | 16 | 20 | 24 | number;
     /** default Warm-Mid; in a button pass "currentColor"; active = var(--color-ink) */

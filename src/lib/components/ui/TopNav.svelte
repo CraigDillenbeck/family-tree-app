@@ -12,15 +12,12 @@
       { id: 'tree', label: 'Tree' },
       { id: 'memories', label: 'Memories' }
     ],
-    wordmark = 'prosapiam',
     onnav,
     onsearch,
     avatar
   }: {
     active?: string;
     links?: Link[];
-    /** brand wordmark text; swap for the <img> lockup from assets/ when available */
-    wordmark?: string;
     onnav?: (id: string) => void;
     onsearch?: () => void;
     /** avatar snippet (drop in <Avatar … /> or initials) */
@@ -29,7 +26,9 @@
 </script>
 
 <header class="nav">
-  <span class="wordmark">{wordmark}</span>
+  <a href="/dashboard" class="wordmark" aria-label="Prosapiam">
+    <img src="/logo-wordmark.svg" alt="Prosapiam" height="20" />
+  </a>
 
   <nav class="links">
     {#each links as l (l.id)}
@@ -64,15 +63,13 @@
     color: var(--color-text-inverse);
   }
 
-  /* Wordmark — Plus Jakarta Light, the brand's quiet voice. */
   .wordmark {
     flex-shrink: 0;
-    font-family: var(--font-display);
-    font-weight: var(--font-weight-light);
-    font-size: 22px;
-    letter-spacing: -0.01em;
-    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    text-decoration: none;
   }
+  .wordmark img { display: block; }
 
   .links { display: flex; gap: var(--space-6); }
   .link {
