@@ -44,7 +44,7 @@
     min-width: 80px;
     border: none;
     border-radius: var(--radius-sm); /* 4px */
-    font-family: var(--font-display);
+    font-family: var(--font-ui);
     font-weight: var(--font-weight-medium); /* 500 */
     line-height: 1;
     white-space: nowrap;

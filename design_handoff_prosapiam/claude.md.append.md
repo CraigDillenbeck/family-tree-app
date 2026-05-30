@@ -26,8 +26,11 @@ The product's visual + content system lives in `design_handoff_prosapiam/`. **Re
 - Never `#FFF` page bg (Parchment `#F7F4EE` floor) · never `#000` text (Ink `#1C1A17`).
 - No gradients / background images / backdrop-blur on product chrome. No emoji.
 - No shadows on cards/modals/panels (depth is tonal). Only floating UI gets the one allowed shadow.
-- 0.5px hairline borders by default. Two typefaces, never on one line: Plus Jakarta Sans (UI, max
-  weight 500) and Cormorant Garamond (story only, ≥14px, line-height ≥1.7, never bold/ALL-CAPS).
+- 0.5px hairline borders by default. Three typefaces, never mixed on one line: **Young Serif**
+  (`--font-display`, variable `YoungSerifVF.woff2`) for display headlines only (hero titles, the
+  dashboard greeting, person profile names) · **Plus Jakarta Sans** (`--font-ui`, max weight 500)
+  for all UI chrome · **Cormorant Garamond** (`--font-body`, ≥14px, line-height ≥1.7, never
+  bold/ALL-CAPS) for narrative prose only.
 - Gold `#8C7355` is an accent, never a large fill. Sage = living/success, Terracotta = deceased/error
   (never red). Photography is the only full-color element.
 - Motion ease-out only `cubic-bezier(0.22,1,0.36,1)`; no bounce/spring/loop; reduced-motion fallback required.

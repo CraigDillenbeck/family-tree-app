@@ -48,7 +48,7 @@
 
   /* Micro-label — ALL CAPS, ≤14px, the one place caps are allowed. */
   .label {
-    font-family: var(--font-display);
+    font-family: var(--font-ui);
     font-weight: var(--font-weight-medium);
     font-size: var(--font-size-label); /* 11px */
     letter-spacing: var(--letter-spacing-label);
@@ -91,7 +91,7 @@
     border: none;
     outline: none;
     background: transparent;
-    font-family: var(--font-display);
+    font-family: var(--font-ui);
     font-weight: var(--font-weight-regular);
     font-size: 14px;
     color: var(--color-ink);
@@ -99,7 +99,7 @@
   input::placeholder { color: var(--color-text-hint); }
 
   .msg {
-    font-family: var(--font-display);
+    font-family: var(--font-ui);
     font-size: var(--font-size-caption); /* 12px */
     color: var(--color-terra);
   }

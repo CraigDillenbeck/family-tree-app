@@ -28,7 +28,7 @@
     gap: var(--space-1);
     padding: 3px var(--space-2);
     border-radius: var(--radius-xs); /* 2px */
-    font-family: var(--font-display);
+    font-family: var(--font-ui);
     font-weight: var(--font-weight-medium);
     font-size: 10px;
     letter-spacing: 0.06em;

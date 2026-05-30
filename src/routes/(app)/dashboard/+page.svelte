@@ -147,7 +147,7 @@
 
   .section-label {
     display: block;
-    font-family: var(--font-display);
+    font-family: var(--font-ui);
     font-size: var(--font-size-label);
     font-weight: var(--font-weight-medium);
     letter-spacing: var(--letter-spacing-label);
@@ -178,7 +178,7 @@
   .tree-card-link { text-decoration: none; }
 
   .tree-count {
-    font-family: var(--font-display);
+    font-family: var(--font-ui);
     font-size: var(--font-size-display-l);
     font-weight: var(--font-weight-light);
     color: var(--color-text-primary);
@@ -187,14 +187,14 @@
   }
 
   .tree-meta {
-    font-family: var(--font-display);
+    font-family: var(--font-ui);
     font-size: 13px;
     color: var(--color-text-secondary);
     margin: var(--space-1) 0 var(--space-4) 0;
   }
 
   .begin-cta {
-    font-family: var(--font-display);
+    font-family: var(--font-ui);
     font-size: 13px;
     font-weight: var(--font-weight-medium);
     color: var(--color-accent);

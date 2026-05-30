@@ -58,7 +58,7 @@
     background: var(--color-surface-2);
     border: var(--border-default);
     color: var(--color-warm-mid);
-    font-family: var(--font-display);
+    font-family: var(--font-ui);
     font-weight: var(--font-weight-medium);
     overflow: hidden;
   }

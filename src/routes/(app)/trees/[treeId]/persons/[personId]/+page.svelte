@@ -232,7 +232,7 @@
   }
 
   .back-link {
-    font-family: var(--font-display);
+    font-family: var(--font-ui);
     font-size: 12px;
     color: var(--color-text-secondary);
     text-decoration: underline;
@@ -267,7 +267,7 @@
   }
 
   .meta {
-    font-family: var(--font-display);
+    font-family: var(--font-ui);
     font-size: 16px;
     color: var(--color-text-secondary);
     margin: var(--space-2) 0 0 0;
@@ -351,7 +351,7 @@
 
   /* ── Section label ── */
   .section-label {
-    font-family: var(--font-display);
+    font-family: var(--font-ui);
     font-size: var(--font-size-label);
     font-weight: var(--font-weight-medium);
     letter-spacing: var(--letter-spacing-label);
@@ -367,7 +367,7 @@
   }
 
   .memory-title {
-    font-family: var(--font-display);
+    font-family: var(--font-ui);
     font-weight: var(--font-weight-medium);
     font-size: 16px;
     color: var(--color-text-primary);
@@ -391,13 +391,13 @@
   }
 
   .memory-date {
-    font-family: var(--font-display);
+    font-family: var(--font-ui);
     font-size: var(--font-size-label);
     color: var(--color-text-secondary);
   }
 
   .dot {
-    font-family: var(--font-display);
+    font-family: var(--font-ui);
     font-size: var(--font-size-label);
     color: var(--color-text-hint);
   }
@@ -412,7 +412,7 @@
   }
 
   .fact-label {
-    font-family: var(--font-display);
+    font-family: var(--font-ui);
     font-size: var(--font-size-label);
     font-weight: var(--font-weight-medium);
     letter-spacing: var(--letter-spacing-label);
@@ -422,7 +422,7 @@
   }
 
   .fact-value {
-    font-family: var(--font-display);
+    font-family: var(--font-ui);
     font-size: var(--font-size-body-ui);
     color: var(--color-text-primary);
     margin: 0;
@@ -451,7 +451,7 @@
 
   .media-caption {
     padding: var(--space-3);
-    font-family: var(--font-display);
+    font-family: var(--font-ui);
     font-size: 12px;
     color: var(--color-text-body);
     margin: 0;
@@ -477,7 +477,7 @@
   .rel-info { flex: 1; }
 
   .rel-name {
-    font-family: var(--font-display);
+    font-family: var(--font-ui);
     font-weight: var(--font-weight-medium);
     font-size: 14px;
     color: var(--color-text-primary);
@@ -485,7 +485,7 @@
   }
 
   .rel-dates {
-    font-family: var(--font-display);
+    font-family: var(--font-ui);
     font-size: 12px;
     color: var(--color-text-secondary);
     margin: 0;

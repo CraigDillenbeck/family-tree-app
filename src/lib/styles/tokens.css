@@ -5,8 +5,9 @@
    ============================================================ */
 
 /* ----- Web fonts -----
-   Story/narrative face: Cormorant Garamond (self-hosted from /fonts).
-   UI face: Plus Jakarta Sans (self-hosted from /fonts).
+   Display face: Young Serif (variable, self-hosted from /fonts) — headlines only.
+   UI face:      Plus Jakarta Sans (self-hosted from /fonts) — all chrome.
+   Story face:   Cormorant Garamond (self-hosted from /fonts) — narrative prose only.
 */
 
 @font-face { font-family:'Plus Jakarta Sans'; font-style:normal; font-weight:200; font-display:swap; src:url('/fonts/PlusJakartaSans-ExtraLight.ttf') format('truetype'); }
@@ -34,6 +35,9 @@
 @font-face { font-family:'Cormorant Garamond'; font-style:italic; font-weight:600; font-display:swap; src:url('/fonts/CormorantGaramond-SemiBoldItalic.ttf') format('truetype'); }
 @font-face { font-family:'Cormorant Garamond'; font-style:normal; font-weight:700; font-display:swap; src:url('/fonts/CormorantGaramond-Bold.ttf') format('truetype'); }
 @font-face { font-family:'Cormorant Garamond'; font-style:italic; font-weight:700; font-display:swap; src:url('/fonts/CormorantGaramond-BoldItalic.ttf') format('truetype'); }
+
+/* Young Serif — display face (variable). wght axis: 300–700, ital axis: 0–100. */
+@font-face { font-family:'Young Serif'; font-style:normal; font-weight:300 700; font-display:swap; src:url('/fonts/YoungSerifVF.woff2') format('woff2-variations'); }
 
 :root {
   /* ---------- COLOR — base palette ---------- */
@@ -87,8 +91,9 @@
   --color-border-inverse:  rgba(247,244,238,0.15);
 
   /* ---------- TYPOGRAPHY ---------- */
-  --font-display: 'Plus Jakarta Sans', 'Helvetica Neue', Arial, sans-serif;
-  --font-body:    'Cormorant Garamond', Georgia, 'Times New Roman', serif;
+  --font-display: 'Young Serif', 'Times New Roman', Georgia, serif;          /* display headlines */
+  --font-ui:      'Plus Jakarta Sans', 'Helvetica Neue', Arial, sans-serif;  /* UI chrome */
+  --font-body:    'Cormorant Garamond', Georgia, 'Times New Roman', serif;   /* narrative prose */
 
   --font-size-display-xl:  56px;
   --font-size-display-l:   40px;
@@ -183,7 +188,7 @@
 .mn-base, body.mn-base {
   background: var(--color-bg-page);
   color: var(--color-text-body);
-  font-family: var(--font-display);
+  font-family: var(--font-ui);
   font-size: var(--font-size-body-ui);
   font-weight: var(--font-weight-regular);
   line-height: var(--line-height-ui);
@@ -191,7 +196,7 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Headings — Plus Jakarta Sans (UI typeface) */
+/* Display headings — Young Serif (display typeface). Hero titles, page greetings, profile names. */
 .mn-display-xl {
   font-family: var(--font-display);
   font-weight: var(--font-weight-light);
@@ -215,15 +220,17 @@
   line-height: var(--line-height-heading);
   color: var(--color-text-primary);
 }
+
+/* UI headings — Plus Jakarta Sans (UI typeface). Section headings, card titles, chrome. */
 .mn-h2 {
-  font-family: var(--font-display);
+  font-family: var(--font-ui);
   font-weight: var(--font-weight-medium);
   font-size: var(--font-size-h2);
   line-height: var(--line-height-heading);
   color: var(--color-text-primary);
 }
 .mn-h3 {
-  font-family: var(--font-display);
+  font-family: var(--font-ui);
   font-weight: var(--font-weight-medium);
   font-size: var(--font-size-h3);
   line-height: 1.4;
@@ -232,7 +239,7 @@
 
 /* Body — Plus Jakarta UI body */
 .mn-body-ui {
-  font-family: var(--font-display);
+  font-family: var(--font-ui);
   font-weight: var(--font-weight-regular);
   font-size: var(--font-size-body-ui);
   line-height: var(--line-height-ui);
@@ -256,7 +263,7 @@
 
 /* Labels — ALL CAPS */
 .mn-label {
-  font-family: var(--font-display);
+  font-family: var(--font-ui);
   font-weight: var(--font-weight-medium);
   font-size: var(--font-size-label);
   letter-spacing: var(--letter-spacing-label);
@@ -265,14 +272,14 @@
 }
 
 .mn-caption {
-  font-family: var(--font-display);
+  font-family: var(--font-ui);
   font-weight: var(--font-weight-regular);
   font-size: var(--font-size-caption);
   color: var(--color-text-secondary);
 }
 
 .mn-meta {
-  font-family: var(--font-display);
+  font-family: var(--font-ui);
   font-weight: var(--font-weight-regular);
   font-size: var(--font-size-meta);
   color: var(--color-text-secondary);

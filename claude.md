@@ -83,11 +83,12 @@ The project uses **Svelte 5**. All components must use runes syntax. No Svelte 4
 
 ## Design System
 
-### Typography — Two typefaces, strictly separated
+### Typography — Three typefaces, strictly separated
 
 | Typeface | Token | Role | Never use for |
 | --- | --- | --- | --- |
-| **Plus Jakarta Sans** | `--font-display` | All UI chrome — labels, buttons, tabs, navigation, form fields, captions, badges, headings | Story or narrative content |
+| **Young Serif** | `--font-display` | Display headlines ONLY — hero titles, the dashboard greeting, the person-profile name | Any UI chrome; anything smaller than ~28px |
+| **Plus Jakarta Sans** | `--font-ui` | All UI chrome — labels, buttons, tabs, navigation, form fields, captions, badges, card headings, stat numbers | Story or narrative content |
 | **Cormorant Garamond** | `--font-body` | Narrative text, biographies, memory excerpts, story content, taglines | Navigation, buttons, labels, metadata |
 
 **Non-negotiable typography rules:**
@@ -98,10 +99,15 @@ The project uses **Svelte 5**. All components must use runes syntax. No Svelte 4
 - Plus Jakarta Sans max weight **500 (Medium)** on light surfaces; **600 (SemiBold)** on inverse (Ink) surfaces only
 - Cormorant Garamond **italic** used for: sign-in tagline, memory card excerpts, dashboard subtext — everything else regular upright
 - `max-width: 680px` on any Cormorant Garamond prose block
+- When in doubt about a token name: **`--font-ui`** is Plus Jakarta, **`--font-display`** is Young Serif
 
-**Font files — self-hosted `.ttf` in `static/fonts/`, declared in `src/lib/styles/tokens.css`:**
+**Font files — self-hosted in `static/fonts/`, declared in `src/lib/styles/tokens.css`:**
 
-Plus Jakarta Sans weights 200–800 (regular + italic each) and Cormorant Garamond weights 300–700 (regular + italic each) are all present. The `@font-face` declarations live in `src/lib/styles/tokens.css` — do not duplicate them in `app.css`.
+- `YoungSerifVF.woff2` — variable font, wght axis 300–700, ital axis 0–100
+- Plus Jakarta Sans weights 200–800 (regular + italic each) as static `.ttf`
+- Cormorant Garamond weights 300–700 (regular + italic each) as static `.ttf`
+
+The `@font-face` declarations live in `src/lib/styles/tokens.css` — do not duplicate them in `app.css`.
 
 ### CSS Custom Properties — Complete Token System
 
@@ -986,8 +992,10 @@ The product's visual + content system lives in `design_handoff_prosapiam/`. **Re
 - Never `#FFF` page bg (Parchment `#F7F4EE` floor) · never `#000` text (Ink `#1C1A17`).
 - No gradients / background images / backdrop-blur on product chrome. No emoji.
 - No shadows on cards/modals/panels (depth is tonal). Only floating UI gets the one allowed shadow.
-- 0.5px hairline borders by default. Two typefaces, never on one line: Plus Jakarta Sans (UI, max
-  weight 500) and Cormorant Garamond (story only, ≥14px, line-height ≥1.7, never bold/ALL-CAPS).
+- 0.5px hairline borders by default. Three typefaces, never mixed on one line: **Young Serif**
+  (`--font-display`, variable `YoungSerifVF.woff2`) for display headlines only · **Plus Jakarta
+  Sans** (`--font-ui`, max weight 500) for all UI chrome · **Cormorant Garamond** (`--font-body`,
+  ≥14px, line-height ≥1.7, never bold/ALL-CAPS) for narrative prose only.
 - Gold `#8C7355` is an accent, never a large fill. Sage = living/success, Terracotta = deceased/error
   (never red). Photography is the only full-color element.
 - Motion ease-out only `cubic-bezier(0.22,1,0.36,1)`; no bounce/spring/loop; reduced-motion fallback required.

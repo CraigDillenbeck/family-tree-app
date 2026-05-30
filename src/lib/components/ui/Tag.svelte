@@ -37,7 +37,7 @@
     background: var(--color-surface-2);
     border: var(--border-default);
     border-radius: var(--radius-xs); /* 2px — reads as a label */
-    font-family: var(--font-display);
+    font-family: var(--font-ui);
     font-size: var(--font-size-caption); /* 12px */
     color: var(--color-ink-soft);
   }

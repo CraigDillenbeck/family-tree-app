@@ -73,7 +73,7 @@
 
   .links { display: flex; gap: var(--space-6); }
   .link {
-    font-family: var(--font-display);
+    font-family: var(--font-ui);
     font-weight: var(--font-weight-medium);
     font-size: 13px;
     color: var(--color-text-inverse-muted);
@@ -95,7 +95,7 @@
     border: var(--border-inverse);
     border-radius: var(--radius-sm);
     color: var(--color-text-inverse-muted);
-    font-family: var(--font-display);
+    font-family: var(--font-ui);
     font-size: 13px;
     cursor: pointer;
     transition: background var(--dur-fast) var(--ease);

@@ -79,7 +79,7 @@
   }
 
   .wordmark {
-    font-family: var(--font-display);
+    font-family: var(--font-ui);
     font-weight: var(--font-weight-light);
     font-size: 32px;
     letter-spacing: -0.01em;
@@ -112,7 +112,7 @@
   .tab {
     flex: 1;
     text-align: center;
-    font-family: var(--font-display);
+    font-family: var(--font-ui);
     font-weight: var(--font-weight-medium);
     font-size: 13px;
     height: 40px;
@@ -136,7 +136,7 @@
     border: var(--border-error);
     border-radius: var(--radius-sm);
     color: var(--color-error);
-    font-family: var(--font-display);
+    font-family: var(--font-ui);
     font-size: 13px;
     padding: var(--space-3) var(--space-4);
     margin-bottom: var(--space-4);
@@ -149,7 +149,7 @@
   }
 
   .consent {
-    font-family: var(--font-display);
+    font-family: var(--font-ui);
     font-size: 12px;
     color: var(--color-text-secondary);
     line-height: var(--line-height-ui);
@@ -160,7 +160,7 @@
   .switch {
     text-align: center;
     margin: var(--space-6) 0 0 0;
-    font-family: var(--font-display);
+    font-family: var(--font-ui);
     font-size: 13px;
     color: var(--color-text-secondary);
   }

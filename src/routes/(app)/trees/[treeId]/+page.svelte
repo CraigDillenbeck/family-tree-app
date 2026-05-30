@@ -148,7 +148,7 @@
   }
 
   .tree-name {
-    font-family: var(--font-display);
+    font-family: var(--font-ui);
     font-weight: var(--font-weight-medium);
     font-size: var(--font-size-h2);
     color: var(--color-text-primary);
@@ -167,7 +167,7 @@
     display: inline-flex;
     align-items: center;
     gap: var(--space-2);
-    font-family: var(--font-display);
+    font-family: var(--font-ui);
     font-size: 12px;
     color: var(--color-text-secondary);
     margin-right: var(--space-2);
@@ -226,7 +226,7 @@
   }
 
   .empty-title {
-    font-family: var(--font-display);
+    font-family: var(--font-ui);
     font-size: var(--font-size-h2);
     font-weight: var(--font-weight-medium);
     color: var(--color-text-primary);
@@ -280,7 +280,7 @@
   }
 
   .node-name {
-    font-family: var(--font-display);
+    font-family: var(--font-ui);
     font-weight: var(--font-weight-medium);
     font-size: 13px;
     color: var(--color-text-primary);
@@ -289,7 +289,7 @@
   }
 
   .node-dates {
-    font-family: var(--font-display);
+    font-family: var(--font-ui);
     font-size: var(--font-size-label);
     color: var(--color-text-secondary);
   }
@@ -318,7 +318,7 @@
   }
 
   .drawer-label {
-    font-family: var(--font-display);
+    font-family: var(--font-ui);
     font-size: var(--font-size-label);
     font-weight: var(--font-weight-medium);
     letter-spacing: var(--letter-spacing-label);
@@ -350,7 +350,7 @@
   }
 
   .drawer-name {
-    font-family: var(--font-display);
+    font-family: var(--font-ui);
     font-weight: var(--font-weight-light);
     font-size: var(--font-size-h1);
     color: var(--color-text-primary);

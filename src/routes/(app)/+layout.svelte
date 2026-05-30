@@ -31,7 +31,7 @@
     border-radius: var(--radius-sm);
     color: var(--color-text-inverse-muted);
     cursor: pointer;
-    font-family: var(--font-display);
+    font-family: var(--font-ui);
     font-size: 12px;
     font-weight: var(--font-weight-medium);
     height: 28px;

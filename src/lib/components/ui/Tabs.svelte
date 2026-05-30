@@ -39,7 +39,7 @@
     border: none;
     background: transparent;
     border-bottom: 2px solid transparent;
-    font-family: var(--font-display);
+    font-family: var(--font-ui);
     font-weight: var(--font-weight-medium);
     font-size: 13px;
     color: var(--color-warm-mid);

@@ -72,12 +72,13 @@ Three accent colors carry semantic weight and never decorate:
 Photography is the *only* full-color element in the UI. The interface is monochrome-warm; photographs carry the color.
 
 ### Type
-Two typefaces, with a strict rule against mixing them on the same line.
+Three typefaces in three distinct roles. Never mix roles on the same line.
 
-- **Plus Jakarta Sans** — all UI chrome (navigation, buttons, labels, metadata, headings). Max weight **500** (semibold 600 only on Ink/inverse surfaces).
-- **Cormorant Garamond** — story/narrative text only. Minimum 14px, line-height ≥1.7, max-width 680px. **No bold body. No ALL CAPS in the serif, ever.**
+- **Young Serif** (`--font-display`) — display headlines only: hero titles, the dashboard greeting, person profile names. Variable font (`YoungSerifVF.woff2`), wght axis 300–700.
+- **Plus Jakarta Sans** (`--font-ui`) — all UI chrome: navigation, buttons, tabs, labels, badges, metadata, card/section titles, stat numbers, inputs, breadcrumbs. Max weight **500** (semibold 600 only on Ink/inverse surfaces).
+- **Cormorant Garamond** (`--font-body`) — story/narrative text only. Minimum 14px, line-height ≥1.7, max-width 680px. **No bold body. No ALL CAPS in the serif, ever.**
 
-The register-shift between the two is at element boundary — a Cormorant paragraph never contains a Jakarta word. Both faces are self-hosted from `fonts/`..nir Next. *Flagged for replacement when the licensed fonts are wired in.*
+The register-shift between faces is at element boundary — typefaces never share a line. All faces are self-hosted from `fonts/`.
 
 ### Spacing & rhythm
 4-based scale: 4 · 8 · 12 · 16 · 24 · 32 · 48 · 64 · 80 · 96 · 120. Story pages use generous vertical rhythm — year dividers in a memory timeline have 48px above / 32px below. Component-internal spacing is tight (4–16px); page-level spacing is generous (32–96px).
