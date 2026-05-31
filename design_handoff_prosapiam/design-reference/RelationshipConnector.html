@@ -1,0 +1,733 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>PROSAPIAM — P02 Relationship Connector</title>
+  <link rel="stylesheet" href="styles/app.css" />
+  <style>
+    body {
+      background: #F7F4EE;
+      min-height: 100vh;
+      padding: 48px 24px 96px;
+    }
+    .rc-page {
+      max-width: 1200px; margin: 0 auto;
+      display: flex; flex-direction: column; gap: 48px;
+    }
+
+    /* Page title */
+    .rc-page-title {
+      display: flex; align-items: baseline; gap: 14px;
+      padding: 0 4px 4px; border-bottom: 0.5px solid #D6CFC4;
+    }
+    .rc-page-title .eyebrow {
+      font-family: var(--font-display); font-weight: 500; font-size: 11px;
+      letter-spacing: 0.16em; text-transform: uppercase; color: #7A6F63;
+    }
+    .rc-page-title h1 {
+      font-family: var(--font-display); font-weight: 300; font-size: 28px;
+      letter-spacing: -0.01em; color: #1C1A17; margin: 0;
+    }
+    .rc-page-title .meta {
+      margin-left: auto;
+      font-family: var(--font-display); font-weight: 400; font-size: 12px;
+      color: #7A6F63;
+    }
+
+    /* Section labels */
+    .rc-section { display: flex; flex-direction: column; gap: 20px; }
+    .rc-section-label { display: flex; align-items: center; gap: 12px; }
+    .rc-section-label .num {
+      font-family: var(--font-display); font-weight: 500; font-size: 11px;
+      letter-spacing: 0.10em; text-transform: uppercase; color: #7A6F63;
+    }
+    .rc-section-label .rule { flex: 1; height: 0.5px; background: #D6CFC4; }
+    .rc-section-label .desc {
+      font-family: var(--font-display); font-style: italic; font-size: 14px;
+      color: #7A6F63; font-weight: 400;
+    }
+
+    /* Canvas stage — Parchment surface */
+    .rc-stage {
+      background: #F7F4EE;
+      padding: 56px 32px;
+      border: 0.5px solid #D6CFC4;
+      border-radius: 10px;
+      position: relative;
+      overflow: hidden;
+    }
+    .rc-stage::before {
+      content: ''; position: absolute; inset: 0; pointer-events: none;
+      opacity: 0.5;
+      background-image:
+        radial-gradient(rgba(28,26,23,0.045) 1px, transparent 1px),
+        radial-gradient(rgba(28,26,23,0.025) 1px, transparent 1px);
+      background-size: 3px 3px, 7px 7px;
+      background-position: 0 0, 1px 2px;
+      mix-blend-mode: multiply;
+    }
+    .rc-stage > * { position: relative; }
+
+    /* Specimen caption */
+    .rc-caption {
+      display: flex; flex-direction: column; align-items: center; gap: 6px;
+      margin-top: 32px;
+      font-family: var(--font-display);
+    }
+    .rc-caption .label {
+      font-weight: 500; font-size: 10px;
+      letter-spacing: 0.10em; text-transform: uppercase;
+      color: #7A6F63;
+    }
+    .rc-caption .sub {
+      font-weight: 400; font-size: 11px;
+      letter-spacing: 0.04em;
+      color: #C4B9A8;
+    }
+
+    /* Substitution / process notes */
+    .rc-future-note {
+      display: flex; gap: 12px; align-items: flex-start;
+      padding: 14px 18px;
+      background: rgba(140,115,85,0.06);
+      border: 0.5px solid rgba(140,115,85,0.30);
+      border-radius: 4px;
+      font-family: var(--font-display); font-weight: 400; font-size: 12px;
+      color: #3D3A35; line-height: 1.55;
+    }
+    .rc-future-note .tag {
+      font-family: var(--font-display); font-weight: 500; font-size: 10px;
+      letter-spacing: 0.10em; text-transform: uppercase;
+      padding: 3px 8px; border-radius: 2px;
+      background: rgba(140,115,85,0.14); color: #7A5F3E;
+      flex-shrink: 0;
+    }
+
+    /* Variant matrix */
+    .rc-variant-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 24px;
+    }
+    @media (max-width: 880px) {
+      .rc-variant-grid { grid-template-columns: 1fr; }
+    }
+    .rc-variant-card {
+      background: #F7F4EE;
+      border: 0.5px solid #D6CFC4;
+      border-radius: 10px;
+      padding: 32px;
+      display: flex; flex-direction: column;
+      position: relative; overflow: hidden;
+    }
+    .rc-variant-card::before {
+      content: ''; position: absolute; inset: 0; pointer-events: none;
+      opacity: 0.5;
+      background-image:
+        radial-gradient(rgba(28,26,23,0.045) 1px, transparent 1px);
+      background-size: 4px 4px;
+      mix-blend-mode: multiply;
+    }
+    .rc-variant-card > * { position: relative; }
+
+    .rc-variant-title {
+      font-family: var(--font-display); font-weight: 500; font-size: 11px;
+      letter-spacing: 0.10em; text-transform: uppercase; color: #7A6F63;
+      margin-bottom: 4px;
+    }
+    .rc-variant-spec {
+      font-family: var(--font-display); font-weight: 400; font-size: 11px;
+      color: #C4B9A8; letter-spacing: 0.02em;
+      margin-bottom: 24px;
+    }
+
+    /* Stage where the connectors live, sized in pixels */
+    .rc-canvas-frame {
+      position: relative;
+      margin: 0 auto;
+    }
+
+    /* Line specimen — a small SVG showing just the line style */
+    .rc-line-spec-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+    @media (max-width: 880px) {
+      .rc-line-spec-row { grid-template-columns: 1fr; }
+    }
+    .rc-line-spec {
+      background: #F7F4EE;
+      border: 0.5px solid #D6CFC4;
+      border-radius: 6px;
+      padding: 20px 24px;
+      display: flex; flex-direction: column; gap: 12px;
+    }
+    .rc-line-spec .name {
+      font-family: var(--font-display); font-weight: 500; font-size: 12px;
+      color: #1C1A17;
+    }
+    .rc-line-spec .specs {
+      font-family: var(--font-display); font-weight: 400; font-size: 11px;
+      color: #7A6F63; line-height: 1.55;
+    }
+    .rc-line-spec svg { display: block; }
+  </style>
+
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+</head>
+<body class="mn-base">
+  <div id="root"></div>
+
+  <script type="text/babel" src="app/FamilyTreeNode.jsx"></script>
+  <script type="text/babel" src="app/RelationshipConnector.jsx"></script>
+
+  <script type="text/babel" data-presets="env,react">
+    // ------------------------------------------------------------------
+    // Sample people — same archive as the P01 sheet for continuity.
+    // ------------------------------------------------------------------
+    const PHOTO_MAEVE   = 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=300&q=80&auto=format&fit=crop&crop=faces&face=1';
+    const PHOTO_DECLAN  = 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&q=80&auto=format&fit=crop&crop=faces';
+    const PHOTO_NIAMH   = 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=300&q=80&auto=format&fit=crop&crop=faces';
+    const PHOTO_RUTH    = 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=300&q=80&auto=format&fit=crop&crop=faces';
+    const PHOTO_THOMAS  = 'https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=300&q=80&auto=format&fit=crop&crop=faces';
+    const PHOTO_AOIFE   = 'https://images.unsplash.com/photo-1546961342-1d11e3e36e35?w=300&q=80&auto=format&fit=crop&crop=faces';
+
+    // ------------------------------------------------------------------
+    // Geometry constants — used to position absolute-positioned P01 nodes
+    // and to compute SVG paths against the same coordinate system.
+    // Node dimensions at full zoom (from P01): 120px wide, ~100px tall
+    // including the 6px status dot below the boundary.
+    // ------------------------------------------------------------------
+    const NODE_W = 120;
+    const NODE_H = 100; // visual height of a full-zoom node incl. dot
+    const ROW_GAP = 96; // vertical space between parent row bottom and child row top
+
+    // Helper — positions a P01 node absolutely at a given (centerX, topY).
+    // Width comes from the actual zoom so the centering matches connector geometry.
+    function PositionedNode({ centerX, top, ...props }) {
+      const zoom = props.zoom || 'full';
+      const w = zoom === 'compact' ? 40 : 120;
+      return (
+        <div style={{
+          position: 'absolute',
+          left: centerX - w / 2,
+          top: top,
+          width: w,
+        }}>
+          <FamilyTreeNode {...props} />
+        </div>
+      );
+    }
+
+    // ------------------------------------------------------------------
+    // Section wrapper
+    // ------------------------------------------------------------------
+    function Section({ eyebrow, title, children }) {
+      return (
+        <section className="rc-section">
+          <div className="rc-section-label">
+            <span className="num">{eyebrow}</span>
+            <span className="rule" />
+            <span className="desc">{title}</span>
+          </div>
+          {children}
+        </section>
+      );
+    }
+
+    // ------------------------------------------------------------------
+    // <LineSpecimen> — small SVG demonstration of a single line style.
+    // ------------------------------------------------------------------
+    function LineSpecimen({ lineKind, state = 'default', zoom = 'full', name, specs }) {
+      const w = 220, h = 24;
+      const y = 12;
+      const { stroke, weight, dash } = rcResolveStroke(lineKind, state, zoom);
+      return (
+        <div className="rc-line-spec">
+          <div className="name">{name}</div>
+          <svg width={w} height={h}>
+            <line
+              x1={4} x2={w - 4} y1={y} y2={y}
+              stroke={stroke}
+              strokeWidth={weight}
+              strokeDasharray={dash || undefined}
+              strokeLinecap={dash ? 'butt' : 'round'}
+              fill="none"
+            />
+          </svg>
+          <div className="specs">{specs}</div>
+        </div>
+      );
+    }
+
+    // ------------------------------------------------------------------
+    // <FamilyScene> — composable scene of two parents + N children
+    // with a single <RCFamilyGroup> SVG layer.
+    // ------------------------------------------------------------------
+    // Per-zoom node dimensions — must match what P01 actually renders, so
+    // connector geometry doesn't float in empty space at medium/compact.
+    function nodeDims(zoom) {
+      if (zoom === 'compact') return { w: 40,  h: 50 };  // 24 avatar, no dates, dot
+      if (zoom === 'medium')  return { w: 120, h: 80 };  // 32 avatar, name, dot
+      return { w: 120, h: 100 };                          // full: 48 avatar, name, dates, dot
+    }
+
+    function FamilyScene({
+      width = 800,
+      height = 360,
+      parentY = 24,
+      childY,                      // optional override; default computed from zoom
+      parents,                     // [{ centerX, props }, ...]
+      childrenNodes,               // [{ centerX, props }, ...]
+      spouseKind = 'spouse',
+      spouseState = 'default',
+      spouseLabel = null,
+      spouseMuted = false,
+      childLineProps = [],         // per-child: { lineKind, state, label, muted }
+      zoom = 'full',
+    }) {
+      const { w: nW, h: nH } = nodeDims(zoom);
+      const resolvedChildY = childY != null ? childY : (parentY + nH + ROW_GAP);
+      // Build geometry inputs for RCFamilyGroup
+      const parentGeom = parents.map(p => ({
+        x: p.centerX,
+        y: parentY + nH / 2,
+        bottom: parentY + nH - 12,       // bottom-center exit (account for dot space)
+        left:   p.centerX - nW / 2,
+        right:  p.centerX + nW / 2,
+      }));
+      const childGeom = childrenNodes.map((c, i) => ({
+        x: c.centerX,
+        top: resolvedChildY,
+        ...(childLineProps[i] || {}),
+      }));
+
+      return (
+        <div className="rc-canvas-frame" style={{ width, height }}>
+          {/* Connector layer — under nodes */}
+          <RCFamilyGroup
+            parents={parentGeom}
+            children={childGeom}
+            spouseKind={spouseKind}
+            spouseState={spouseState}
+            spouseLabel={spouseLabel}
+            spouseMuted={spouseMuted}
+            zoom={zoom}
+            width={width}
+            height={height}
+          />
+
+          {/* Parents */}
+          {parents.map((p, i) => (
+            <PositionedNode key={`p${i}`} centerX={p.centerX} top={parentY} {...p.props} />
+          ))}
+          {/* Children */}
+          {childrenNodes.map((c, i) => (
+            <PositionedNode key={`c${i}`} centerX={c.centerX} top={resolvedChildY} {...c.props} />
+          ))}
+        </div>
+      );
+    }
+
+    // ------------------------------------------------------------------
+    // App
+    // ------------------------------------------------------------------
+    function App() {
+      // Standard family geometry for variants 01–06
+      const SCENE_W = 760;
+      const SCENE_H = 360;
+      const PARENTS = [
+        { centerX: 240 },
+        { centerX: 520 },
+      ];
+      const CHILDREN_X = [160, 380, 600];
+
+      const buildScene = (overrides = {}) => ({
+        parents: [
+          {
+            centerX: PARENTS[0].centerX,
+            props: {
+              name: "Thomas O'Sullivan", photo: PHOTO_THOMAS,
+              status: 'living', birthYear: 1979, zoom: 'full',
+              ...overrides.parentA,
+            },
+          },
+          {
+            centerX: PARENTS[1].centerX,
+            props: {
+              name: "Maeve O'Sullivan", photo: PHOTO_MAEVE,
+              status: 'living', birthYear: 1982, zoom: 'full',
+              ...overrides.parentB,
+            },
+          },
+        ],
+        childrenNodes: [
+          {
+            centerX: CHILDREN_X[0],
+            props: {
+              name: "Niamh O'Sullivan", photo: PHOTO_NIAMH,
+              status: 'living', birthYear: 2008, zoom: 'full',
+              ...overrides.child0,
+            },
+          },
+          {
+            centerX: CHILDREN_X[1],
+            props: {
+              name: "Cillian O'Sullivan", photo: PHOTO_DECLAN,
+              status: 'living', birthYear: 2011, zoom: 'full',
+              ...overrides.child1,
+            },
+          },
+          {
+            centerX: CHILDREN_X[2],
+            props: {
+              name: "Aoife O'Sullivan", photo: PHOTO_AOIFE,
+              status: 'living', birthYear: 2014, zoom: 'full',
+              ...overrides.child2,
+            },
+          },
+        ],
+      });
+
+      return (
+        <div className="rc-page">
+          <div className="rc-page-title">
+            <span className="eyebrow">P02</span>
+            <h1>Relationship connector</h1>
+            <span className="meta">Family tree canvas · Grammar of the tree</span>
+          </div>
+
+          <div className="rc-future-note">
+            <span className="tag">Type substitution</span>
+            <span>
+              <strong style={{ fontWeight: 500, color: '#1C1A17' }}>Plus Jakarta Sans replaces Avenir Next</strong>
+              {' '}for connector labels — the licensed UI face in this design system. Weight 400, size 10px,
+              Warm-Mid color, Parchment pill background — all other spec values (weights, dash arrays,
+              colors, opacity) are honoured exactly.
+            </span>
+          </div>
+
+          {/* ============================================================ */}
+          {/* Line catalogue — the six connector styles, isolated.          */}
+          {/* ============================================================ */}
+          <Section
+            eyebrow="00 — Line catalogue"
+            title="The six connector variants in isolation. Type, weight, and color carry the meaning — no legend required."
+          >
+            <div className="rc-line-spec-row">
+              <LineSpecimen
+                lineKind="parent-child"
+                name="Parent–child · standard"
+                specs="1px · Warm-Light · solid · biological"
+              />
+              <LineSpecimen
+                lineKind="spouse"
+                name="Spouse · current"
+                specs="2px · Gold-Light · solid · current or lifelong"
+              />
+              <LineSpecimen
+                lineKind="spouse-divorced"
+                name="Spouse · divorced"
+                specs="1.5px · Warm-Light · dashed 6,4 · former"
+              />
+              <LineSpecimen
+                lineKind="parent-child-adopted"
+                name="Parent–child · adopted"
+                specs="1px · Warm-Light · dashed 4,3 · equal in weight"
+              />
+              <LineSpecimen
+                lineKind="parent-child-uncertain"
+                name="Parent–child · uncertain"
+                specs="1px · Warm-Light · dotted 2,4 · believed but unconfirmed"
+              />
+              <LineSpecimen
+                lineKind="sibling-bar"
+                name="Sibling bar"
+                specs="1px · Warm-Light · solid · structural junction"
+              />
+            </div>
+          </Section>
+
+          {/* ============================================================ */}
+          {/* 01 — Standard family group                                    */}
+          {/* ============================================================ */}
+          <Section
+            eyebrow="01 — Standard family group"
+            title="Two parents joined by a 2px Gold-Light spouse line. Three children below, each connecting to a single shared sibling bar — biological parent–child standard."
+          >
+            <div className="rc-stage" style={{ display: 'flex', justifyContent: 'center' }}>
+              <div>
+                <FamilyScene
+                  width={SCENE_W} height={SCENE_H}
+                  {...buildScene()}
+                  spouseKind="spouse"
+                />
+                <div className="rc-caption">
+                  <span className="label">Default · 100% zoom</span>
+                  <span className="sub">spouse 2px Gold-Light · children 1px Warm-Light · shared sibling bar</span>
+                </div>
+              </div>
+            </div>
+          </Section>
+
+          {/* ============================================================ */}
+          {/* 02 — Divorced parents                                         */}
+          {/* ============================================================ */}
+          <Section
+            eyebrow="02 — Divorced or separated parents"
+            title="Same routing, but the spouse line becomes 1.5px Warm-Light dashed (6,4). The relationship existed; it is no longer current — without judgment. Children connectors unchanged."
+          >
+            <div className="rc-stage" style={{ display: 'flex', justifyContent: 'center' }}>
+              <div>
+                <FamilyScene
+                  width={SCENE_W} height={SCENE_H}
+                  {...buildScene()}
+                  spouseKind="spouse-divorced"
+                />
+                <div className="rc-caption">
+                  <span className="label">Divorced · 100% zoom</span>
+                  <span className="sub">spouse 1.5px Warm-Light dashed · children unchanged</span>
+                </div>
+              </div>
+            </div>
+          </Section>
+
+          {/* ============================================================ */}
+          {/* 03 — Adopted child                                            */}
+          {/* ============================================================ */}
+          <Section
+            eyebrow="03 — Adopted child"
+            title="The middle child connects via dashed (4,3) parent–child — adoptive. Equal in weight to the biological siblings — different in style only. Optional &ldquo;Adopted&rdquo; label clarifies."
+          >
+            <div className="rc-stage" style={{ display: 'flex', justifyContent: 'center' }}>
+              <div>
+                <FamilyScene
+                  width={SCENE_W} height={SCENE_H}
+                  {...buildScene()}
+                  spouseKind="spouse"
+                  childLineProps={[
+                    {},
+                    { lineKind: 'parent-child-adopted', label: 'Adopted' },
+                    {},
+                  ]}
+                />
+                <div className="rc-caption">
+                  <span className="label">Adopted child · middle</span>
+                  <span className="sub">dashed parent–child 4,3 · inline label on Parchment pill</span>
+                </div>
+              </div>
+            </div>
+          </Section>
+
+          {/* ============================================================ */}
+          {/* 04 — Uncertain relationship                                   */}
+          {/* ============================================================ */}
+          <Section
+            eyebrow="04 — Uncertain relationship"
+            title="The third child is connected by a dotted (2,4) parent–child line — a relationship believed to exist but not yet confirmed. Common in historical genealogy research. The node carries a quiet &ldquo;?&rdquo; in place of a known birth year."
+          >
+            <div className="rc-stage" style={{ display: 'flex', justifyContent: 'center' }}>
+              <div>
+                <FamilyScene
+                  width={SCENE_W} height={SCENE_H}
+                  {...buildScene({
+                    child2: {
+                      name: "Aoife O'Sullivan",
+                      photo: null,
+                      status: 'unknown',
+                      birthYear: undefined,
+                    },
+                  })}
+                  spouseKind="spouse"
+                  childLineProps={[
+                    {},
+                    {},
+                    { lineKind: 'parent-child-uncertain' },
+                  ]}
+                />
+                <div className="rc-caption">
+                  <span className="label">Uncertain · third child</span>
+                  <span className="sub">dotted parent–child 2,4 · &ldquo;?&rdquo; on the node itself</span>
+                </div>
+              </div>
+            </div>
+          </Section>
+
+          {/* ============================================================ */}
+          {/* 05 — Selected state                                           */}
+          {/* ============================================================ */}
+          <Section
+            eyebrow="05 — Selected · connector + node together"
+            title="The first child's connector is selected — Gold #8C7355, weight raised to 2px. Adjacent P01 node also in selected state (2px Gold border). Node and connector selection share the same accent color."
+          >
+            <div className="rc-stage" style={{ display: 'flex', justifyContent: 'center' }}>
+              <div>
+                <FamilyScene
+                  width={SCENE_W} height={SCENE_H}
+                  {...buildScene({
+                    child0: { state: 'selected' },
+                  })}
+                  spouseKind="spouse"
+                  childLineProps={[
+                    { state: 'selected' },
+                    {},
+                    {},
+                  ]}
+                />
+                <div className="rc-caption">
+                  <span className="label">Selected</span>
+                  <span className="sub">connector Gold 2px · node 2px Gold border</span>
+                </div>
+              </div>
+            </div>
+          </Section>
+
+          {/* ============================================================ */}
+          {/* 06 — Muted state                                              */}
+          {/* ============================================================ */}
+          <Section
+            eyebrow="06 — Muted · focused subtree"
+            title="The user has focused the rightmost child. All other connectors recede to opacity 0.30 — the focused leg stays at full strength. The structure remains legible; the eye is drawn to the active relationship."
+          >
+            <div className="rc-stage" style={{ display: 'flex', justifyContent: 'center' }}>
+              <div>
+                <FamilyScene
+                  width={SCENE_W} height={SCENE_H}
+                  {...(() => {
+                    const s = buildScene();
+                    // Non-focused nodes dimmed; focused child in viewing state.
+                    s.parents[0].props = { ...s.parents[0].props, state: 'disabled' };
+                    s.parents[1].props = { ...s.parents[1].props, state: 'disabled' };
+                    s.childrenNodes[0].props = { ...s.childrenNodes[0].props, state: 'disabled' };
+                    s.childrenNodes[1].props = { ...s.childrenNodes[1].props, state: 'disabled' };
+                    s.childrenNodes[2].props = { ...s.childrenNodes[2].props, state: 'viewing' };
+                    return s;
+                  })()}
+                  spouseKind="spouse"
+                  spouseMuted={true}
+                  childLineProps={[
+                    { muted: true },
+                    { muted: true },
+                    { muted: false },
+                  ]}
+                />
+                <div className="rc-caption">
+                  <span className="label">Muted · subtree focus</span>
+                  <span className="sub">opacity 0.30 on inactive · focused leg full strength</span>
+                </div>
+              </div>
+            </div>
+          </Section>
+
+          {/* ============================================================ */}
+          {/* 07 — Hover state · close-up                                   */}
+          {/* ============================================================ */}
+          <Section
+            eyebrow="07 — Hover state"
+            title="Subtle darkening to indicate interactivity. Color shifts to Warm-Mid #7A6F63, weight increases by 0.5px — a 150ms ease. Quiet by design — the connector should never feel like a flowchart link."
+          >
+            <div className="rc-variant-grid">
+              <div className="rc-variant-card">
+                <div className="rc-variant-title">Default</div>
+                <div className="rc-variant-spec">parent–child · 1px · Warm-Light</div>
+                <FamilyScene
+                  width={420} height={300}
+                  parents={[
+                    { centerX: 130, props: { name: "Thomas O'Sullivan", photo: PHOTO_THOMAS, status: 'living', birthYear: 1979 } },
+                    { centerX: 290, props: { name: "Maeve O'Sullivan", photo: PHOTO_MAEVE, status: 'living', birthYear: 1982 } },
+                  ]}
+                  childrenNodes={[
+                    { centerX: 210, props: { name: "Niamh O'Sullivan", photo: PHOTO_NIAMH, status: 'living', birthYear: 2008 } },
+                  ]}
+                  spouseKind="spouse"
+                />
+              </div>
+              <div className="rc-variant-card">
+                <div className="rc-variant-title">Hover</div>
+                <div className="rc-variant-spec">stroke shifts to Warm-Mid · weight +0.5px</div>
+                <FamilyScene
+                  width={420} height={300}
+                  parents={[
+                    { centerX: 130, props: { name: "Thomas O'Sullivan", photo: PHOTO_THOMAS, status: 'living', birthYear: 1979 } },
+                    { centerX: 290, props: { name: "Maeve O'Sullivan", photo: PHOTO_MAEVE, status: 'living', birthYear: 1982 } },
+                  ]}
+                  childrenNodes={[
+                    { centerX: 210, props: { name: "Niamh O'Sullivan", photo: PHOTO_NIAMH, status: 'living', birthYear: 2008, state: 'hover' } },
+                  ]}
+                  spouseKind="spouse"
+                  spouseState="hover"
+                  childLineProps={[
+                    { state: 'hover' },
+                  ]}
+                />
+              </div>
+            </div>
+          </Section>
+
+          {/* ============================================================ */}
+          {/* 08 — Zoom behaviour                                           */}
+          {/* ============================================================ */}
+          <Section
+            eyebrow="08 — Zoom behaviour"
+            title="Below 75% zoom, weights reduce by 0.5px to prevent visual density. At 50% (compact), all connectors flatten to solid 0.5px — dashed and dotted are indistinguishable at that scale, so they simplify."
+          >
+            <div className="rc-variant-grid" style={{ gridTemplateColumns: '1fr 1fr' }}>
+              <div className="rc-variant-card">
+                <div className="rc-variant-title">Medium · 75% zoom</div>
+                <div className="rc-variant-spec">weights reduced 0.5px · dashed/dotted preserved</div>
+                <FamilyScene
+                  width={420} height={260}
+                  parentY={20}
+                  parents={[
+                    { centerX: 130, props: { name: "Thomas O'Sullivan", photo: PHOTO_THOMAS, status: 'living', birthYear: 1979, zoom: 'medium' } },
+                    { centerX: 290, props: { name: "Maeve O'Sullivan", photo: PHOTO_MAEVE, status: 'living', birthYear: 1982, zoom: 'medium' } },
+                  ]}
+                  childrenNodes={[
+                    { centerX: 130, props: { name: "Niamh O'Sullivan", photo: PHOTO_NIAMH, status: 'living', birthYear: 2008, zoom: 'medium' } },
+                    { centerX: 290, props: { name: "Cillian O'Sullivan", photo: PHOTO_DECLAN, status: 'living', birthYear: 2011, zoom: 'medium' } },
+                  ]}
+                  spouseKind="spouse"
+                  childLineProps={[
+                    {},
+                    { lineKind: 'parent-child-adopted' },
+                  ]}
+                  zoom="medium"
+                />
+              </div>
+              <div className="rc-variant-card">
+                <div className="rc-variant-title">Compact · 50% zoom</div>
+                <div className="rc-variant-spec">all 0.5px solid · style distinctions retire</div>
+                <FamilyScene
+                  width={420} height={220}
+                  parentY={16}
+                  parents={[
+                    { centerX: 130, props: { name: "Thomas O'Sullivan", photo: PHOTO_THOMAS, status: 'living', birthYear: 1979, zoom: 'compact' } },
+                    { centerX: 290, props: { name: "Maeve O'Sullivan", photo: PHOTO_MAEVE, status: 'living', birthYear: 1982, zoom: 'compact' } },
+                  ]}
+                  childrenNodes={[
+                    { centerX: 130, props: { name: "Niamh O'Sullivan", photo: PHOTO_NIAMH, status: 'living', birthYear: 2008, zoom: 'compact' } },
+                    { centerX: 290, props: { name: "Cillian O'Sullivan", photo: PHOTO_DECLAN, status: 'living', birthYear: 2011, zoom: 'compact' } },
+                  ]}
+                  spouseKind="spouse"
+                  childLineProps={[
+                    {},
+                    { lineKind: 'parent-child-adopted' },
+                  ]}
+                  zoom="compact"
+                />
+              </div>
+            </div>
+          </Section>
+
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>

@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>PROSAPIAM — S3 Family Tree View</title>
+  <link rel="stylesheet" href="styles/app.css" />
+  <style>
+    /* Page chrome — outside the artboards.
+       The DesignCanvas component supplies its own warm-gray work surface. */
+    body {
+      margin: 0;
+      background: #f0eee9;
+      font-family: var(--font-display);
+    }
+
+    /* Artboard root reset — neutralise the dark body so each artboard
+       is its own self-contained surface. */
+    .s3-artboard {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      background: #F7F4EE;
+      overflow: hidden;
+      font-family: var(--font-display);
+      color: var(--color-text-body);
+    }
+
+    /* The canvas — the one full-bleed exception in the system.
+       Parchment surface, no grid lines, no max-width. */
+    .tree-canvas {
+      position: relative;
+      flex: 1;
+      background: #F7F4EE;
+      cursor: grab;
+      overflow: hidden;
+    }
+
+    /* Desktop layout split */
+    .s3-desktop {
+      display: flex;
+      width: 100%; height: 100%;
+    }
+    .s3-desktop-main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+      position: relative;
+    }
+
+    /* Mobile layout split */
+    .s3-mobile {
+      display: flex; flex-direction: column;
+      width: 100%; height: 100%;
+    }
+
+    /* Tooltip rule — no native title flashes; static mock. */
+  </style>
+
+  <!-- React + Babel -->
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+</head>
+<body>
+  <div id="root"></div>
+
+  <!-- Approved components from prior sheets — used here, not redefined. -->
+  <script type="text/babel" src="app/FamilyTreeNode.jsx"></script>
+  <script type="text/babel" src="app/RelationshipConnector.jsx"></script>
+  <script type="text/babel" src="app/PersonSummaryCard.jsx"></script>
+
+  <!-- S3-specific compositions -->
+  <script type="text/babel" src="app/TreeViewPrimitives.jsx"></script>
+  <script type="text/babel" src="app/TreeViewPanels.jsx"></script>
+  <script type="text/babel" src="app/TreeViewCanvas.jsx"></script>
+
+  <!-- DesignCanvas — wraps the two artboards (desktop + mobile) -->
+  <script type="text/babel" src="design-canvas.jsx"></script>
+
+  <!-- App -->
+  <script type="text/babel" data-presets="env,react">
+    const { useState } = React;
+
+    // ----------------------------------------------------------
+    // Selected person (Margaret) — used by both the detail panel
+    // and the mobile bottom sheet.
+    // ----------------------------------------------------------
+    const MARGARET = {
+      name: 'Margaret Walsh',
+      photo: TC_PHOTO.margaret,
+      status: 'living',
+      birthYear: 1943,
+      relationshipContext: 'Your grandmother · Cork, Ireland',
+    };
+
+    // Three direct relationships for the detail panel
+    const MARGARET_RELATIONSHIPS = [
+      { name: 'Thomas Walsh',  photo: TC_PHOTO.thomas,  status: 'deceased', birthYear: 1938, deathYear: 2009, relationship: 'Spouse' },
+      { name: 'Aoife Walsh',   photo: TC_PHOTO.aoife,   status: 'living',   birthYear: 1965, relationship: 'Daughter' },
+      { name: 'Ciarán Walsh',  photo: TC_PHOTO.ciaran,  status: 'living',   birthYear: 1968, relationship: 'Son' },
+    ];
+
+    // ----------------------------------------------------------
+    // Desktop artboard — 1440 × 900.
+    //   Sidebar (220) · Main column (toolbar 48 + canvas)
+    //   Detail panel (320) overlaps the canvas's right edge.
+    // ----------------------------------------------------------
+    function DesktopArtboard() {
+      const [panelOpen, setPanelOpen] = useState(true);
+      // Mini-map sits 16px right of the panel-left when panel is open.
+      const minimapRight = panelOpen ? 320 + 16 : 16;
+
+      return (
+        <div className="s3-artboard" data-screen-label="S3 Family Tree View · Desktop">
+          <div className="s3-desktop">
+            {/* Global navigation */}
+            <TVSidebar active="tree" />
+
+            {/* Main content column */}
+            <div className="s3-desktop-main">
+              {/* Toolbar — 48px strip */}
+              <TVToolbar zoom={100} layout="auto" />
+
+              {/* Tree canvas — Parchment, no grid */}
+              <div className="tree-canvas">
+                <TreeCanvas mode="desktop" />
+
+                {/* Mini-map — bottom right, accounts for panel width */}
+                <TVMiniMap right={minimapRight} bottom={16} />
+
+                {/* Status bar — bottom-spanning, unobtrusive */}
+                <TVStatusBar count={5} zoom={100} />
+              </div>
+            </div>
+
+            {/* Detail panel — overlaps the canvas's right edge, not shrinking it.
+                We render it inside the desktop main column so it floats over the canvas. */}
+            {panelOpen && (
+              <div style={{
+                position: 'absolute',
+                top: 48,
+                right: 0,
+                bottom: 0,
+                width: 320,
+                zIndex: 5,
+              }}>
+                <TVDetailPanel
+                  person={MARGARET}
+                  relationships={MARGARET_RELATIONSHIPS}
+                  onClose={() => setPanelOpen(false)}
+                />
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    // ----------------------------------------------------------
+    // Mobile artboard — 390 × 844.
+    //   Top bar (48) · Canvas · Bottom nav (56 + safe area)
+    //   Bottom sheet at ~50% height overlaps canvas bottom.
+    // ----------------------------------------------------------
+    function MobileArtboard() {
+      const sheetHeight = 422; // ~50% of 844
+
+      return (
+        <div className="s3-artboard" data-screen-label="S3 Family Tree View · Mobile">
+          <div className="s3-mobile">
+            <TVMobileTopBar />
+
+            {/* Tree canvas — full width */}
+            <div className="tree-canvas" style={{ position: 'relative' }}>
+              <TreeCanvas mode="mobile" />
+
+              {/* Floating zoom cluster — bottom-left, above bottom sheet */}
+              <TVMobileZoomCluster left={16} bottom={sheetHeight + 16} />
+
+              {/* Bottom sheet — appears as Margaret is selected */}
+              <TVMobileBottomSheet person={MARGARET} height={sheetHeight} />
+            </div>
+
+            <TVMobileBottomNav active="tree" safeArea={24} />
+          </div>
+        </div>
+      );
+    }
+
+    // ----------------------------------------------------------
+    // Page assembly — two breakpoints, side by side on a design canvas.
+    // ----------------------------------------------------------
+    function App() {
+      return (
+        <DesignCanvas
+          title="PROSAPIAM · S3 Family Tree View"
+          subtitle="The discovery space — Margaret Walsh selected"
+        >
+          <DCSection
+            id="breakpoints"
+            title="Two breakpoints"
+            subtitle="Desktop ≥1024px · Mobile <768px — Walsh family, Margaret selected"
+          >
+            <DCArtboard id="desktop" label="Desktop · 1440 × 900" width={1440} height={900}>
+              <DesktopArtboard />
+            </DCArtboard>
+
+            <DCArtboard id="mobile" label="Mobile · 390 × 844" width={390} height={844}>
+              <MobileArtboard />
+            </DCArtboard>
+          </DCSection>
+        </DesignCanvas>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>

@@ -1,0 +1,595 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>PROSAPIAM — S2 Dashboard (v2 · Multi-Tree)</title>
+  <link rel="stylesheet" href="styles/app.css" />
+  <style>
+    body {
+      margin: 0;
+      background: #f0eee9;
+      font-family: var(--font-display);
+    }
+
+    /* Artboard root reset */
+    .s2-artboard {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      background: #F7F4EE;
+      overflow: hidden;
+      font-family: var(--font-display);
+      color: var(--color-text-body);
+    }
+
+    /* ----- DESKTOP LAYOUT ----- */
+    .s2-desktop {
+      display: flex;
+      width: 100%; height: 100%;
+    }
+    .s2-desktop-main {
+      flex: 1;
+      min-width: 0;
+      overflow-y: auto;
+      overflow-x: hidden;
+      position: relative;
+    }
+    /* Content area — max 1280px, 80px page margins, breathes. */
+    .s2-desktop-content {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 48px 80px 80px 80px;
+      display: flex; flex-direction: column;
+    }
+
+    /* ----- MOBILE LAYOUT ----- */
+    .s2-mobile {
+      display: flex; flex-direction: column;
+      width: 100%; height: 100%;
+      position: relative;
+    }
+    .s2-mobile-scroll {
+      flex: 1;
+      overflow-y: auto;
+      overflow-x: hidden;
+    }
+
+    /* Recent people horizontal scroll — mobile */
+    .s2-mobile-people-scroll {
+      display: flex;
+      gap: 12px;
+      overflow-x: auto;
+      padding: 0 24px;
+      scrollbar-width: none;
+    }
+    .s2-mobile-people-scroll::-webkit-scrollbar { display: none; }
+    .s2-mobile-people-scroll > * {
+      flex: 0 0 240px;
+    }
+
+    /* Tree-switcher mobile scroll — hide scrollbar */
+    .s2-mobile-tree-scroll::-webkit-scrollbar { display: none; }
+
+    /* Tree-scoped content fade.
+       --dur-base 280ms ease on content blocks only (per spec). */
+    .s2-tree-scope {
+      transition: opacity 280ms cubic-bezier(.22,1,.36,1);
+    }
+    .s2-tree-scope.is-switching {
+      opacity: 0;
+    }
+
+    /* Empty state artboard */
+    .s2-empty {
+      width: 100%; height: 100%;
+      display: flex; align-items: center; justify-content: center;
+      background: #F7F4EE;
+    }
+  </style>
+
+  <!-- React + Babel -->
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+</head>
+<body>
+  <div id="root"></div>
+
+  <!-- Approved components (used, not redefined) -->
+  <script type="text/babel" src="app/FamilyTreeNode.jsx"></script>
+  <script type="text/babel" src="app/RelationshipConnector.jsx"></script>
+  <script type="text/babel" src="app/PersonSummaryCard.jsx"></script>
+  <script type="text/babel" src="app/MemoryCard.jsx"></script>
+
+  <!-- Shared TV primitives (sidebar, icons, bottom nav) -->
+  <script type="text/babel" src="app/TreeViewPrimitives.jsx"></script>
+  <script type="text/babel" src="app/TreeViewPanels.jsx"></script>
+  <script type="text/babel" src="app/TreeViewCanvas.jsx"></script>
+
+  <!-- Dashboard-specific compositions -->
+  <script type="text/babel" src="app/Dashboard.jsx"></script>
+
+  <!-- DesignCanvas wrapper -->
+  <script type="text/babel" src="design-canvas.jsx"></script>
+
+  <!-- App -->
+  <script type="text/babel" data-presets="env,react">
+
+    // ---------------------------------------------------------------------
+    // useActiveTree — tiny state hook for tree-scoped artboards.
+    //
+    // The dashboard is scoped to one tree at a time. The most recently
+    // active tree loads as default; switching is a client-side context
+    // switch — content blocks fade out (--dur-base 280ms) then fade back
+    // in with the new tree's data. Welcome header + navigation never
+    // participate in the fade.
+    // ---------------------------------------------------------------------
+    function useActiveTree(initialId = 'walsh') {
+      const [id, setId] = React.useState(initialId);
+      const [switching, setSwitching] = React.useState(false);
+      const tree = TREES.find(t => t.id === id) || TREES[0];
+
+      const onSelect = React.useCallback((next) => {
+        if (next === id) return;
+        setSwitching(true);
+        // 180ms fade-out, then swap and fade back in
+        setTimeout(() => {
+          setId(next);
+          setSwitching(false);
+        }, 180);
+      }, [id]);
+
+      return { tree, activeId: id, switching, onSelect };
+    }
+
+    // =====================================================================
+    // DESKTOP ARTBOARD — 1440 × 1180
+    //   Sidebar 220 · Content area max 1280, 80px margins.
+    //   Welcome + tree switcher + recent strip + 2-col main + quick actions.
+    // =====================================================================
+    function DesktopArtboard() {
+      const { tree, activeId, switching, onSelect } = useActiveTree('walsh');
+
+      return (
+        <div className="s2-artboard" data-screen-label="S2 Dashboard · Desktop">
+          <div className="s2-desktop">
+            <TVSidebar
+              active="dashboard"
+              userName="Margaret Walsh"
+              userInitials="MW"
+            />
+
+            <div className="s2-desktop-main">
+              <div className="s2-desktop-content">
+
+                {/* ===== Welcome header (global — never tree-scoped) ===== */}
+                <div style={{ marginBottom: 24 }}>
+                  <DBWelcomeHeader
+                    name="Margaret"
+                    lastVisit="Last visited 2 days ago."
+                  />
+                </div>
+
+                {/* ===== Tree switcher (global control) ===== */}
+                <section style={{ marginBottom: 32 }}>
+                  <DBTreeSwitcher
+                    trees={TREES}
+                    activeId={activeId}
+                    onSelect={onSelect}
+                  />
+                </section>
+
+                {/* ===== Tree-scoped content begins ===== */}
+                <div className={'s2-tree-scope' + (switching ? ' is-switching' : '')}>
+
+                  {/* Recently viewed in {tree.name} */}
+                  <section style={{ marginBottom: 48 }}>
+                    <DBSectionLabel>Recently Viewed in {tree.name}</DBSectionLabel>
+                    <div style={{
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(4, 1fr)',
+                      gap: 16,
+                    }}>
+                      {tree.recent.map((p, i) => (
+                        <DBRecentPersonCard key={i} person={p} />
+                      ))}
+                    </div>
+                  </section>
+
+                  {/* Main two-column area */}
+                  <section style={{
+                    display: 'grid',
+                    gridTemplateColumns: '60% 40%',
+                    gap: 32,
+                    alignItems: 'start',
+                  }}>
+                    {/* Left — Tree preview card */}
+                    <div>
+                      <DBTreePreviewCard tree={tree} />
+                    </div>
+
+                    {/* Right — Stats + Recent Memories */}
+                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                      <DBSectionLabel>{tree.name}</DBSectionLabel>
+                      <DBStatsGrid tree={tree} />
+
+                      <div style={{ marginTop: 32 }}>
+                        <DBSectionLabel>Recent Memories</DBSectionLabel>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                          {tree.feed.map((m, i) => (
+                            <MemoryCard
+                              key={tree.id + '/' + i}
+                              date={m.date}
+                              title={m.title}
+                              excerpt={m.excerpt}
+                              media={m.media}
+                              mediaAspect="16:9"
+                              author={m.author}
+                              timestamp={m.timestamp}
+                              variant="compact"
+                            />
+                          ))}
+                          <DBViewAllLink>View all memories</DBViewAllLink>
+                        </div>
+                      </div>
+                    </div>
+                  </section>
+
+                  {/* Quick actions — scoped to active tree */}
+                  <div style={{ marginTop: 48 }}>
+                    <DBQuickActionsBar />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // =====================================================================
+    // MOBILE ARTBOARD — 390 × 1360
+    //   Top bar 48 · scrollable body · FAB · bottom nav 56+safe.
+    // =====================================================================
+    function MobileArtboard() {
+      const { tree, activeId, switching, onSelect } = useActiveTree('walsh');
+
+      return (
+        <div className="s2-artboard" data-screen-label="S2 Dashboard · Mobile">
+          <div className="s2-mobile">
+            <DBMobileTopBar userInitials="MW" />
+
+            <div className="s2-mobile-scroll">
+              {/* Welcome */}
+              <div style={{ padding: '24px 24px 0 24px' }}>
+                <DBWelcomeHeader
+                  name="Margaret"
+                  lastVisit="Last visited 2 days ago."
+                  variant="mobile"
+                />
+              </div>
+
+              {/* Tree switcher — full width, bleeds right */}
+              <section style={{ marginTop: 28 }}>
+                <DBTreeSwitcher
+                  trees={TREES}
+                  activeId={activeId}
+                  onSelect={onSelect}
+                  variant="mobile"
+                />
+              </section>
+
+              {/* Tree-scoped content begins */}
+              <div className={'s2-tree-scope' + (switching ? ' is-switching' : '')}>
+                {/* Recently viewed — horizontal scroll */}
+                <section style={{ marginTop: 28 }}>
+                  <div style={{ padding: '0 24px' }}>
+                    <DBSectionLabel>Recently Viewed</DBSectionLabel>
+                  </div>
+                  <div className="s2-mobile-people-scroll">
+                    {tree.recent.map((p, i) => (
+                      <div key={tree.id + '/' + i}>
+                        <PersonSummaryCard
+                          name={p.name}
+                          photo={p.photo}
+                          status={p.status}
+                          birthYear={p.birthYear}
+                          deathYear={p.deathYear}
+                          relationship={p.relationship}
+                          variant="compact"
+                        />
+                      </div>
+                    ))}
+                    {/* trailing spacer so last card has 24px right margin */}
+                    <div aria-hidden="true" style={{ flex: '0 0 1px' }} />
+                  </div>
+                </section>
+
+                {/* Tree preview */}
+                <section style={{ marginTop: 32, padding: '0 24px' }}>
+                  <DBTreePreviewCard tree={tree} variant="mobile" />
+                </section>
+
+                {/* Recent memories */}
+                <section style={{ marginTop: 32, padding: '0 24px 96px 24px' }}>
+                  <DBSectionLabel>Recent Memories</DBSectionLabel>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                    {tree.feed.map((m, i) => (
+                      <MemoryCard
+                        key={tree.id + '/' + i}
+                        date={m.date}
+                        title={m.title}
+                        excerpt={m.excerpt}
+                        media={m.media}
+                        mediaAspect="16:9"
+                        author={m.author}
+                        timestamp={m.timestamp}
+                        variant="compact"
+                      />
+                    ))}
+                    <DBViewAllLink>View all memories</DBViewAllLink>
+                  </div>
+                </section>
+              </div>
+            </div>
+
+            {/* FAB — 16px right, 16px above bottom nav */}
+            <DBFAB right={16} bottom={56 + 24 + 16} />
+
+            <TVMobileBottomNav active="home" safeArea={24} />
+          </div>
+        </div>
+      );
+    }
+
+    // =====================================================================
+    // MURPHY-ACTIVE ARTBOARD — shows the result of switching trees.
+    // Same desktop frame, Murphy Research Tree pre-selected. Demonstrates
+    // every scoped block (label, recent strip, preview card, stats, feed)
+    // reflecting the newly active tree.
+    // =====================================================================
+    function MurphyActiveArtboard() {
+      const { tree, activeId, onSelect } = useActiveTree('murphy');
+      const [switching, setSwitching] = React.useState(false);
+
+      // Local switch handler — same fade behaviour as Desktop artboard.
+      const select = React.useCallback((next) => {
+        if (next === activeId) return;
+        setSwitching(true);
+        setTimeout(() => { onSelect(next); setSwitching(false); }, 180);
+      }, [activeId, onSelect]);
+
+      return (
+        <div className="s2-artboard" data-screen-label="S2 Dashboard · Murphy active">
+          <div className="s2-desktop">
+            <TVSidebar active="dashboard" userName="Margaret Walsh" userInitials="MW" />
+            <div className="s2-desktop-main">
+              <div className="s2-desktop-content">
+                <div style={{ marginBottom: 24 }}>
+                  <DBWelcomeHeader name="Margaret" lastVisit="Last visited 2 days ago." />
+                </div>
+
+                <section style={{ marginBottom: 32 }}>
+                  <DBTreeSwitcher trees={TREES} activeId={activeId} onSelect={select} />
+                </section>
+
+                <div className={'s2-tree-scope' + (switching ? ' is-switching' : '')}>
+                  <section style={{ marginBottom: 48 }}>
+                    <DBSectionLabel>Recently Viewed in {tree.name}</DBSectionLabel>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
+                      {tree.recent.map((p, i) => (
+                        <DBRecentPersonCard key={i} person={p} />
+                      ))}
+                    </div>
+                  </section>
+
+                  <section style={{
+                    display: 'grid', gridTemplateColumns: '60% 40%',
+                    gap: 32, alignItems: 'start',
+                  }}>
+                    <div><DBTreePreviewCard tree={tree} /></div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                      <DBSectionLabel>{tree.name}</DBSectionLabel>
+                      <DBStatsGrid tree={tree} />
+
+                      <div style={{ marginTop: 32 }}>
+                        <DBSectionLabel>Recent Memories</DBSectionLabel>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                          {tree.feed.map((m, i) => (
+                            <MemoryCard
+                              key={tree.id + '/' + i}
+                              date={m.date} title={m.title} excerpt={m.excerpt}
+                              media={m.media} mediaAspect="16:9"
+                              author={m.author} timestamp={m.timestamp}
+                              variant="compact"
+                            />
+                          ))}
+                          <DBViewAllLink>View all memories</DBViewAllLink>
+                        </div>
+                      </div>
+                    </div>
+                  </section>
+
+                  <div style={{ marginTop: 48 }}>
+                    <DBQuickActionsBar />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // =====================================================================
+    // EMPTY STATE — brand-new user with no trees at all.
+    //   No tree switcher (nothing to switch to). Centered Cormorant italic
+    //   prompt + Primary CTA "Create your first tree".
+    // =====================================================================
+    function EmptyNewUserArtboard() {
+      return (
+        <div className="s2-artboard" data-screen-label="S2 Dashboard · Empty (new user)">
+          <div className="s2-desktop">
+            <TVSidebar
+              active="dashboard"
+              userName="Margaret Walsh"
+              userInitials="MW"
+            />
+            <div className="s2-desktop-main">
+              <div className="s2-desktop-content" style={{ minHeight: '100%' }}>
+                {/* Welcome header — still warm, still present */}
+                <div>
+                  <h1 style={{
+                    margin: 0,
+                    fontFamily: 'var(--font-display)',
+                    fontWeight: 400, fontSize: 28, lineHeight: 1.2,
+                    color: '#1C1A17', letterSpacing: '-0.01em',
+                  }}>Welcome, Margaret.</h1>
+                  <span style={{
+                    display: 'inline-block', marginTop: 6,
+                    fontFamily: 'var(--font-display)', fontWeight: 400, fontSize: 13,
+                    color: '#7A6F63',
+                  }}>This is where it begins.</span>
+                </div>
+
+                {/* Centered empty state — replaces entire main content area.
+                    No tree switcher: nothing to switch to yet. */}
+                <div style={{
+                  flex: 1,
+                  display: 'flex', flexDirection: 'column',
+                  alignItems: 'center', justifyContent: 'center',
+                  gap: 28,
+                  textAlign: 'center',
+                  paddingTop: 96, paddingBottom: 120,
+                }}>
+                  <p style={{
+                    margin: 0,
+                    fontFamily: 'var(--font-body)', fontStyle: 'italic', fontWeight: 400,
+                    fontSize: 17, lineHeight: 1.6,
+                    color: '#7A6F63',
+                    maxWidth: 440,
+                  }}>Your family&rsquo;s story begins here.</p>
+
+                  <DBPrimaryButton height={48} fontSize={14}>Create your first tree</DBPrimaryButton>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // =====================================================================
+    // EMPTY-TREE STATE — user has a tree selected but it has no content.
+    //   Replaces the entire main content area (per spec): "Begin with
+    //   yourself". Tree switcher remains visible. Other widget-level
+    //   empties are not shown — absence is rendered once, page-level.
+    // =====================================================================
+    function EmptyTreeArtboard() {
+      // Build a "freshly added" empty tree, plus keep walsh visible as
+      // another option in the switcher row.
+      const emptyTree = {
+        id: 'oconnor',
+        name: 'O\u2019Connor Family Tree',
+        members: 0, generations: 0, memories: 0, photos: 0,
+        recent: [], feed: [],
+      };
+      const switcherTrees = [TREES[0], emptyTree];
+
+      return (
+        <div className="s2-artboard" data-screen-label="S2 Dashboard · Empty tree selected">
+          <div className="s2-desktop">
+            <TVSidebar active="dashboard" userName="Margaret Walsh" userInitials="MW" />
+            <div className="s2-desktop-main">
+              <div className="s2-desktop-content" style={{ minHeight: '100%' }}>
+                <div style={{ marginBottom: 24 }}>
+                  <DBWelcomeHeader name="Margaret" lastVisit="Last visited 2 days ago." />
+                </div>
+                <section style={{ marginBottom: 48 }}>
+                  <DBTreeSwitcher
+                    trees={switcherTrees}
+                    activeId="oconnor"
+                    onSelect={() => {}}
+                  />
+                </section>
+
+                {/* Page-level empty state — quiet invitation. */}
+                <div style={{
+                  flex: 1,
+                  display: 'flex', flexDirection: 'column',
+                  alignItems: 'center', justifyContent: 'center',
+                  gap: 28, textAlign: 'center',
+                  paddingTop: 48, paddingBottom: 96,
+                }}>
+                  <p style={{
+                    margin: 0,
+                    fontFamily: 'var(--font-body)', fontStyle: 'italic', fontWeight: 400,
+                    fontSize: 17, lineHeight: 1.6,
+                    color: '#7A6F63',
+                    maxWidth: 520,
+                  }}>Every family has a story. This one is just beginning.</p>
+                  <DBPrimaryButton height={48} fontSize={14}>Add the first person</DBPrimaryButton>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // =====================================================================
+    // Page assembly
+    // =====================================================================
+    function App() {
+      return (
+        <DesignCanvas
+          title="PROSAPIAM · S2 Dashboard"
+          subtitle="The hearth — Margaret Walsh's home view · v2 with multi-tree support"
+        >
+          <DCSection
+            id="breakpoints"
+            title="Two breakpoints — Walsh active"
+            subtitle="Desktop ≥1024px · Mobile <768px. The Walsh Family Tree is the active context. Click any tree chip to switch — every scoped block fades and updates."
+          >
+            <DCArtboard id="desktop" label="Desktop · 1440 × 1180" width={1440} height={1180}>
+              <DesktopArtboard />
+            </DCArtboard>
+
+            <DCArtboard id="mobile" label="Mobile · 390 × 1360" width={390} height={1360}>
+              <MobileArtboard />
+            </DCArtboard>
+          </DCSection>
+
+          <DCSection
+            id="murphy-active"
+            title="Switched context — Murphy Research Tree active"
+            subtitle="What the dashboard looks like after the user taps Murphy: chips swap their active treatment, section labels rename, recently-viewed strip and stats and feed all reflect Murphy data only."
+          >
+            <DCArtboard id="murphy" label="Desktop · Murphy active · 1440 × 1100" width={1440} height={1100}>
+              <MurphyActiveArtboard />
+            </DCArtboard>
+          </DCSection>
+
+          <DCSection
+            id="empty-states"
+            title="Empty states"
+            subtitle="Two flavours of absence. Page-level empties only — no widget-level empties on the dashboard, per spec."
+          >
+            <DCArtboard id="empty-new-user" label="Empty state — new user · 1440 × 900" width={1440} height={900}>
+              <EmptyNewUserArtboard />
+            </DCArtboard>
+
+            <DCArtboard id="empty-new-tree" label="Empty tree selected · 1440 × 900" width={1440} height={900}>
+              <EmptyTreeArtboard />
+            </DCArtboard>
+          </DCSection>
+        </DesignCanvas>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>

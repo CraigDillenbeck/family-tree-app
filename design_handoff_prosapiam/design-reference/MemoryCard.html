@@ -1,0 +1,313 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>PROSAPIAM — P05 Memory / Story Card</title>
+  <link rel="stylesheet" href="styles/app.css" />
+  <style>
+    body {
+      background: #F7F4EE;
+      min-height: 100vh;
+      padding: 48px 24px 96px;
+    }
+    .mc-page {
+      max-width: 1200px; margin: 0 auto;
+      display: flex; flex-direction: column; gap: 48px;
+    }
+    .mc-page-title {
+      display: flex; align-items: baseline; gap: 14px;
+      padding: 0 4px 4px; border-bottom: 0.5px solid #D6CFC4;
+    }
+    .mc-page-title .eyebrow {
+      font-family: var(--font-display); font-weight: 500; font-size: 11px;
+      letter-spacing: 0.16em; text-transform: uppercase; color: #7A6F63;
+    }
+    .mc-page-title h1 {
+      font-family: var(--font-display); font-weight: 300; font-size: 28px;
+      letter-spacing: -0.01em; color: #1C1A17; margin: 0;
+    }
+    .mc-page-title .meta {
+      margin-left: auto;
+      font-family: var(--font-display); font-weight: 400; font-size: 12px;
+      color: #7A6F63;
+    }
+
+    .mc-section {
+      display: flex; flex-direction: column; gap: 20px;
+    }
+    .mc-section-label {
+      display: flex; align-items: center; gap: 12px;
+    }
+    .mc-section-label .num {
+      font-family: var(--font-display); font-weight: 500; font-size: 11px;
+      letter-spacing: 0.10em; text-transform: uppercase; color: #7A6F63;
+    }
+    .mc-section-label .rule {
+      flex: 1; height: 0.5px; background: #D6CFC4;
+    }
+    .mc-section-label .desc {
+      font-family: var(--font-body); font-style: italic; font-size: 14px;
+      color: #7A6F63;
+    }
+
+    /* Each card is staged on a subtle parchment field so the recede-to-card
+       tonal step is visible in isolation. No frame around the card itself. */
+    .mc-stage {
+      background: #F7F4EE;
+      padding: 32px;
+      border: 0.5px solid #D6CFC4;
+      border-radius: 10px;
+    }
+    .mc-stage--narrow {
+      max-width: 520px;
+    }
+    .mc-stage--compact {
+      max-width: 380px;
+    }
+
+    .mc-pair {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+    }
+    @media (max-width: 880px) {
+      .mc-pair { grid-template-columns: 1fr; }
+    }
+
+    /* Substitution note callout */
+    .mc-future-note {
+      display: flex; gap: 12px; align-items: flex-start;
+      padding: 14px 18px;
+      background: rgba(140,115,85,0.06);
+      border: 0.5px solid rgba(140,115,85,0.30);
+      border-radius: 4px;
+      font-family: var(--font-display); font-weight: 400; font-size: 12px;
+      color: #3D3A35; line-height: 1.55;
+    }
+    .mc-future-note .tag {
+      font-family: var(--font-display); font-weight: 500; font-size: 10px;
+      letter-spacing: 0.10em; text-transform: uppercase;
+      padding: 3px 8px; border-radius: 2px;
+      background: rgba(140,115,85,0.14); color: #7A5F3E;
+      flex-shrink: 0;
+    }
+
+    /* Caption beneath each card */
+    .mc-caption {
+      margin-top: 14px;
+      font-family: var(--font-display); font-weight: 400; font-size: 11px;
+      letter-spacing: 0.10em; text-transform: uppercase;
+      color: #7A6F63;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .mc-caption .dot { width: 4px; height: 4px; border-radius: 9999px; background: #C4B9A8; }
+  </style>
+
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+</head>
+<body class="mn-base">
+  <div id="root"></div>
+
+  <script type="text/babel" src="app/MemoryCard.jsx"></script>
+
+  <script type="text/babel" data-presets="env,react">
+    // ------------------------------------------------------------------
+    // Sample data — real, specific, archival in tone.
+    // Per design-system voice rules: specifics over genericness.
+    // ------------------------------------------------------------------
+    const STORY_CORK = "We arrived in Cork on a Sunday in late June, all our things in two trunks and a hatbox that had belonged to her mother. The flat above the bakery had a window facing the river, and on the first morning she sat us at the table with bread still warm from below and said, very plainly, that this would be the place we remembered when we were old. She was right about that.";
+
+    const STORY_SEVENTIETH = "She wore the navy dress with the small white collar — the one she had been saving — and she let the grandchildren bring the cake in themselves, candle by candle, so that no one face was the centre of it. When we asked her to make a wish she only smiled and said she had had quite enough of those, thank you, and would prefer a second slice.";
+
+    const STORY_GARDEN = "The Maple Street garden was never tidy, but it was always full. Tomatoes leaned against beans, the rosemary outgrew its bed by August, and somewhere in the middle she kept a stone from the old country that she would not explain to anyone. She said a garden ought to keep one secret of its own.";
+
+    const STORY_LETTERS = "He wrote home on Sundays, always — a single page in a careful hand, never two. The letters survived because she kept them in a biscuit tin under the bed, and the biscuit tin survived because it was the kind of thing nobody thought to throw away.";
+
+    const AUTHOR_DAUGHTER = { name: 'Sarah Walsh', status: 'living' };
+    const AUTHOR_SON      = { name: 'Daniel Walsh', status: 'living' };
+    const AUTHOR_NIECE    = { name: 'Eileen Walsh', status: 'living' };
+
+    // Real archival photography (warm, slightly desaturated — matches imagery vibe)
+    const PHOTO_CORK     = 'https://images.unsplash.com/photo-1543248939-4296e1fea89b?w=900&q=80&auto=format&fit=crop';
+    const PHOTO_BIRTHDAY = 'https://images.unsplash.com/photo-1464347744102-11db6282f854?w=900&q=80&auto=format&fit=crop';
+
+    // ------------------------------------------------------------------
+    // Section wrapper — matches the pattern in ProfileHeader.html
+    // ------------------------------------------------------------------
+    function StackedSection({ eyebrow, title, children }) {
+      return (
+        <section className="mc-section">
+          <div className="mc-section-label">
+            <span className="num">{eyebrow}</span>
+            <span className="rule" />
+            <span className="desc">{title}</span>
+          </div>
+          {children}
+        </section>
+      );
+    }
+
+    function Caption({ children }) {
+      return (
+        <div className="mc-caption">
+          <span className="dot" />
+          <span>{children}</span>
+        </div>
+      );
+    }
+
+    // ------------------------------------------------------------------
+    // App
+    // ------------------------------------------------------------------
+    function App() {
+      return (
+        <div className="mc-page">
+          <div className="mc-page-title">
+            <span className="eyebrow">P05</span>
+            <h1>Memory / story card</h1>
+            <span className="meta">S4 · Person Profile · Memories tab</span>
+          </div>
+
+          <div className="mc-future-note">
+            <span className="tag">Type substitution</span>
+            <span>
+              <strong style={{ fontWeight: 500, color: '#1C1A17' }}>Cormorant Garamond replaces Adobe Caslon Pro</strong>
+              {' '}as the story face, and{' '}
+              <strong style={{ fontWeight: 500, color: '#1C1A17' }}>Plus Jakarta Sans replaces Avenir Next</strong>
+              {' '}as the UI face — these are the licensed faces in this design system. All weights, sizes,
+              line-heights, casing, and spacing rules from the brief are applied exactly as specified.
+            </span>
+          </div>
+
+          {/* ============================================================ */}
+          {/* 01 — Standard variant                                         */}
+          {/* ============================================================ */}
+          <StackedSection
+            eyebrow="01 — Standard"
+            title="Date · title · Cormorant excerpt · author row · tags. The default and most common state."
+          >
+            <div className="mc-stage mc-stage--narrow">
+              <MemoryCard
+                date="Summer 1967"
+                title="The summer we moved to Cork"
+                excerpt={STORY_CORK}
+                author={AUTHOR_DAUGHTER}
+                timestamp="Added June 2024"
+                tags={['Childhood', 'Migration', 'Cork']}
+              />
+              <Caption>No media · 24px padding · Surface-1 background</Caption>
+            </div>
+          </StackedSection>
+
+          {/* ============================================================ */}
+          {/* 02 — With media variant                                       */}
+          {/* ============================================================ */}
+          <StackedSection
+            eyebrow="02 — With media"
+            title="Photo bleeds to top edge — 16:9, top corners only honour --radius-lg. Body padding sits beneath."
+          >
+            <div className="mc-stage mc-stage--narrow">
+              <MemoryCard
+                date="14 March 1982"
+                title="Her seventieth birthday"
+                excerpt={STORY_SEVENTIETH}
+                media={PHOTO_BIRTHDAY}
+                mediaAspect="16:9"
+                author={AUTHOR_NIECE}
+                timestamp="3 days ago"
+                tags={['Family gathering', 'Wartime generation']}
+              />
+              <Caption>Media 16:9 · top-corners only · sides + bottom padding 24px</Caption>
+            </div>
+          </StackedSection>
+
+          {/* ============================================================ */}
+          {/* 03 — Featured variant                                         */}
+          {/* ============================================================ */}
+          <StackedSection
+            eyebrow="03 — Featured"
+            title="1px Gold border — the only place 1px is allowed. Reserved for the first or most significant memory in a timeline."
+          >
+            <div className="mc-stage mc-stage--narrow">
+              <MemoryCard
+                date="1955"
+                title="Coming across, with a single trunk"
+                excerpt={STORY_LETTERS}
+                author={AUTHOR_SON}
+                timestamp="Added April 2024"
+                tags={['Migration', 'Wartime']}
+                variant="featured"
+              />
+              <Caption>--border-featured (1px Gold) · same layout as Standard</Caption>
+            </div>
+          </StackedSection>
+
+          {/* ============================================================ */}
+          {/* 04 — Compact variant — Overview tab preview                   */}
+          {/* ============================================================ */}
+          <StackedSection
+            eyebrow="04 — Compact"
+            title="Overview tab preview. 16px padding. Caslon excerpt clamped to 2 lines. No tag row. No media."
+          >
+            <div className="mc-stage mc-stage--compact">
+              <MemoryCard
+                date="August 1989"
+                title="The Maple Street garden"
+                excerpt={STORY_GARDEN}
+                author={AUTHOR_DAUGHTER}
+                timestamp="2 weeks ago"
+                variant="compact"
+              />
+              <Caption>--space-4 padding · 2-line clamp · no tags · no media</Caption>
+            </div>
+          </StackedSection>
+
+          {/* ============================================================ */}
+          {/* 05 — Side-by-side context — how a timeline reads              */}
+          {/* ============================================================ */}
+          <StackedSection
+            eyebrow="05 — In context"
+            title="How a Memories tab reads when these cards are stacked. Featured first; standard and with-media follow."
+          >
+            <div className="mc-stage">
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 16, maxWidth: 680, margin: '0 auto' }}>
+                <MemoryCard
+                  date="1955"
+                  title="Coming across, with a single trunk"
+                  excerpt={STORY_LETTERS}
+                  author={AUTHOR_SON}
+                  timestamp="Added April 2024"
+                  tags={['Migration', 'Wartime']}
+                  variant="featured"
+                />
+                <MemoryCard
+                  date="Summer 1967"
+                  title="The summer we moved to Cork"
+                  excerpt={STORY_CORK}
+                  author={AUTHOR_DAUGHTER}
+                  timestamp="Added June 2024"
+                  tags={['Childhood', 'Migration', 'Cork']}
+                />
+                <MemoryCard
+                  date="14 March 1982"
+                  title="Her seventieth birthday"
+                  excerpt={STORY_SEVENTIETH}
+                  media={PHOTO_BIRTHDAY}
+                  author={AUTHOR_NIECE}
+                  timestamp="3 days ago"
+                  tags={['Family gathering', 'Wartime generation']}
+                />
+              </div>
+            </div>
+          </StackedSection>
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>

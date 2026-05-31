@@ -1,0 +1,439 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>PROSAPIAM — P05 Tabs</title>
+  <link rel="stylesheet" href="styles/app.css" />
+  <style>
+    body {
+      background: #F7F4EE;
+      min-height: 100vh;
+      padding: 48px 24px 96px;
+    }
+    .tb-page {
+      max-width: 1200px; margin: 0 auto;
+      display: flex; flex-direction: column; gap: 48px;
+    }
+
+    /* Page title — same pattern as the other component pages */
+    .tb-page-title {
+      display: flex; align-items: baseline; gap: 14px;
+      padding: 0 4px 4px; border-bottom: 0.5px solid #D6CFC4;
+    }
+    .tb-page-title .eyebrow {
+      font-family: var(--font-display); font-weight: 500; font-size: 11px;
+      letter-spacing: 0.16em; text-transform: uppercase; color: #7A6F63;
+    }
+    .tb-page-title h1 {
+      font-family: var(--font-display); font-weight: 300; font-size: 28px;
+      letter-spacing: -0.01em; color: #1C1A17; margin: 0;
+    }
+    .tb-page-title .meta {
+      margin-left: auto;
+      font-family: var(--font-display); font-weight: 400; font-size: 12px;
+      color: #7A6F63;
+    }
+
+    /* Section labels */
+    .tb-section { display: flex; flex-direction: column; gap: 20px; }
+    .tb-section-label { display: flex; align-items: center; gap: 12px; }
+    .tb-section-label .num {
+      font-family: var(--font-display); font-weight: 500; font-size: 11px;
+      letter-spacing: 0.10em; text-transform: uppercase; color: #7A6F63;
+    }
+    .tb-section-label .rule { flex: 1; height: 0.5px; background: #D6CFC4; }
+    .tb-section-label .desc {
+      font-family: var(--font-display); font-style: italic; font-size: 14px;
+      color: #7A6F63; font-weight: 400;
+    }
+
+    /* Stage frame around each variant */
+    .tb-stage {
+      background: #F7F4EE;
+      padding: 32px;
+      border: 0.5px solid #D6CFC4;
+      border-radius: 10px;
+    }
+
+    /* Caption beneath each variant */
+    .tb-caption {
+      margin-top: 14px;
+      font-family: var(--font-display); font-weight: 400; font-size: 11px;
+      letter-spacing: 0.10em; text-transform: uppercase;
+      color: #7A6F63;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .tb-caption .dot { width: 4px; height: 4px; border-radius: 9999px; background: #C4B9A8; }
+
+    /* Substitution note */
+    .tb-future-note {
+      display: flex; gap: 12px; align-items: flex-start;
+      padding: 14px 18px;
+      background: rgba(140,115,85,0.06);
+      border: 0.5px solid rgba(140,115,85,0.30);
+      border-radius: 4px;
+      font-family: var(--font-display); font-weight: 400; font-size: 12px;
+      color: #3D3A35; line-height: 1.55;
+    }
+    .tb-future-note .tag {
+      font-family: var(--font-display); font-weight: 500; font-size: 10px;
+      letter-spacing: 0.10em; text-transform: uppercase;
+      padding: 3px 8px; border-radius: 2px;
+      background: rgba(140,115,85,0.14); color: #7A5F3E;
+      flex-shrink: 0;
+    }
+
+    /* In-context S4 frame — for the bottom example */
+    .tb-s4 {
+      background: #F7F4EE;
+      border: 0.5px solid #D6CFC4;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    .tb-s4-header {
+      padding: 24px 32px 20px;
+      display: flex; flex-direction: column; gap: 6px;
+      border-bottom: 0.5px solid #D6CFC4;
+      background: #F7F4EE;
+    }
+    .tb-s4-header .name {
+      font-family: var(--font-display); font-weight: 300; font-size: 28px;
+      letter-spacing: -0.01em; color: #1C1A17;
+    }
+    .tb-s4-header .dates {
+      font-family: var(--font-display); font-weight: 400; font-size: 12px;
+      color: #7A6F63; letter-spacing: 0.04em;
+    }
+    .tb-s4-tabs-wrap { padding: 0 32px; }
+    .tb-s4-body {
+      padding: 32px;
+      font-family: var(--font-body); font-size: 17px; font-weight: 400;
+      line-height: 1.75; color: #3D3A35;
+      max-width: 680px;
+    }
+    .tb-s4-body em { font-style: italic; }
+
+    /* Hover annotation — small dotted line + label */
+    .tb-anno {
+      position: relative;
+      margin-top: 18px;
+      font-family: var(--font-display); font-weight: 400; font-size: 11px;
+      color: #7A6F63; font-style: italic;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .tb-anno .arr {
+      width: 14px; height: 0.5px; background: #C4B9A8;
+    }
+
+    /* Spec table */
+    .tb-spec {
+      display: grid;
+      grid-template-columns: 140px 1fr;
+      gap: 6px 24px;
+      font-family: var(--font-display); font-size: 12px;
+      color: #3D3A35;
+    }
+    .tb-spec dt {
+      font-weight: 500; font-size: 10px; letter-spacing: 0.10em;
+      text-transform: uppercase; color: #7A6F63;
+      padding-top: 2px;
+    }
+    .tb-spec dd { margin: 0; line-height: 1.55; }
+    .tb-spec dd code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 11px;
+      background: rgba(28,26,23,0.04); padding: 1px 5px; border-radius: 2px;
+    }
+
+    /* State legend grid */
+    .tb-states {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 0;
+      border: 0.5px solid #D6CFC4; border-radius: 6px;
+      overflow: hidden;
+    }
+    .tb-state-cell {
+      padding: 20px 24px;
+      border-right: 0.5px solid #D6CFC4;
+      border-bottom: 0.5px solid #D6CFC4;
+      background: #F7F4EE;
+      display: flex; flex-direction: column; gap: 12px;
+    }
+    .tb-state-cell:nth-child(2n) { border-right: 0; }
+    .tb-state-cell:nth-last-child(-n+2) { border-bottom: 0; }
+    .tb-state-cell .lbl {
+      font-family: var(--font-display); font-weight: 500; font-size: 10px;
+      letter-spacing: 0.10em; text-transform: uppercase; color: #7A6F63;
+    }
+    .tb-state-cell .desc {
+      font-family: var(--font-display); font-size: 11px; color: #7A6F63;
+      line-height: 1.6;
+    }
+    .tb-state-cell .demo {
+      display: flex; align-items: flex-end;
+      height: 44px;
+      border-bottom: 0.5px solid #D6CFC4;
+    }
+  </style>
+
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+</head>
+<body class="mn-base">
+  <div id="root"></div>
+
+  <script type="text/babel" src="app/Tabs.jsx"></script>
+
+  <script type="text/babel" data-presets="env,react">
+    const S4_TABS = [
+      { id: 'overview',      label: 'Overview' },
+      { id: 'memories',      label: 'Memories' },
+      { id: 'relationships', label: 'Relationships' },
+      { id: 'media',         label: 'Media' },
+    ];
+
+    function StackedSection({ eyebrow, title, children }) {
+      return (
+        <section className="tb-section">
+          <div className="tb-section-label">
+            <span className="num">{eyebrow}</span>
+            <span className="rule" />
+            <span className="desc">{title}</span>
+          </div>
+          {children}
+        </section>
+      );
+    }
+
+    function Caption({ children }) {
+      return (
+        <div className="tb-caption">
+          <span className="dot" />
+          <span>{children}</span>
+        </div>
+      );
+    }
+
+    function StatesLegend() {
+      return (
+        <div className="tb-states">
+          <div className="tb-state-cell">
+            <span className="lbl">Active</span>
+            <div className="demo">
+              <Tabs tabs={[{ id: 'a', label: 'Overview' }]} activeId="a" />
+            </div>
+            <span className="desc">Plus Jakarta 500 · Ink #1C1A17 · 2px Gold #8C7355 underline replacing the baseline.</span>
+          </div>
+          <div className="tb-state-cell">
+            <span className="lbl">Inactive</span>
+            <div className="demo">
+              <Tabs tabs={[{ id: 'a', label: 'Overview' }]} activeId="" />
+            </div>
+            <span className="desc">Plus Jakarta 400 · Warm-Mid #7A6F63 · no underline. Sits on the container baseline.</span>
+          </div>
+          <div className="tb-state-cell">
+            <span className="lbl">Hover</span>
+            <div className="demo">
+              <Tabs tabs={[{ id: 'a', label: 'Overview' }]} activeId="" hoverId="a" />
+            </div>
+            <span className="desc">Plus Jakarta 400 · Ink-Soft #3D3A35 · 0.5px Warm-Light hairline underline · 150ms ease.</span>
+          </div>
+          <div className="tb-state-cell">
+            <span className="lbl">Disabled</span>
+            <div className="demo">
+              <Tabs tabs={[{ id: 'a', label: 'Media' }]} activeId="" disabledIds={['a']} />
+            </div>
+            <span className="desc">Opacity 0.35 · cursor: not-allowed · no hover. For locked states (e.g. Media before media is added).</span>
+          </div>
+        </div>
+      );
+    }
+
+    function App() {
+      const [activeId, setActiveId] = React.useState('overview');
+
+      return (
+        <div className="tb-page">
+          <div className="tb-page-title">
+            <span className="eyebrow">P05</span>
+            <h1>Tabs</h1>
+            <span className="meta">Underline · S4 Person Profile · Overview · Memories · Relationships · Media</span>
+          </div>
+
+          <div className="tb-future-note">
+            <span className="tag">Type substitution</span>
+            <span>
+              <strong style={{ fontWeight: 500, color: '#1C1A17' }}>Plus Jakarta Sans replaces Avenir Next</strong>
+              {' '}as the UI face — the licensed typeface in this design system. All weights
+              (500 active / 400 inactive), the 13px size, and the sentence-case label rule
+              are applied exactly as the brief specifies. Underline geometry, color, and
+              spacing are unchanged.
+            </span>
+          </div>
+
+          {/* ============================================================ */}
+          {/* 01 — Anatomy                                                   */}
+          {/* ============================================================ */}
+          <StackedSection
+            eyebrow="01 — Anatomy"
+            title="44px container · 0.5px #D6CFC4 baseline · 16px horizontal padding per tab · 8px gap · left-aligned. The Gold underline replaces the baseline at the active tab — same position, greater weight."
+          >
+            <div className="tb-stage">
+              <Tabs
+                tabs={S4_TABS}
+                activeId="overview"
+              />
+              <Caption>Container border-bottom: 0.5px #D6CFC4 · Active underline: 2px #8C7355 · margin-bottom -0.5px</Caption>
+            </div>
+          </StackedSection>
+
+          {/* ============================================================ */}
+          {/* 02 — States                                                    */}
+          {/* ============================================================ */}
+          <StackedSection
+            eyebrow="02 — States"
+            title="Four rendered states. The weight shift (400 → 500) is the secondary active signal alongside the Gold underline — subtle and intentional."
+          >
+            <div className="tb-stage" style={{ padding: 0, background: 'transparent', border: 0 }}>
+              <StatesLegend />
+            </div>
+          </StackedSection>
+
+          {/* ============================================================ */}
+          {/* 03 — Default · Overview active                                 */}
+          {/* ============================================================ */}
+          <StackedSection
+            eyebrow="03 — Default · Overview active"
+            title="The first variant the user sees on S4. Overview holds the active Gold underline; Memories, Relationships, Media sit quiet on the baseline."
+          >
+            <div className="tb-stage">
+              <Tabs tabs={S4_TABS} activeId="overview" />
+              <Caption>Overview · 500 / Ink · 2px Gold underline</Caption>
+            </div>
+          </StackedSection>
+
+          {/* ============================================================ */}
+          {/* 04 — Memories active                                           */}
+          {/* ============================================================ */}
+          <StackedSection
+            eyebrow="04 — Memories active"
+            title="Active state moves with the user's selection. Only the underline and the weight on the selected label change — nothing else moves, nothing else colors."
+          >
+            <div className="tb-stage">
+              <Tabs tabs={S4_TABS} activeId="memories" />
+              <Caption>Memories · 500 / Ink · Overview returns to Warm-Mid 400</Caption>
+            </div>
+          </StackedSection>
+
+          {/* ============================================================ */}
+          {/* 05 — With hover state                                          */}
+          {/* ============================================================ */}
+          <StackedSection
+            eyebrow="05 — With hover state"
+            title="Overview is active; the cursor is over Relationships. A 0.5px Warm-Light hairline underlines the hovered label, and its color lifts from Warm-Mid to Ink-Soft. 150ms ease — quiet, considered."
+          >
+            <div className="tb-stage">
+              <Tabs tabs={S4_TABS} activeId="overview" hoverId="relationships" />
+              <Caption>Hovered: Relationships · 400 / Ink-Soft #3D3A35 · 0.5px hairline</Caption>
+            </div>
+          </StackedSection>
+
+          {/* ============================================================ */}
+          {/* 06 — With disabled tab                                         */}
+          {/* ============================================================ */}
+          <StackedSection
+            eyebrow="06 — With disabled tab"
+            title="Media is locked until the user adds a photograph. Overview active; Media at opacity 0.35 with cursor: not-allowed. No hover state on the disabled label — the absence of response is itself the affordance."
+          >
+            <div className="tb-stage">
+              <Tabs tabs={S4_TABS} activeId="overview" disabledIds={['media']} />
+              <Caption>Media · opacity 0.35 · cursor: not-allowed · no hover, no underline</Caption>
+            </div>
+          </StackedSection>
+
+          {/* ============================================================ */}
+          {/* 07 — Live · click to switch                                    */}
+          {/* ============================================================ */}
+          <StackedSection
+            eyebrow="07 — Live · click to switch"
+            title="Interactive. Click a tab to move the active state. The Gold underline is the sole indicator — like a careful underlining in a book, not a UI affordance."
+          >
+            <div className="tb-stage">
+              <Tabs tabs={S4_TABS} activeId={activeId} onChange={setActiveId} />
+              <Caption>Active: {S4_TABS.find(t => t.id === activeId).label} · click to change</Caption>
+            </div>
+          </StackedSection>
+
+          {/* ============================================================ */}
+          {/* 08 — In context · S4 Person Profile                            */}
+          {/* ============================================================ */}
+          <StackedSection
+            eyebrow="08 — In context · S4 Person profile"
+            title="The tab bar in its real position — sitting beneath the Profile Header (P04), forming the structural ground between identity and content. On scroll past the header, this strip becomes sticky to the viewport top."
+          >
+            <div className="tb-stage" style={{ padding: 32 }}>
+              <div className="tb-s4">
+                <div className="tb-s4-header">
+                  <div className="name">Eileen Walsh</div>
+                  <div className="dates">Born 1932 · Cork, Ireland · Mother</div>
+                </div>
+                <div className="tb-s4-tabs-wrap">
+                  <Tabs tabs={S4_TABS} activeId="memories" />
+                </div>
+                <div className="tb-s4-body">
+                  <em>She kept a garden on Maple Street — herbs along the south wall, and a single fig
+                  tree that never quite ripened in the Cork weather but was loved anyway.</em>
+                </div>
+              </div>
+              <Caption>Sticky on scroll beneath P04 · same on desktop and mobile</Caption>
+            </div>
+          </StackedSection>
+
+          {/* ============================================================ */}
+          {/* 09 — Specifications                                            */}
+          {/* ============================================================ */}
+          <StackedSection
+            eyebrow="09 — Specifications"
+            title="Hard rules. Every value below is sourced from the Component Library Brief and the Design System Spec v1.1 — no new values introduced."
+          >
+            <div className="tb-stage">
+              <dl className="tb-spec">
+                <dt>Container</dt>
+                <dd>Full width · height <code>44px</code> · background <code>--color-bg-page</code> (Parchment <code>#F7F4EE</code>) · border-bottom <code>--border-default</code> (<code>0.5px #D6CFC4</code>).</dd>
+
+                <dt>Layout</dt>
+                <dd>Left-aligned, never distributed full-width. Padding <code>--space-4</code> (<code>16px</code>) horizontal per tab. Gap between tabs <code>--space-2</code> (<code>8px</code>).</dd>
+
+                <dt>Type</dt>
+                <dd>Plus Jakarta Sans · <code>13px</code> · sentence case · never ALL CAPS · never bold (500 is the system maximum).</dd>
+
+                <dt>Active</dt>
+                <dd>Weight <code>500</code> · color <code>--color-text-primary</code> (<code>#1C1A17</code>) · underline <code>2px solid #8C7355</code> flush to the bottom of the tab bar — replaces the container baseline at this tab.</dd>
+
+                <dt>Inactive</dt>
+                <dd>Weight <code>400</code> · color <code>--color-text-secondary</code> (<code>#7A6F63</code>) · no underline · no background.</dd>
+
+                <dt>Hover</dt>
+                <dd>Weight <code>400</code> · color <code>--color-text-body</code> (<code>#3D3A35</code>) · <code>0.5px</code> Warm-Light hairline underline · transition <code>150ms var(--ease)</code>.</dd>
+
+                <dt>Disabled</dt>
+                <dd>Opacity <code>0.35</code> · <code>cursor: not-allowed</code> · no hover state.</dd>
+
+                <dt>Sticky behavior</dt>
+                <dd>S4 desktop &amp; mobile: tabs become sticky to the top of the viewport beneath the Profile Header (P04) once the header scrolls out of view. Layout-only behavior — see Claude Code handoff note.</dd>
+
+                <dt>Forbidden</dt>
+                <dd>No background fill on any state · no pill or chip variant · no rounded container · no icons in tab labels · no color other than Ink (active) and Warm-Mid (inactive) on labels · underline never thicker than 2px.</dd>
+              </dl>
+            </div>
+          </StackedSection>
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>

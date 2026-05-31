@@ -1,0 +1,457 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>PROSAPIAM — P03 Person Summary Card</title>
+  <link rel="stylesheet" href="styles/app.css" />
+  <style>
+    body {
+      background: #F7F4EE;
+      min-height: 100vh;
+      padding: 48px 24px 96px;
+    }
+    .pc-page {
+      max-width: 1200px; margin: 0 auto;
+      display: flex; flex-direction: column; gap: 48px;
+    }
+
+    /* Page title — same pattern as MemoryCard.html */
+    .pc-page-title {
+      display: flex; align-items: baseline; gap: 14px;
+      padding: 0 4px 4px; border-bottom: 0.5px solid #D6CFC4;
+    }
+    .pc-page-title .eyebrow {
+      font-family: var(--font-display); font-weight: 500; font-size: 11px;
+      letter-spacing: 0.16em; text-transform: uppercase; color: #7A6F63;
+    }
+    .pc-page-title h1 {
+      font-family: var(--font-display); font-weight: 300; font-size: 28px;
+      letter-spacing: -0.01em; color: #1C1A17; margin: 0;
+    }
+    .pc-page-title .meta {
+      margin-left: auto;
+      font-family: var(--font-display); font-weight: 400; font-size: 12px;
+      color: #7A6F63;
+    }
+
+    /* Section labels */
+    .pc-section { display: flex; flex-direction: column; gap: 20px; }
+    .pc-section-label { display: flex; align-items: center; gap: 12px; }
+    .pc-section-label .num {
+      font-family: var(--font-display); font-weight: 500; font-size: 11px;
+      letter-spacing: 0.10em; text-transform: uppercase; color: #7A6F63;
+    }
+    .pc-section-label .rule { flex: 1; height: 0.5px; background: #D6CFC4; }
+    .pc-section-label .desc {
+      font-family: var(--font-display); font-style: italic; font-size: 14px;
+      color: #7A6F63; font-weight: 400;
+    }
+
+    /* Stage frame around each card to make the surface-1 → parchment step visible */
+    .pc-stage {
+      background: #F7F4EE;
+      padding: 32px;
+      border: 0.5px solid #D6CFC4;
+      border-radius: 10px;
+    }
+    .pc-stage--narrow { max-width: 420px; }
+    .pc-stage--compact { max-width: 320px; }
+    .pc-stage--sidebar { max-width: 320px; }
+
+    .pc-pair {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+    }
+    @media (max-width: 880px) {
+      .pc-pair { grid-template-columns: 1fr; }
+    }
+
+    /* Caption beneath each card */
+    .pc-caption {
+      margin-top: 14px;
+      font-family: var(--font-display); font-weight: 400; font-size: 11px;
+      letter-spacing: 0.10em; text-transform: uppercase;
+      color: #7A6F63;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .pc-caption .dot { width: 4px; height: 4px; border-radius: 9999px; background: #C4B9A8; }
+
+    /* Substitution note */
+    .pc-future-note {
+      display: flex; gap: 12px; align-items: flex-start;
+      padding: 14px 18px;
+      background: rgba(140,115,85,0.06);
+      border: 0.5px solid rgba(140,115,85,0.30);
+      border-radius: 4px;
+      font-family: var(--font-display); font-weight: 400; font-size: 12px;
+      color: #3D3A35; line-height: 1.55;
+    }
+    .pc-future-note .tag {
+      font-family: var(--font-display); font-weight: 500; font-size: 10px;
+      letter-spacing: 0.10em; text-transform: uppercase;
+      padding: 3px 8px; border-radius: 2px;
+      background: rgba(140,115,85,0.14); color: #7A5F3E;
+      flex-shrink: 0;
+    }
+
+    /* Sidebar simulation — replicates the right-rail context the static and
+       compact variants live inside. */
+    .pc-sidebar {
+      background: #F7F4EE;
+      border: 0.5px solid #D6CFC4;
+      border-radius: 10px;
+      padding: 20px;
+      max-width: 320px;
+    }
+    .pc-sidebar-heading {
+      font-family: var(--font-display); font-weight: 500; font-size: 11px;
+      letter-spacing: 0.10em; text-transform: uppercase;
+      color: #7A6F63;
+      padding-bottom: 12px;
+      border-bottom: 0.5px solid #D6CFC4;
+      margin-bottom: 12px;
+    }
+    .pc-sidebar-stack { display: flex; flex-direction: column; gap: 6px; }
+
+    /* Search results dropdown simulation */
+    .pc-search {
+      background: #FFFEFB;
+      border: 0.5px solid #D6CFC4;
+      border-radius: 10px;
+      padding: 8px;
+      max-width: 380px;
+      box-shadow: 0 4px 16px rgba(28,26,23,0.10), 0 1px 4px rgba(28,26,23,0.06);
+    }
+    .pc-search-field {
+      display: flex; align-items: center; gap: 8px;
+      padding: 10px 12px; margin-bottom: 6px;
+      border-bottom: 0.5px solid #D6CFC4;
+      font-family: var(--font-display); font-size: 13px; color: #7A6F63;
+    }
+    .pc-search-stack { display: flex; flex-direction: column; gap: 2px; }
+  </style>
+
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+</head>
+<body class="mn-base">
+  <div id="root"></div>
+
+  <script type="text/babel" src="app/PersonSummaryCard.jsx"></script>
+
+  <script type="text/babel" data-presets="env,react">
+    // ------------------------------------------------------------------
+    // Sample people — specific names, real-feeling dates per voice rules.
+    // No placeholders. Every avatar is either a photo or a proper initials
+    // fallback (never a ghost state).
+    // ------------------------------------------------------------------
+
+    // Warm, archival-leaning portraits (matches imagery vibe — slightly
+    // desaturated, often vintage). Sourced from Unsplash.
+    const PHOTO_MAEVE   = 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=300&q=80&auto=format&fit=crop&crop=faces&face=1';
+    const PHOTO_DECLAN  = 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&q=80&auto=format&fit=crop&crop=faces';
+    const PHOTO_NIAMH   = 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=300&q=80&auto=format&fit=crop&crop=faces';
+    const PHOTO_RUTH    = 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=300&q=80&auto=format&fit=crop&crop=faces';
+    const PHOTO_THOMAS  = 'https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=300&q=80&auto=format&fit=crop&crop=faces';
+
+    // ------------------------------------------------------------------
+    // Section wrapper — same shape as ProfileHeader.html / MemoryCard.html
+    // ------------------------------------------------------------------
+    function StackedSection({ eyebrow, title, children }) {
+      return (
+        <section className="pc-section">
+          <div className="pc-section-label">
+            <span className="num">{eyebrow}</span>
+            <span className="rule" />
+            <span className="desc">{title}</span>
+          </div>
+          {children}
+        </section>
+      );
+    }
+
+    function Caption({ children }) {
+      return (
+        <div className="pc-caption">
+          <span className="dot" />
+          <span>{children}</span>
+        </div>
+      );
+    }
+
+    // ------------------------------------------------------------------
+    // App
+    // ------------------------------------------------------------------
+    function App() {
+      return (
+        <div className="pc-page">
+          <div className="pc-page-title">
+            <span className="eyebrow">P03</span>
+            <h1>Person summary card</h1>
+            <span className="meta">Relationships · Sidebar · Search · Recent people</span>
+          </div>
+
+          <div className="pc-future-note">
+            <span className="tag">Type substitution</span>
+            <span>
+              <strong style={{ fontWeight: 500, color: '#1C1A17' }}>Plus Jakarta Sans replaces Avenir Next</strong>
+              {' '}as the UI face — the licensed typeface in this design system. All weights
+              (medium 500 for the name, regular 400 for dates), sizes (15/12 horizontal,
+              13/11 compact), ALL CAPS badges at 10px, and spacing rules are applied
+              exactly as the brief specifies.
+            </span>
+          </div>
+
+          {/* ============================================================ */}
+          {/* 01 — Horizontal interactive · living                          */}
+          {/* ============================================================ */}
+          <StackedSection
+            eyebrow="01 — Horizontal interactive · living"
+            title="Used in the Relationships tab. Tappable — navigates to full profile. Photo · Spouse · Sage Living · chevron."
+          >
+            <div className="pc-stage pc-stage--narrow">
+              <PersonSummaryCard
+                name="Maeve O'Sullivan"
+                photo={PHOTO_MAEVE}
+                status="living"
+                birthYear={1948}
+                relationship="Spouse"
+                showStatus={true}
+                variant="interactive"
+              />
+              <Caption>48px avatar · 16px padding · hover lifts to Surface-3</Caption>
+            </div>
+          </StackedSection>
+
+          {/* ============================================================ */}
+          {/* 02 — Horizontal interactive · deceased                        */}
+          {/* ============================================================ */}
+          <StackedSection
+            eyebrow="02 — Horizontal interactive · deceased"
+            title="Grayscale avatar at 25%. Full date range. Mother · Terra Deceased · chevron."
+          >
+            <div className="pc-stage pc-stage--narrow">
+              <PersonSummaryCard
+                name="Eileen Walsh"
+                photo={PHOTO_NIAMH}
+                status="deceased"
+                birthYear={1932}
+                deathYear={2011}
+                relationship="Mother"
+                showStatus={true}
+                variant="interactive"
+              />
+              <Caption>filter: grayscale(0.25) · "1932 – 2011" · Terra badge</Caption>
+            </div>
+          </StackedSection>
+
+          {/* ============================================================ */}
+          {/* 03 — Horizontal static · initials fallback                    */}
+          {/* ============================================================ */}
+          <StackedSection
+            eyebrow="03 — Horizontal static · initials fallback"
+            title="Right-sidebar Related people. No chevron. No hover state. Initials avatar — Surface-2 fill, Warm-Mid text, weight 500."
+          >
+            <div className="pc-stage pc-stage--narrow">
+              <PersonSummaryCard
+                name="Patrick Walsh"
+                status="living"
+                birthYear={1925}
+                relationship="Father"
+                variant="static"
+              />
+              <Caption>"PW" initials · informational only · no navigation</Caption>
+            </div>
+          </StackedSection>
+
+          {/* ============================================================ */}
+          {/* 04 — Compact horizontal                                       */}
+          {/* ============================================================ */}
+          <StackedSection
+            eyebrow="04 — Compact horizontal"
+            title="Right sidebar and search dropdown. 32px avatar · 13/11 type · 12px padding · relationship badge only."
+          >
+            <div className="pc-stage pc-stage--compact">
+              <PersonSummaryCard
+                name="Declan O'Sullivan"
+                photo={PHOTO_DECLAN}
+                status="living"
+                birthYear={1976}
+                relationship="Sibling"
+                variant="compact"
+              />
+              <Caption>32px · 12px padding · no status · no chevron</Caption>
+            </div>
+          </StackedSection>
+
+          {/* ============================================================ */}
+          {/* 05 — In context · Relationships tab list                      */}
+          {/* ============================================================ */}
+          <StackedSection
+            eyebrow="05 — In context · Relationships tab"
+            title="A run of horizontal interactive cards as they read on S4. Mixed living / deceased; relationship + status badges add scannability."
+          >
+            <div className="pc-stage" style={{ maxWidth: 520 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <PersonSummaryCard
+                  name="Maeve O'Sullivan"
+                  photo={PHOTO_MAEVE}
+                  status="living"
+                  birthYear={1948}
+                  relationship="Spouse"
+                  showStatus={true}
+                  variant="interactive"
+                />
+                <PersonSummaryCard
+                  name="Eileen Walsh"
+                  photo={PHOTO_NIAMH}
+                  status="deceased"
+                  birthYear={1932}
+                  deathYear={2011}
+                  relationship="Mother"
+                  showStatus={true}
+                  variant="interactive"
+                />
+                <PersonSummaryCard
+                  name="Patrick Walsh"
+                  status="deceased"
+                  birthYear={1925}
+                  deathYear={1998}
+                  relationship="Father"
+                  showStatus={true}
+                  variant="interactive"
+                />
+                <PersonSummaryCard
+                  name="Niamh O'Sullivan"
+                  photo={PHOTO_RUTH}
+                  status="living"
+                  birthYear={1981}
+                  relationship="Daughter"
+                  showStatus={true}
+                  variant="interactive"
+                />
+                <PersonSummaryCard
+                  name="Thomas O'Sullivan"
+                  photo={PHOTO_THOMAS}
+                  status="living"
+                  birthYear={1979}
+                  relationship="Son"
+                  showStatus={true}
+                  variant="interactive"
+                />
+              </div>
+            </div>
+          </StackedSection>
+
+          {/* ============================================================ */}
+          {/* 06 — In context · Right sidebar                               */}
+          {/* ============================================================ */}
+          <StackedSection
+            eyebrow="06 — In context · Right sidebar"
+            title="Static variant inside the S4 'Related people' rail. No chevrons, no hover states — purely informational."
+          >
+            <div className="pc-stage" style={{ maxWidth: 360, padding: 24 }}>
+              <div className="pc-sidebar">
+                <div className="pc-sidebar-heading">Related people</div>
+                <div className="pc-sidebar-stack">
+                  <PersonSummaryCard
+                    name="Maeve O'Sullivan"
+                    photo={PHOTO_MAEVE}
+                    status="living"
+                    birthYear={1948}
+                    relationship="Spouse"
+                    variant="static"
+                  />
+                  <PersonSummaryCard
+                    name="Niamh O'Sullivan"
+                    photo={PHOTO_RUTH}
+                    status="living"
+                    birthYear={1981}
+                    relationship="Daughter"
+                    variant="static"
+                  />
+                  <PersonSummaryCard
+                    name="Thomas O'Sullivan"
+                    photo={PHOTO_THOMAS}
+                    status="living"
+                    birthYear={1979}
+                    relationship="Son"
+                    variant="static"
+                  />
+                  <PersonSummaryCard
+                    name="Eileen Walsh"
+                    photo={PHOTO_NIAMH}
+                    status="deceased"
+                    birthYear={1932}
+                    deathYear={2011}
+                    relationship="Mother"
+                    variant="static"
+                  />
+                </div>
+              </div>
+              <Caption>Static · no chevron · no hover</Caption>
+            </div>
+          </StackedSection>
+
+          {/* ============================================================ */}
+          {/* 07 — In context · Search results dropdown                     */}
+          {/* ============================================================ */}
+          <StackedSection
+            eyebrow="07 — In context · Search results"
+            title="Compact variant inside the global search dropdown. Float-only shadow, white surface, hairline divider beneath the field."
+          >
+            <div className="pc-stage" style={{ maxWidth: 440, padding: 24 }}>
+              <div className="pc-search">
+                <div className="pc-search-field">
+                  <span style={{ flex: 1 }}>walsh</span>
+                  <span style={{ fontSize: 11, letterSpacing: '0.10em', textTransform: 'uppercase' }}>4 found</span>
+                </div>
+                <div className="pc-search-stack">
+                  <PersonSummaryCard
+                    name="Eileen Walsh"
+                    photo={PHOTO_NIAMH}
+                    status="deceased"
+                    birthYear={1932}
+                    deathYear={2011}
+                    relationship="Mother"
+                    variant="compact"
+                  />
+                  <PersonSummaryCard
+                    name="Patrick Walsh"
+                    status="deceased"
+                    birthYear={1925}
+                    deathYear={1998}
+                    relationship="Father"
+                    variant="compact"
+                  />
+                  <PersonSummaryCard
+                    name="Sarah Walsh"
+                    photo={PHOTO_RUTH}
+                    status="living"
+                    birthYear={1968}
+                    relationship="Aunt"
+                    variant="compact"
+                  />
+                  <PersonSummaryCard
+                    name="Daniel Walsh"
+                    status="living"
+                    birthYear={1972}
+                    relationship="Uncle"
+                    variant="compact"
+                  />
+                </div>
+              </div>
+              <Caption>Compact · 32px avatars · floating shadow on the dropdown only</Caption>
+            </div>
+          </StackedSection>
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>

@@ -1,0 +1,362 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>PROSAPIAM — P11 Profile Timeline / Memory List</title>
+  <link rel="stylesheet" href="styles/app.css" />
+  <style>
+    body {
+      background: #F7F4EE;
+      min-height: 100vh;
+      padding: 48px 24px 96px;
+    }
+    .pt-page {
+      max-width: 1200px; margin: 0 auto;
+      display: flex; flex-direction: column; gap: 48px;
+    }
+
+    /* Page title — pattern matches Tabs.html / MemoryCard.html */
+    .pt-page-title {
+      display: flex; align-items: baseline; gap: 14px;
+      padding: 0 4px 4px; border-bottom: 0.5px solid #D6CFC4;
+    }
+    .pt-page-title .eyebrow {
+      font-family: var(--font-display); font-weight: 500; font-size: 11px;
+      letter-spacing: 0.16em; text-transform: uppercase; color: #7A6F63;
+    }
+    .pt-page-title h1 {
+      font-family: var(--font-display); font-weight: 300; font-size: 28px;
+      letter-spacing: -0.01em; color: #1C1A17; margin: 0;
+    }
+    .pt-page-title .meta {
+      margin-left: auto;
+      font-family: var(--font-display); font-weight: 400; font-size: 12px;
+      color: #7A6F63;
+    }
+
+    .pt-section { display: flex; flex-direction: column; gap: 20px; }
+    .pt-section-label { display: flex; align-items: center; gap: 12px; }
+    .pt-section-label .num {
+      font-family: var(--font-display); font-weight: 500; font-size: 11px;
+      letter-spacing: 0.10em; text-transform: uppercase; color: #7A6F63;
+    }
+    .pt-section-label .rule { flex: 1; height: 0.5px; background: #D6CFC4; }
+    .pt-section-label .desc {
+      font-family: var(--font-display); font-style: italic; font-size: 14px;
+      color: #7A6F63; font-weight: 400;
+    }
+
+    /* Stage frame around each variant — keeps the parchment field visible */
+    .pt-stage {
+      background: #F7F4EE;
+      padding: 40px 56px;
+      border: 0.5px solid #D6CFC4;
+      border-radius: 10px;
+    }
+    .pt-stage--narrow { max-width: 760px; }
+
+    .pt-caption {
+      margin-top: 14px;
+      font-family: var(--font-display); font-weight: 400; font-size: 11px;
+      letter-spacing: 0.10em; text-transform: uppercase;
+      color: #7A6F63;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .pt-caption .dot { width: 4px; height: 4px; border-radius: 9999px; background: #C4B9A8; }
+
+    /* Substitution note */
+    .pt-future-note {
+      display: flex; gap: 12px; align-items: flex-start;
+      padding: 14px 18px;
+      background: rgba(140,115,85,0.06);
+      border: 0.5px solid rgba(140,115,85,0.30);
+      border-radius: 4px;
+      font-family: var(--font-display); font-weight: 400; font-size: 12px;
+      color: #3D3A35; line-height: 1.55;
+    }
+    .pt-future-note .tag {
+      font-family: var(--font-display); font-weight: 500; font-size: 10px;
+      letter-spacing: 0.10em; text-transform: uppercase;
+      padding: 3px 8px; border-radius: 2px;
+      background: rgba(140,115,85,0.14); color: #7A5F3E;
+      flex-shrink: 0;
+    }
+
+    /* Spec table */
+    .pt-spec {
+      display: grid;
+      grid-template-columns: 160px 1fr;
+      gap: 6px 24px;
+      font-family: var(--font-display); font-size: 12px;
+      color: #3D3A35;
+    }
+    .pt-spec dt {
+      font-weight: 500; font-size: 10px; letter-spacing: 0.10em;
+      text-transform: uppercase; color: #7A6F63;
+      padding-top: 2px;
+    }
+    .pt-spec dd { margin: 0; line-height: 1.55; }
+    .pt-spec dd code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 11px;
+      background: rgba(28,26,23,0.04); padding: 1px 5px; border-radius: 2px;
+    }
+  </style>
+
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+</head>
+<body class="mn-base">
+  <div id="root"></div>
+
+  <script type="text/babel" src="app/MemoryCard.jsx"></script>
+  <script type="text/babel" src="app/ProfileTimeline.jsx"></script>
+
+  <script type="text/babel" data-presets="env,react">
+    // ----------------------------------------------------------------
+    // Sample content — Margaret's life, told in order.
+    // Specifics over genericness.
+    // ----------------------------------------------------------------
+    const STORY_BIRTH = "She was born in the back bedroom on a wet Tuesday in November, the doctor late and the kettle going the whole time. Her mother said afterwards that the kettle was the only thing in the house that knew what it was doing. The name had been chosen for a fortnight already — Margaret, after the great-aunt who had taught school in Skibbereen.";
+
+    const STORY_FIRST_DAY = "On the first day of school she wore a coat too big and shoes a half-size too small, and she carried a slate her brother had used before her. The teacher, Miss Hennessy, asked the children their names and Margaret gave hers in full — Margaret Eileen Walsh — because her grandmother had told her that names ought to be spoken whole when offered to strangers.";
+
+    const STORY_WEDDING = "We were married on a Saturday in the small church above the harbour, the one with the blue door her mother said no church should have. She wore her sister's dress taken in at the waist and a sprig of rosemary instead of a bouquet, because rosemary, she said, was for remembrance, and a wedding was nothing if not the beginning of a thing to be remembered.";
+
+    const STORY_GARDEN = "The Maple Street garden was never tidy, but it was always full. Tomatoes leaned against beans, the rosemary outgrew its bed by August, and somewhere in the middle she kept a stone from the old country that she would not explain to anyone. She said a garden ought to keep one secret of its own.";
+
+    const PHOTO_WEDDING = 'https://images.unsplash.com/photo-1519741497674-611481863552?w=1200&q=80&auto=format&fit=crop';
+
+    const AUTHOR_DAUGHTER = { name: 'Sarah Walsh',  status: 'living' };
+    const AUTHOR_SON      = { name: 'Daniel Walsh', status: 'living' };
+    const AUTHOR_NIECE    = { name: 'Eileen Walsh', status: 'living' };
+
+    // Two-year populated dataset — 1974 (two Standard) + 1981 (one Featured)
+    const POPULATED = [
+      {
+        year: '1974',
+        items: [
+          {
+            date: 'November 1974',
+            title: 'The day she was born',
+            excerpt: STORY_BIRTH,
+            author: AUTHOR_DAUGHTER,
+            timestamp: 'Added April 2024',
+            tags: ['Childhood', 'Cork'],
+            variant: 'standard',
+          },
+          {
+            date: 'August 1974',
+            title: 'The Maple Street garden',
+            excerpt: STORY_GARDEN,
+            author: AUTHOR_SON,
+            timestamp: 'Added May 2024',
+            tags: ['Garden', 'Family home'],
+            variant: 'standard',
+          },
+        ],
+      },
+      {
+        year: '1981',
+        items: [
+          {
+            date: '12 September 1981',
+            title: 'The day they were married',
+            excerpt: STORY_WEDDING,
+            media: PHOTO_WEDDING,
+            mediaAspect: '16:9',
+            author: AUTHOR_NIECE,
+            timestamp: '2 weeks ago',
+            tags: ['Marriage', 'Family gathering'],
+            variant: 'featured',     // first/most-significant — Gold border
+          },
+        ],
+      },
+    ];
+
+    // Larger dataset for the load-more variant
+    const POPULATED_LOADMORE = [
+      {
+        year: '1981',
+        items: [
+          {
+            date: '12 September 1981',
+            title: 'The day they were married',
+            excerpt: STORY_WEDDING,
+            media: PHOTO_WEDDING,
+            mediaAspect: '16:9',
+            author: AUTHOR_NIECE,
+            timestamp: '2 weeks ago',
+            tags: ['Marriage', 'Family gathering'],
+            variant: 'featured',
+          },
+          {
+            date: 'Spring 1981',
+            title: 'Her first day of school',
+            excerpt: STORY_FIRST_DAY,
+            author: AUTHOR_DAUGHTER,
+            timestamp: 'Added April 2024',
+            tags: ['Childhood', 'Schooling'],
+            variant: 'standard',
+          },
+        ],
+      },
+    ];
+
+    // ----------------------------------------------------------------
+    // Page scaffolding
+    // ----------------------------------------------------------------
+    function StackedSection({ eyebrow, title, children }) {
+      return (
+        <section className="pt-section">
+          <div className="pt-section-label">
+            <span className="num">{eyebrow}</span>
+            <span className="rule" />
+            <span className="desc">{title}</span>
+          </div>
+          {children}
+        </section>
+      );
+    }
+
+    function Caption({ children }) {
+      return (
+        <div className="pt-caption">
+          <span className="dot" />
+          <span>{children}</span>
+        </div>
+      );
+    }
+
+    function App() {
+      const [loading, setLoading] = React.useState(false);
+
+      const handleLoadMore = () => {
+        setLoading(true);
+        setTimeout(() => setLoading(false), 1400);
+      };
+
+      return (
+        <div className="pt-page">
+          <div className="pt-page-title">
+            <span className="eyebrow">P11</span>
+            <h1>Profile timeline / memory list</h1>
+            <span className="meta">S4 · Person Profile · Memories tab</span>
+          </div>
+
+          <div className="pt-future-note">
+            <span className="tag">Type substitution</span>
+            <span>
+              <strong style={{ fontWeight: 500, color: '#1C1A17' }}>Plus Jakarta Sans</strong>
+              {' '}is the UI face throughout (the brief's "Avenir Next") and{' '}
+              <strong style={{ fontWeight: 500, color: '#1C1A17' }}>Cormorant Garamond</strong>
+              {' '}is the story face used for the empty-state line (the brief's "Adobe Caslon Pro").
+              All weights, sizes, casing, spacing, and structural rules from the P11 brief are
+              applied exactly. P05 cards and the Divider component are referenced — never redefined.
+            </span>
+          </div>
+
+          {/* ============================================================ */}
+          {/* 01 — Populated timeline                                       */}
+          {/* ============================================================ */}
+          <StackedSection
+            eyebrow="01 — Populated"
+            title="Toolbar at top · two year groups (1974, 1981) · two Standard P05 cards under the first, one Featured P05 card under the second · ghost link at the bottom. Cards float on Parchment — no list wrapper, no panel."
+          >
+            <div className="pt-stage pt-stage--narrow">
+              <ProfileTimeline
+                firstName="Margaret"
+                groups={POPULATED}
+                state="populated"
+                defaultSort="oldest"
+              />
+              <Caption>
+                Toolbar · YearDivider 1974 · 2× Standard · YearDivider 1981 · 1× Featured · Ghost link
+              </Caption>
+            </div>
+          </StackedSection>
+
+          {/* ============================================================ */}
+          {/* 02 — Empty state                                              */}
+          {/* ============================================================ */}
+          <StackedSection
+            eyebrow="02 — Empty state"
+            title="No memories yet. Replaces the entire timeline content. Centered Cormorant italic line + a single Primary CTA. An invitation, never an error."
+          >
+            <div className="pt-stage pt-stage--narrow">
+              <ProfileTimeline
+                firstName="Margaret"
+                state="empty"
+              />
+              <Caption>Cormorant Garamond italic 17px · Primary Gold "Add the first memory"</Caption>
+            </div>
+          </StackedSection>
+
+          {/* ============================================================ */}
+          {/* 03 — Load more                                                */}
+          {/* ============================================================ */}
+          <StackedSection
+            eyebrow="03 — Load more"
+            title="When more than 10 memories exist, a Ghost button sits below the last card. Deliberate pagination — never infinite scroll. Click it to see the spinner-loading state."
+          >
+            <div className="pt-stage pt-stage--narrow">
+              <ProfileTimeline
+                firstName="Margaret"
+                groups={POPULATED_LOADMORE}
+                state="loadmore"
+                loading={loading}
+                onLoadMore={handleLoadMore}
+                defaultSort="newest"
+              />
+              <Caption>Ghost button · 13px Plus Jakarta 400 · loading swaps label for 16px Ink spinner</Caption>
+            </div>
+          </StackedSection>
+
+          {/* ============================================================ */}
+          {/* 04 — Specifications                                           */}
+          {/* ============================================================ */}
+          <StackedSection
+            eyebrow="04 — Specifications"
+            title="Hard rules. Every value below is sourced from the P11 brief and the Design System Spec v1.1 — no new values introduced."
+          >
+            <div className="pt-stage pt-stage--narrow">
+              <dl className="pt-spec">
+                <dt>Container</dt>
+                <dd>Sits directly on the page Parchment background <code>#F7F4EE</code>. No surface, no panel, no card wrapping the list. No alternating backgrounds. No left-rail line or dot markers.</dd>
+
+                <dt>Toolbar row</dt>
+                <dd>Full width · sort (left) + filter (right) · no background · no border · no card. Sort: ghost button — "Newest first" / "Oldest first", Plus Jakarta 400 13px Warm-Mid <code>#7A6F63</code>, 12px chevron at right. Filter: ghost button — 16px filter icon + "Filter by category", same type spec, opens a dropdown of tag categories.</dd>
+
+                <dt>Year divider</dt>
+                <dd>Divider component, "with-label" variant. Hairline <code>0.5px #D6CFC4</code> on each side, year centered inline. Label: Plus Jakarta 500 11px ALL CAPS <code>--letter-spacing-label</code> (<code>0.10em</code>) Warm-Mid. Padded <code>16px</code> horizontal from the rule. Margin <code>--space-8</code> (<code>32px</code>) above, <code>--space-6</code> (<code>24px</code>) below.</dd>
+
+                <dt>Cards</dt>
+                <dd>P05 Memory / Story cards stacked vertically below each year divider. Gap <code>--space-6</code> (<code>24px</code>). Standard variant default. Featured variant (Gold border) reserved for the first or most significant memory in the timeline.</dd>
+
+                <dt>Add a memory</dt>
+                <dd>Desktop: ghost link below the last card — "Add a memory for [first name]" — Plus Jakarta 400 13px Ink, underline offset 3px. Not a Primary button — that already lives in P04 at the top of the page. Mobile: sticky button at the bottom of the Memories tab viewport (host concern).</dd>
+
+                <dt>Empty state</dt>
+                <dd>Replaces the entire timeline. Centered. Cormorant Garamond italic 17px Warm-Mid: "No memories have been added yet." Below: a single Primary button "Add the first memory". Never an error tone.</dd>
+
+                <dt>Load more</dt>
+                <dd>When more than 10 memories exist. Ghost button "Load more memories" below the last card, centered, Plus Jakarta 400 13px. Loading swaps label for a 16px Ink spinner. No infinite scroll — deliberate pagination.</dd>
+
+                <dt>Spacing rhythm</dt>
+                <dd>Generous vertical breathing throughout. <code>32px</code> above year dividers, <code>24px</code> below. <code>24px</code> between stacked cards. <code>32px</code> above the trailing ghost link or load-more button. Density is not the brief.</dd>
+
+                <dt>Forbidden</dt>
+                <dd>No card or panel container around the list · no alternating row colors · no left-side vertical timeline line · no dot markers · no infinite scroll · no dense spacing · no background fill on toolbar · no Cormorant Garamond in toolbar, year labels, or controls · no override of P05 internal typography.</dd>
+              </dl>
+            </div>
+          </StackedSection>
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>

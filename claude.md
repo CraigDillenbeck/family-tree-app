@@ -705,6 +705,33 @@ Build in this order. Each component fully built and tested before moving to the 
 
 ---
 
+## Screen Fidelity Protocol
+Before building any screen, open its reference design in
+`design_handoff_prosapiam/design-reference/` and match it exactly —
+structure, spacing, hierarchy, type scale, and copy. The reference is the
+target; tokens.css and the spec are the rules; they must agree.
+
+| Screen      | Reference file                                              |
+| ----------- | ----------------------------------------------------------- |
+| Landing     | design-reference/Landing Page.html                          |
+| Onboarding  | design-reference/Onboarding.html                            |
+| Dashboard   | design-reference/Dashboard.html                             |
+| Tree canvas | design-reference/FamilyTreeView.html                        |
+| Profile     | design-reference/ProfileHeader.html + ProfileTimeline.html  |
+
+Each .html is a design-canvas presentation showing multiple artboards
+(desktop + mobile breakpoints, plus empty/switched states). The screen
+shell is the .html; the real markup + scoped styles are in the imported
+app/*.jsx components — lift exact values from there. Reference only —
+never import or ship these JSX files.
+
+After building each screen, compare side-by-side with its reference and
+reconcile every difference in layout, spacing, type scale, and copy
+before marking it done. HTML reference is authoritative for layout;
+tokens.css is authoritative for values; the spec resolves conflicts.
+
+---
+
 ## Admin Dashboard (/admin)
 
 Internal founder dashboard. Password protected via `ADMIN_PASSWORD` env variable checked in `+layout.server.ts`. Never indexed by search engines (noindex header). Desktop only — no mobile optimization needed.
@@ -986,6 +1013,10 @@ The product's visual + content system lives in `design_handoff_prosapiam/`. **Re
 - **Reference UI** in `design_handoff_prosapiam/reference-ui/` is a **React fidelity mock** — LOOK
   ONLY. Never import from it and never ship it. The core atoms are already ported to **Svelte 5**
   in `design_handoff_prosapiam/svelte/lib/components/ui/` — copy those into `src/lib/components/ui/`.
+- **Screen designs** in `design_handoff_prosapiam/design-reference/` are canonical runnable screen
+  references (Landing, Onboarding, Dashboard, Tree canvas, Profile) plus component patterns — LOOK
+  ONLY. See its `README.md`. Never import or ship these React/JSX files; rebuild each screen as a
+  Svelte 5 component to match.
 - **Build spec:** `design_handoff_prosapiam/spec/ComponentBrief.txt` (grep by component name) and
   `spec/DesignSpec.txt` (authoritative). If anything disagrees, the spec wins.
 

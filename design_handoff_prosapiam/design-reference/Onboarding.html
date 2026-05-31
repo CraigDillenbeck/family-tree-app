@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>PROSAPIAM — Onboarding</title>
+
+  <!-- Design-system tokens (colors, scale, spacing).
+       Cormorant Garamond, Young Serif, and Plus Jakarta Sans (UI face) are all
+       self-hosted and loaded by tokens.css. -->
+  <link rel="stylesheet" href="styles/tokens.css" />
+
+  <!-- UI face (Plus Jakarta Sans) is self-hosted and loaded by tokens.css. -->
+
+  <style>
+    /* Young Serif — display typeface (kept available even though the
+       onboarding moments are mostly Cormorant italic). */
+    @font-face {
+      font-family: 'Young Serif';
+      font-style: normal;
+      font-weight: 300;
+      font-display: swap;
+      src: url('uploads/YoungSerif-Light.woff2') format('woff2');
+    }
+    @font-face {
+      font-family: 'Young Serif';
+      font-style: normal;
+      font-weight: 500;
+      font-display: swap;
+      src: url('uploads/YoungSerif-Medium.woff2') format('woff2');
+    }
+    @font-face {
+      font-family: 'Young Serif';
+      font-style: normal;
+      font-weight: 400;
+      font-display: swap;
+      src: url('uploads/YoungSerif-Medium.woff2') format('woff2');
+    }
+
+    body {
+      margin: 0;
+      background: #f0eee9;
+      font-family: 'Plus Jakarta Sans', 'Helvetica Neue', Arial, sans-serif;
+      color: #1C1A17;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+    a { color: inherit; }
+
+    /* Spinner keyframe for OBSpinner */
+    @keyframes obSpin { to { transform: rotate(360deg); } }
+  </style>
+
+  <!-- React + Babel -->
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+</head>
+
+<body>
+  <div id="root"></div>
+
+  <!-- Onboarding screens (self-contained, no atoms.jsx dependency) -->
+  <script type="text/babel" src="app/Onboarding.jsx"></script>
+
+  <!-- DesignCanvas wrapper -->
+  <script type="text/babel" src="design-canvas.jsx"></script>
+
+  <!-- App -->
+  <script type="text/babel" data-presets="env,react">
+    function App() {
+      return (
+        <DesignCanvas
+          title="PROSAPIAM · Onboarding"
+          subtitle="Responsive web onboarding flow · The four screens a new user sees after signing up on the Landing Page. Desktop + mobile breakpoints. Auth lives on the Landing Page; the user arrives here already signed in."
+        >
+          <DCSection
+            id="welcome"
+            title="01 — Welcome"
+            subtitle={'The first moment after signing up. Editorial italic salutation on Parchment, inset archival frame. \u201CEvery family tree begins the same way.\u201D'}
+          >
+            <DCArtboard id="welcome-desktop" label="Desktop · 1440 × 900" width={1440} height={900}>
+              <OBWelcomeArtboard variant="desktop" />
+            </DCArtboard>
+            <DCArtboard id="welcome-mobile" label="Mobile · 390 × 780" width={390} height={780}>
+              <OBWelcomeArtboard variant="mobile" />
+            </DCArtboard>
+          </DCSection>
+
+          <DCSection
+            id="begin"
+            title="02 — Begin with yourself"
+            subtitle={'The first-leaf form. Desktop puts the live preview node to the left of the form; mobile stacks it above. Border turns Gold when the given name is filled.'}
+          >
+            <DCArtboard id="begin-desktop" label="Desktop · 1440 × 980" width={1440} height={980}>
+              <OBBeginArtboard variant="desktop" />
+            </DCArtboard>
+            <DCArtboard id="begin-mobile" label="Mobile · 390 × 1080" width={390} height={1080}>
+              <OBBeginArtboard variant="mobile" />
+            </DCArtboard>
+          </DCSection>
+
+          <DCSection
+            id="success"
+            title="03 — First leaf"
+            subtitle={'Confirmation. Sage check, italic pull-quote, single primary CTA to the tree.'}
+          >
+            <DCArtboard id="success-desktop" label="Desktop · 1440 × 800" width={1440} height={800}>
+              <OBSuccessArtboard variant="desktop" />
+            </DCArtboard>
+            <DCArtboard id="success-mobile" label="Mobile · 390 × 720" width={390} height={720}>
+              <OBSuccessArtboard variant="mobile" />
+            </DCArtboard>
+          </DCSection>
+
+          <DCSection
+            id="forgot"
+            title="04 — Forgot password"
+            subtitle={'Separate recovery flow, reachable from the Landing Page sign-in panel. Two stages: enter email, then a sent-confirmation state.'}
+          >
+            <DCArtboard id="forgot-desktop" label="Desktop · 1440 × 800" width={1440} height={800}>
+              <OBForgotArtboard variant="desktop" />
+            </DCArtboard>
+            <DCArtboard id="forgot-mobile" label="Mobile · 390 × 760" width={390} height={760}>
+              <OBForgotArtboard variant="mobile" />
+            </DCArtboard>
+          </DCSection>
+        </DesignCanvas>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>

@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>PROSAPIAM — Landing Page</title>
+
+  <!-- Design-system tokens (colors, scale, spacing). Cormorant Garamond,
+       Young Serif, and Plus Jakarta Sans (UI face) are all self-hosted and
+       loaded by tokens.css. -->
+  <link rel="stylesheet" href="styles/tokens.css" />
+
+  <!-- UI face (Plus Jakarta Sans) is self-hosted and loaded by tokens.css. -->
+
+  <style>
+    /* Young Serif — display typeface for the landing page.
+       Light + Medium provided as woff2 by brand. */
+    @font-face {
+      font-family: 'Young Serif';
+      font-style: normal;
+      font-weight: 300;
+      font-display: swap;
+      src: url('uploads/YoungSerif-Light.woff2') format('woff2');
+    }
+    @font-face {
+      font-family: 'Young Serif';
+      font-style: normal;
+      font-weight: 500;
+      font-display: swap;
+      src: url('uploads/YoungSerif-Medium.woff2') format('woff2');
+    }
+    /* The Medium weight also covers the 400 fallback so any default
+       text without explicit weight still renders in the brand face. */
+    @font-face {
+      font-family: 'Young Serif';
+      font-style: normal;
+      font-weight: 400;
+      font-display: swap;
+      src: url('uploads/YoungSerif-Medium.woff2') format('woff2');
+    }
+
+    body {
+      margin: 0;
+      background: #f0eee9;
+      font-family: 'Plus Jakarta Sans', 'Helvetica Neue', Arial, sans-serif;
+      color: #1C1A17;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    /* Reset link defaults so anchor tags inside the landing inherit the
+       carefully styled inline rules instead of browser blue. */
+    a { color: inherit; }
+  </style>
+
+  <!-- React + Babel -->
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+</head>
+
+<body>
+  <div id="root"></div>
+
+  <!-- Approved P05 Memory / Story Card — referenced by Section 04. -->
+  <script type="text/babel" src="app/MemoryCard.jsx"></script>
+
+  <!-- Landing-page sections and composite artboards. -->
+  <script type="text/babel" src="app/LandingPage.jsx"></script>
+
+  <!-- DesignCanvas wrapper -->
+  <script type="text/babel" src="design-canvas.jsx"></script>
+
+  <!-- App -->
+  <script type="text/babel" data-presets="env,react">
+    function App() {
+      return (
+        <DesignCanvas
+          title="PROSAPIAM · Landing Page"
+          subtitle="Public-facing surface · Two breakpoints · Desktop ≥1024px · Mobile <768px"
+        >
+          <DCSection
+            id="landing-breakpoints"
+            title="Landing — desktop & mobile"
+            subtitle="Five sections + footer. Hero (Ink) → Product (Parchment) → Features (Surface-1) → Memory (Parchment) → Final CTA (Ink) → Footer. The page alternates surfaces to create natural rhythm; no shadows, no gradients, no pure white or pure black."
+          >
+            <DCArtboard id="desktop" label="Desktop · 1440 × 5000" width={1440} height={5000}>
+              <LPDesktopArtboard />
+            </DCArtboard>
+
+            <DCArtboard id="mobile" label="Mobile · 390 × 6300" width={390} height={6300}>
+              <LPMobileArtboard />
+            </DCArtboard>
+          </DCSection>
+        </DesignCanvas>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>

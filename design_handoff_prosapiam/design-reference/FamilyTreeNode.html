@@ -1,0 +1,584 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>PROSAPIAM — P01 Family Tree Node</title>
+  <link rel="stylesheet" href="styles/app.css" />
+  <style>
+    body {
+      background: #F7F4EE;
+      min-height: 100vh;
+      padding: 48px 24px 96px;
+    }
+    .ft-page {
+      max-width: 1200px; margin: 0 auto;
+      display: flex; flex-direction: column; gap: 48px;
+    }
+
+    /* Page title — same pattern as PersonSummaryCard.html / MemoryCard.html */
+    .ft-page-title {
+      display: flex; align-items: baseline; gap: 14px;
+      padding: 0 4px 4px; border-bottom: 0.5px solid #D6CFC4;
+    }
+    .ft-page-title .eyebrow {
+      font-family: var(--font-display); font-weight: 500; font-size: 11px;
+      letter-spacing: 0.16em; text-transform: uppercase; color: #7A6F63;
+    }
+    .ft-page-title h1 {
+      font-family: var(--font-display); font-weight: 300; font-size: 28px;
+      letter-spacing: -0.01em; color: #1C1A17; margin: 0;
+    }
+    .ft-page-title .meta {
+      margin-left: auto;
+      font-family: var(--font-display); font-weight: 400; font-size: 12px;
+      color: #7A6F63;
+    }
+
+    /* Section labels */
+    .ft-section { display: flex; flex-direction: column; gap: 20px; }
+    .ft-section-label { display: flex; align-items: center; gap: 12px; }
+    .ft-section-label .num {
+      font-family: var(--font-display); font-weight: 500; font-size: 11px;
+      letter-spacing: 0.10em; text-transform: uppercase; color: #7A6F63;
+    }
+    .ft-section-label .rule { flex: 1; height: 0.5px; background: #D6CFC4; }
+    .ft-section-label .desc {
+      font-family: var(--font-display); font-style: italic; font-size: 14px;
+      color: #7A6F63; font-weight: 400;
+    }
+
+    /* Canvas stage — Parchment surface to honour the "node floats on paper" rule.
+       This is a frame, not a card. It must read as the canvas the nodes sit on. */
+    .ft-stage {
+      background: #F7F4EE;
+      padding: 56px 32px;
+      border: 0.5px solid #D6CFC4;
+      border-radius: 10px;
+      position: relative;
+      overflow: hidden;
+    }
+    /* Subtle parchment grain — barely there, only inside stages */
+    .ft-stage::before {
+      content: ''; position: absolute; inset: 0; pointer-events: none;
+      opacity: 0.5;
+      background-image:
+        radial-gradient(rgba(28,26,23,0.045) 1px, transparent 1px),
+        radial-gradient(rgba(28,26,23,0.025) 1px, transparent 1px);
+      background-size: 3px 3px, 7px 7px;
+      background-position: 0 0, 1px 2px;
+      mix-blend-mode: multiply;
+    }
+    .ft-stage > * { position: relative; }
+
+    .ft-stage--row {
+      display: flex; flex-wrap: wrap; align-items: flex-end; gap: 56px;
+      justify-content: flex-start;
+    }
+
+    .ft-stage--centered {
+      display: flex; align-items: center; justify-content: center;
+    }
+
+    /* A specimen — node + caption beneath */
+    .ft-specimen {
+      display: flex; flex-direction: column; align-items: center; gap: 18px;
+    }
+    .ft-specimen .label {
+      font-family: var(--font-display); font-weight: 500; font-size: 10px;
+      letter-spacing: 0.10em; text-transform: uppercase;
+      color: #7A6F63;
+      text-align: center;
+    }
+    .ft-specimen .label .sub {
+      display: block; margin-top: 4px;
+      font-weight: 400; letter-spacing: 0.04em; text-transform: none;
+      color: #C4B9A8; font-size: 11px;
+    }
+
+    /* Pair row */
+    .ft-pair {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+    }
+    @media (max-width: 880px) {
+      .ft-pair { grid-template-columns: 1fr; }
+    }
+
+    /* Substitution note */
+    .ft-future-note {
+      display: flex; gap: 12px; align-items: flex-start;
+      padding: 14px 18px;
+      background: rgba(140,115,85,0.06);
+      border: 0.5px solid rgba(140,115,85,0.30);
+      border-radius: 4px;
+      font-family: var(--font-display); font-weight: 400; font-size: 12px;
+      color: #3D3A35; line-height: 1.55;
+    }
+    .ft-future-note .tag {
+      font-family: var(--font-display); font-weight: 500; font-size: 10px;
+      letter-spacing: 0.10em; text-transform: uppercase;
+      padding: 3px 8px; border-radius: 2px;
+      background: rgba(140,115,85,0.14); color: #7A5F3E;
+      flex-shrink: 0;
+    }
+
+    /* Connector preview — thin Warm-Light strokes between mini-nodes.
+       Used in section 10 to show the node in genuine canvas context. */
+    .ft-connectors-stage {
+      position: relative;
+      min-height: 360px;
+      padding: 32px;
+    }
+    .ft-tree-row {
+      display: flex; align-items: center; justify-content: center;
+      gap: 64px; position: relative;
+    }
+    .ft-tree-row + .ft-tree-row { margin-top: 88px; }
+
+    /* SVG connector layer */
+    .ft-connector-svg {
+      position: absolute; inset: 0;
+      width: 100%; height: 100%;
+      pointer-events: none;
+    }
+  </style>
+
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+</head>
+<body class="mn-base">
+  <div id="root"></div>
+
+  <script type="text/babel" src="app/FamilyTreeNode.jsx"></script>
+
+  <script type="text/babel" data-presets="env,react">
+    // ------------------------------------------------------------------
+    // Sample people — specific names, dates that read like real records.
+    // Photo URLs match the archival imagery vibe (warm, slightly desaturated).
+    // ------------------------------------------------------------------
+    const PHOTO_MAEVE   = 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=300&q=80&auto=format&fit=crop&crop=faces&face=1';
+    const PHOTO_DECLAN  = 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&q=80&auto=format&fit=crop&crop=faces';
+    const PHOTO_NIAMH   = 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=300&q=80&auto=format&fit=crop&crop=faces';
+    const PHOTO_RUTH    = 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=300&q=80&auto=format&fit=crop&crop=faces';
+    const PHOTO_THOMAS  = 'https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=300&q=80&auto=format&fit=crop&crop=faces';
+    const PHOTO_EILEEN  = 'https://images.unsplash.com/photo-1581579438747-104c53e7e84a?w=300&q=80&auto=format&fit=crop&crop=faces';
+
+    // ------------------------------------------------------------------
+    // Section wrapper — same shape as the rest of the component sheets.
+    // ------------------------------------------------------------------
+    function StackedSection({ eyebrow, title, children }) {
+      return (
+        <section className="ft-section">
+          <div className="ft-section-label">
+            <span className="num">{eyebrow}</span>
+            <span className="rule" />
+            <span className="desc">{title}</span>
+          </div>
+          {children}
+        </section>
+      );
+    }
+
+    function Specimen({ label, sub, children }) {
+      return (
+        <div className="ft-specimen">
+          {children}
+          <div className="label">
+            {label}
+            {sub && <span className="sub">{sub}</span>}
+          </div>
+        </div>
+      );
+    }
+
+    // ------------------------------------------------------------------
+    // App
+    // ------------------------------------------------------------------
+    function App() {
+      return (
+        <div className="ft-page">
+          <div className="ft-page-title">
+            <span className="eyebrow">P01</span>
+            <h1>Family tree node</h1>
+            <span className="meta">Family tree canvas · Spatial navigation</span>
+          </div>
+
+          <div className="ft-future-note">
+            <span className="tag">Type substitution</span>
+            <span>
+              <strong style={{ fontWeight: 500, color: '#1C1A17' }}>Plus Jakarta Sans replaces Avenir Next</strong>
+              {' '}as the UI face — the licensed typeface in this design system. Name at weight 500,
+              dates at weight 400, sizes 13/11 at full zoom and 11 at medium, ALL CAPS labels at 10px.
+              Spacing and casing rules from the brief are applied exactly.
+            </span>
+          </div>
+
+          {/* ============================================================ */}
+          {/* 01 — Full zoom · living                                       */}
+          {/* ============================================================ */}
+          <StackedSection
+            eyebrow="01 — Full zoom · living"
+            title="Default state. 48px photo avatar, full name, &ldquo;b. 1948&rdquo;, Sage status dot beneath the node."
+          >
+            <div className="ft-stage ft-stage--centered">
+              <Specimen label="Default" sub="Surface-1 · 0.5px border · no elevation">
+                <FamilyTreeNode
+                  name="Maeve O'Sullivan"
+                  photo={PHOTO_MAEVE}
+                  status="living"
+                  birthYear={1948}
+                  zoom="full"
+                  state="default"
+                />
+              </Specimen>
+            </div>
+          </StackedSection>
+
+          {/* ============================================================ */}
+          {/* 02 — Full zoom · deceased                                     */}
+          {/* ============================================================ */}
+          <StackedSection
+            eyebrow="02 — Full zoom · deceased"
+            title="Avatar dimmed by 25% grayscale. Date range &ldquo;1932 – 2011&rdquo;. Terra status dot — a quiet, dignified marker."
+          >
+            <div className="ft-stage ft-stage--centered">
+              <Specimen label="Deceased" sub="grayscale(0.25) · 1932 – 2011 · Terra dot">
+                <FamilyTreeNode
+                  name="Eileen Walsh"
+                  photo={PHOTO_EILEEN}
+                  status="deceased"
+                  birthYear={1932}
+                  deathYear={2011}
+                  zoom="full"
+                  state="default"
+                />
+              </Specimen>
+            </div>
+          </StackedSection>
+
+          {/* ============================================================ */}
+          {/* 03 — Full zoom · selected                                     */}
+          {/* ============================================================ */}
+          <StackedSection
+            eyebrow="03 — Full zoom · selected"
+            title="The Gold border (2px) is the primary selected signal — unmistakable without being aggressive."
+          >
+            <div className="ft-stage ft-stage--centered">
+              <Specimen label="Selected" sub="border-active 2px · Gold #8C7355">
+                <FamilyTreeNode
+                  name="Declan O'Sullivan"
+                  photo={PHOTO_DECLAN}
+                  status="living"
+                  birthYear={1976}
+                  zoom="full"
+                  state="selected"
+                />
+              </Specimen>
+            </div>
+          </StackedSection>
+
+          {/* ============================================================ */}
+          {/* 04 — Full zoom · viewing                                      */}
+          {/* ============================================================ */}
+          <StackedSection
+            eyebrow="04 — Full zoom · viewing"
+            title="The person whose profile is currently open in the detail panel. 3px Gold accent on the left edge — quieter than selected, persistent across navigation."
+          >
+            <div className="ft-stage ft-stage--centered">
+              <Specimen label="Viewing" sub="3px Gold left bar · profile panel open">
+                <FamilyTreeNode
+                  name="Niamh O'Sullivan"
+                  photo={PHOTO_NIAMH}
+                  status="living"
+                  birthYear={1981}
+                  zoom="full"
+                  state="viewing"
+                />
+              </Specimen>
+            </div>
+          </StackedSection>
+
+          {/* ============================================================ */}
+          {/* 05 — Root person                                              */}
+          {/* ============================================================ */}
+          <StackedSection
+            eyebrow="05 — Root person"
+            title="Gold-Light fill — the only node in the tree with a different background. Orients the user: this is whose tree they are looking at."
+          >
+            <div className="ft-stage ft-stage--centered">
+              <Specimen label="Root person" sub="Gold-Light #BFA882 fill">
+                <FamilyTreeNode
+                  name="Thomas O'Sullivan"
+                  photo={PHOTO_THOMAS}
+                  status="living"
+                  birthYear={1979}
+                  zoom="full"
+                  state="default"
+                  kind="root"
+                />
+              </Specimen>
+            </div>
+          </StackedSection>
+
+          {/* ============================================================ */}
+          {/* 06 — Zoom variants                                            */}
+          {/* ============================================================ */}
+          <StackedSection
+            eyebrow="06 — Zoom variants"
+            title="The node condenses gracefully as the canvas zooms out. Dates drop first, then the name. The face carries the node at every scale."
+          >
+            <div className="ft-stage ft-stage--row" style={{ justifyContent: 'space-around' }}>
+              <Specimen label="Full · 100%" sub="48 avatar · name · dates · dot">
+                <FamilyTreeNode
+                  name="Maeve O'Sullivan"
+                  photo={PHOTO_MAEVE}
+                  status="living"
+                  birthYear={1948}
+                  zoom="full"
+                />
+              </Specimen>
+              <Specimen label="Medium · 75%" sub="32 avatar · name · dot">
+                <FamilyTreeNode
+                  name="Maeve O'Sullivan"
+                  photo={PHOTO_MAEVE}
+                  status="living"
+                  birthYear={1948}
+                  zoom="medium"
+                />
+              </Specimen>
+              <Specimen label="Compact · 50%" sub="24 avatar only · 40px node · 44px tap target">
+                <FamilyTreeNode
+                  name="Maeve O'Sullivan"
+                  photo={PHOTO_MAEVE}
+                  status="living"
+                  birthYear={1948}
+                  zoom="compact"
+                />
+              </Specimen>
+            </div>
+          </StackedSection>
+
+          {/* ============================================================ */}
+          {/* 07 — Add person                                               */}
+          {/* ============================================================ */}
+          <StackedSection
+            eyebrow="07 — Add person"
+            title="Dashed circle, 48px, + icon centred. Appears at the end of a relationship connector as an invitation to add a family member."
+          >
+            <div className="ft-stage ft-stage--row" style={{ justifyContent: 'space-around' }}>
+              <Specimen label="Default" sub="dashed border · Warm-Light + icon">
+                <FamilyTreeNode kind="add" />
+              </Specimen>
+              <Specimen label="Hover" sub="border-strong · Ink + icon">
+                <FamilyTreeNode kind="add" state="hover" />
+              </Specimen>
+            </div>
+          </StackedSection>
+
+          {/* ============================================================ */}
+          {/* 08 — Unknown person                                           */}
+          {/* ============================================================ */}
+          <StackedSection
+            eyebrow="08 — Unknown person"
+            title="A known relationship whose identity is not yet recorded. Italic Warm-Mid &ldquo;Unknown&rdquo; · &ldquo;?&rdquo; for dates · Warm-Light status dot."
+          >
+            <div className="ft-stage ft-stage--centered">
+              <Specimen label="Unknown" sub="? initial · italic name · Warm-Light dot">
+                <FamilyTreeNode
+                  kind="unknown"
+                  status="unknown"
+                  zoom="full"
+                />
+              </Specimen>
+            </div>
+          </StackedSection>
+
+          {/* ============================================================ */}
+          {/* 09 — Full state matrix                                        */}
+          {/* ============================================================ */}
+          <StackedSection
+            eyebrow="09 — State matrix"
+            title="All interactive states side by side. The Gold border on Selected is the most visually prominent — by design."
+          >
+            <div className="ft-stage ft-stage--row" style={{ justifyContent: 'space-around' }}>
+              <Specimen label="Default">
+                <FamilyTreeNode
+                  name="Declan O'Sullivan" photo={PHOTO_DECLAN}
+                  status="living" birthYear={1976}
+                  zoom="full" state="default"
+                />
+              </Specimen>
+              <Specimen label="Hover" sub="Surface-3 · border-strong">
+                <FamilyTreeNode
+                  name="Declan O'Sullivan" photo={PHOTO_DECLAN}
+                  status="living" birthYear={1976}
+                  zoom="full" state="hover"
+                />
+              </Specimen>
+              <Specimen label="Selected" sub="2px Gold border">
+                <FamilyTreeNode
+                  name="Declan O'Sullivan" photo={PHOTO_DECLAN}
+                  status="living" birthYear={1976}
+                  zoom="full" state="selected"
+                />
+              </Specimen>
+              <Specimen label="Viewing" sub="3px Gold left bar">
+                <FamilyTreeNode
+                  name="Declan O'Sullivan" photo={PHOTO_DECLAN}
+                  status="living" birthYear={1976}
+                  zoom="full" state="viewing"
+                />
+              </Specimen>
+              <Specimen label="Focus" sub="2px Ink @20% offset 2">
+                <FamilyTreeNode
+                  name="Declan O'Sullivan" photo={PHOTO_DECLAN}
+                  status="living" birthYear={1976}
+                  zoom="full" state="focus"
+                />
+              </Specimen>
+              <Specimen label="Disabled" sub="opacity 0.40">
+                <FamilyTreeNode
+                  name="Declan O'Sullivan" photo={PHOTO_DECLAN}
+                  status="living" birthYear={1976}
+                  zoom="full" state="disabled"
+                />
+              </Specimen>
+            </div>
+          </StackedSection>
+
+          {/* ============================================================ */}
+          {/* 10 — In context · canvas excerpt                              */}
+          {/* ============================================================ */}
+          <StackedSection
+            eyebrow="10 — In context · tree canvas"
+            title="Three generations on the Parchment canvas. Connectors are 0.5px Warm-Light. The viewing state shows whose profile is open; the add-person node invites a sibling."
+          >
+            <div className="ft-stage ft-connectors-stage">
+              {/* SVG connectors layer */}
+              <svg className="ft-connector-svg" viewBox="0 0 800 360" preserveAspectRatio="none">
+                {/* Generation 1 → 2 (Patrick + Eileen → Thomas) */}
+                {/* Top center-bottom of parents → bus → top of child */}
+                <path d="M 240 100 L 240 130 L 400 130 L 400 160" stroke="#C4B9A8" strokeWidth="0.5" fill="none" />
+                <path d="M 560 100 L 560 130 L 400 130" stroke="#C4B9A8" strokeWidth="0.5" fill="none" />
+                {/* Spouse line between Patrick and Eileen */}
+                <path d="M 280 70 L 520 70" stroke="#C4B9A8" strokeWidth="0.5" fill="none" strokeDasharray="3 3" />
+                {/* Generation 2 → 3 (Thomas + Maeve → Niamh, Declan, +) */}
+                <path d="M 400 240 L 400 270 L 240 270 L 240 290" stroke="#C4B9A8" strokeWidth="0.5" fill="none" />
+                <path d="M 400 270 L 400 290" stroke="#C4B9A8" strokeWidth="0.5" fill="none" />
+                <path d="M 400 270 L 560 270 L 560 290" stroke="#C4B9A8" strokeWidth="0.5" fill="none" />
+                {/* Spouse line Thomas + Maeve */}
+                <path d="M 440 200 L 600 200" stroke="#C4B9A8" strokeWidth="0.5" fill="none" strokeDasharray="3 3" />
+              </svg>
+
+              {/* Generation 1 — grandparents */}
+              <div className="ft-tree-row">
+                <FamilyTreeNode
+                  name="Patrick Walsh"
+                  status="deceased"
+                  birthYear={1925}
+                  deathYear={1998}
+                  zoom="full"
+                />
+                <FamilyTreeNode
+                  name="Eileen Walsh"
+                  photo={PHOTO_EILEEN}
+                  status="deceased"
+                  birthYear={1932}
+                  deathYear={2011}
+                  zoom="full"
+                />
+              </div>
+
+              {/* Generation 2 — root + spouse */}
+              <div className="ft-tree-row">
+                <FamilyTreeNode
+                  name="Thomas O'Sullivan"
+                  photo={PHOTO_THOMAS}
+                  status="living"
+                  birthYear={1979}
+                  zoom="full"
+                  kind="root"
+                />
+                <FamilyTreeNode
+                  name="Maeve O'Sullivan"
+                  photo={PHOTO_MAEVE}
+                  status="living"
+                  birthYear={1948}
+                  zoom="full"
+                />
+              </div>
+
+              {/* Generation 3 — children */}
+              <div className="ft-tree-row">
+                <FamilyTreeNode
+                  name="Niamh O'Sullivan"
+                  photo={PHOTO_NIAMH}
+                  status="living"
+                  birthYear={2008}
+                  zoom="full"
+                  state="viewing"
+                />
+                <FamilyTreeNode
+                  name="Cillian O'Sullivan"
+                  photo={PHOTO_RUTH}
+                  status="living"
+                  birthYear={2011}
+                  zoom="full"
+                  state="selected"
+                />
+                <FamilyTreeNode kind="add" />
+              </div>
+            </div>
+          </StackedSection>
+
+          {/* ============================================================ */}
+          {/* 11 — In context · zoomed-out canvas                           */}
+          {/* ============================================================ */}
+          <StackedSection
+            eyebrow="11 — In context · zoomed-out canvas"
+            title="A wider tree at 75% zoom. The face becomes the carrier of the node — names compress, dates fall away. Still legibly human."
+          >
+            <div className="ft-stage" style={{ padding: '40px 32px' }}>
+              <div style={{ display: 'flex', justifyContent: 'center', gap: 24, flexWrap: 'wrap' }}>
+                <FamilyTreeNode name="Patrick Walsh" status="deceased" birthYear={1925} deathYear={1998} zoom="medium" />
+                <FamilyTreeNode name="Eileen Walsh" photo={PHOTO_EILEEN} status="deceased" birthYear={1932} deathYear={2011} zoom="medium" />
+                <FamilyTreeNode name="Thomas O'Sullivan" photo={PHOTO_THOMAS} status="living" birthYear={1979} zoom="medium" kind="root" />
+                <FamilyTreeNode name="Maeve O'Sullivan" photo={PHOTO_MAEVE} status="living" birthYear={1948} zoom="medium" />
+                <FamilyTreeNode name="Niamh O'Sullivan" photo={PHOTO_NIAMH} status="living" birthYear={2008} zoom="medium" />
+                <FamilyTreeNode name="Cillian O'Sullivan" photo={PHOTO_RUTH} status="living" birthYear={2011} zoom="medium" state="selected" />
+                <FamilyTreeNode kind="unknown" status="unknown" zoom="medium" />
+              </div>
+            </div>
+          </StackedSection>
+
+          {/* ============================================================ */}
+          {/* 12 — In context · compact canvas                              */}
+          {/* ============================================================ */}
+          <StackedSection
+            eyebrow="12 — In context · compact canvas"
+            title="At 50% zoom the canvas becomes a sea of faces. The node is essentially a labelled avatar chip — a person glimpsed at distance, still recognizable."
+          >
+            <div className="ft-stage" style={{ padding: '40px 32px' }}>
+              <div style={{ display: 'flex', justifyContent: 'center', gap: 16, flexWrap: 'wrap', alignItems: 'center' }}>
+                <FamilyTreeNode name="Patrick Walsh" status="deceased" birthYear={1925} deathYear={1998} zoom="compact" />
+                <FamilyTreeNode name="Eileen Walsh" photo={PHOTO_EILEEN} status="deceased" birthYear={1932} deathYear={2011} zoom="compact" />
+                <FamilyTreeNode name="Thomas O'Sullivan" photo={PHOTO_THOMAS} status="living" birthYear={1979} zoom="compact" kind="root" />
+                <FamilyTreeNode name="Maeve O'Sullivan" photo={PHOTO_MAEVE} status="living" birthYear={1948} zoom="compact" />
+                <FamilyTreeNode name="Niamh O'Sullivan" photo={PHOTO_NIAMH} status="living" birthYear={2008} zoom="compact" />
+                <FamilyTreeNode name="Cillian O'Sullivan" photo={PHOTO_RUTH} status="living" birthYear={2011} zoom="compact" state="selected" />
+                <FamilyTreeNode name="Declan O'Sullivan" photo={PHOTO_DECLAN} status="living" birthYear={1976} zoom="compact" />
+                <FamilyTreeNode kind="unknown" status="unknown" zoom="compact" />
+              </div>
+            </div>
+          </StackedSection>
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>

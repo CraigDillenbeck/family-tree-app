@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>PROSAPIAM — P04 Person Profile Header</title>
+  <link rel="stylesheet" href="styles/app.css" />
+  <style>
+    body {
+      background: #F7F4EE;
+      min-height: 100vh;
+      padding: 48px 24px 96px;
+    }
+    .ph-page {
+      max-width: 1200px; margin: 0 auto;
+      display: flex; flex-direction: column; gap: 48px;
+    }
+    .ph-page-title {
+      display: flex; align-items: baseline; gap: 14px;
+      padding: 0 4px 4px; border-bottom: 0.5px solid #D6CFC4;
+    }
+    .ph-page-title .eyebrow {
+      font-family: var(--font-display); font-weight: 500; font-size: 11px;
+      letter-spacing: 0.16em; text-transform: uppercase; color: #7A6F63;
+    }
+    .ph-page-title h1 {
+      font-family: var(--font-display); font-weight: 300; font-size: 28px;
+      letter-spacing: -0.01em; color: #1C1A17; margin: 0;
+    }
+    .ph-page-title .meta {
+      margin-left: auto;
+      font-family: var(--font-display); font-weight: 400; font-size: 12px;
+      color: #7A6F63;
+    }
+    .ph-section {
+      display: flex; flex-direction: column; gap: 16px;
+    }
+    .ph-section-label {
+      display: flex; align-items: center; gap: 12px;
+    }
+    .ph-section-label .num {
+      font-family: var(--font-display); font-weight: 500; font-size: 11px;
+      letter-spacing: 0.10em; text-transform: uppercase; color: #7A6F63;
+    }
+    .ph-section-label .rule {
+      flex: 1; height: 0.5px; background: #D6CFC4;
+    }
+    .ph-section-label .desc {
+      font-family: var(--font-body); font-style: italic; font-size: 14px;
+      color: #7A6F63;
+    }
+    .ph-frame {
+      background: #F7F4EE;
+      border: 0.5px solid #D6CFC4;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    /* Sticky tab strip beneath header (S4 page architecture) — included for context only */
+    .ph-tabs {
+      display: flex; gap: 0; padding: 0 64px;
+      background: #F7F4EE;
+      border-top: 0.5px solid #D6CFC4;
+    }
+    .ph-tabs .tab {
+      font-family: var(--font-display); font-weight: 500; font-size: 13px;
+      height: 44px; padding: 0 20px;
+      display: flex; align-items: center;
+      color: #7A6F63;
+      border-bottom: 2px solid transparent; margin-bottom: -1px;
+      cursor: default;
+    }
+    .ph-tabs .tab.active {
+      color: #1C1A17;
+      border-bottom-color: #8C7355;
+    }
+    .ph-tabs .tab .count {
+      margin-left: 8px;
+      background: #E5DDD2; color: #7A6F63;
+      font-weight: 500; font-size: 10px;
+      padding: 1px 7px; border-radius: 9999px;
+    }
+    .ph-future-note {
+      display: flex; gap: 12px; align-items: flex-start;
+      padding: 14px 18px;
+      background: rgba(140,115,85,0.06);
+      border: 0.5px solid rgba(140,115,85,0.30);
+      border-radius: 4px;
+      font-family: var(--font-display); font-weight: 400; font-size: 12px;
+      color: #3D3A35; line-height: 1.55;
+    }
+    .ph-future-note .tag {
+      font-family: var(--font-display); font-weight: 500; font-size: 10px;
+      letter-spacing: 0.10em; text-transform: uppercase;
+      padding: 3px 8px; border-radius: 2px;
+      background: rgba(140,115,85,0.14); color: #7A5F3E;
+      flex-shrink: 0;
+    }
+
+    /* Mobile-variant frame */
+    .ph-mobile-stage {
+      display: flex; justify-content: center;
+      padding: 32px;
+      background: #2A2724;
+      border-radius: 10px;
+    }
+    .ph-mobile-frame {
+      width: 390px;
+      background: #F7F4EE;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 30px 60px rgba(0,0,0,0.35);
+    }
+  </style>
+
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+</head>
+<body class="mn-base">
+  <div id="root"></div>
+
+  <script type="text/babel" src="app/ProfileHeader.jsx"></script>
+
+  <script type="text/babel" data-presets="env,react">
+    // Sample data for the two required states.
+    const LIVING = {
+      given: 'Sarah',
+      middle: 'Catherine',
+      family: 'Walsh',
+      // No photo — initials fallback demonstrates the spec'd no-photo treatment.
+      photo: null,
+      status: 'living',
+      birthYear: 1953,
+      relationship: 'Your aunt · Walsh family',
+      bio: 'Kept a garden on Maple Street and a kitchen that always smelled of bread. Taught the younger cousins to swim at the lake each summer. Still writes a letter on Sundays.',
+    };
+
+    const DECEASED = {
+      given: 'Margaret',
+      middle: 'Eileen',
+      family: 'Walsh',
+      photo: 'https://images.unsplash.com/photo-1581824283135-0666cf353f35?w=640&q=80&auto=format&fit=crop',
+      status: 'deceased',
+      birthYear: 1932,
+      deathYear: 2011,
+      relationship: 'Paternal grandmother · Walsh family',
+      bio: 'Born in Cork on a Sunday in early spring. Came across in 1955 with a single trunk and her mother\u2019s rosary. Made a home of three rooms in Boston and filled them with seven children, a thousand suppers, and the slow accumulation of a life recorded carefully.',
+    };
+
+    function StackedHeader({ title, eyebrow, children }) {
+      return (
+        <section className="ph-section">
+          <div className="ph-section-label">
+            <span className="num">{eyebrow}</span>
+            <span className="rule" />
+            <span className="desc">{title}</span>
+          </div>
+          {children}
+        </section>
+      );
+    }
+
+    function TabStripPreview({ tab = 'memories' }) {
+      // Sticky tab bar that lives below the header in the S4 page —
+      // shown here only as orientation, not built as a real component.
+      const tabs = [
+        { id: 'about', label: 'About' },
+        { id: 'memories', label: 'Memories', count: 24 },
+        { id: 'media', label: 'Media', count: 6 },
+        { id: 'relationships', label: 'Relationships', count: 8 },
+      ];
+      return (
+        <div className="ph-tabs" aria-hidden="true">
+          {tabs.map(t => (
+            <div key={t.id} className={'tab' + (t.id === tab ? ' active' : '')}>
+              {t.label}
+              {t.count != null && <span className="count">{t.count}</span>}
+            </div>
+          ))}
+        </div>
+      );
+    }
+
+    function App() {
+      return (
+        <div className="ph-page">
+          <div className="ph-page-title">
+            <span className="eyebrow">P04</span>
+            <h1>Person profile header</h1>
+            <span className="meta">S4 · Person Profile · top region</span>
+          </div>
+
+          <div className="ph-future-note">
+            <span className="tag">Reserved</span>
+            <span>
+              <strong style={{ fontWeight: 500, color: '#1C1A17' }}>Cover photo slot.</strong>{' '}
+              An optional user-uploaded cover image will sit behind the header at full width, 240px tall, with a transparent → Surface-1 gradient so the avatar and name remain readable. Out of scope for this build; no decorative imagery introduced in its place.
+            </span>
+          </div>
+
+          <StackedHeader eyebrow="01 — Default · living person" title="Photo avatar absent — initials fallback in Surface-2 with Warm-Mid mark.">
+            <div className="ph-frame">
+              <ProfileHeader {...LIVING} layout="desktop" />
+              <TabStripPreview tab="memories" />
+            </div>
+          </StackedHeader>
+
+          <StackedHeader eyebrow="02 — Deceased variant" title="Photo at 25% grayscale. Terra badge. Same warmth, same dignity.">
+            <div className="ph-frame">
+              <ProfileHeader {...DECEASED} layout="desktop" />
+              <TabStripPreview tab="memories" />
+            </div>
+          </StackedHeader>
+
+          <StackedHeader eyebrow="03 — Mobile" title="Avatar centers above the name. Action row stays horizontal. Bio remains.">
+            <div className="ph-mobile-stage">
+              <div className="ph-mobile-frame">
+                <ProfileHeader {...DECEASED} layout="mobile" />
+              </div>
+            </div>
+          </StackedHeader>
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>
