@@ -117,8 +117,9 @@ Key tokens (see `tokens.css` for the complete list):
 
 ```css
 /* ── Typography ── */
---font-display: 'Plus Jakarta Sans', 'Helvetica Neue', Arial, sans-serif;
---font-body:    'Cormorant Garamond', Georgia, 'Times New Roman', serif;
+--font-display: 'Young Serif', 'Times New Roman', Georgia, serif;          /* display headlines only */
+--font-ui:      'Plus Jakarta Sans', 'Helvetica Neue', Arial, sans-serif;  /* all UI chrome */
+--font-body:    'Cormorant Garamond', Georgia, 'Times New Roman', serif;   /* narrative prose only */
 
 --font-weight-light:    300;
 --font-weight-regular:  400;
@@ -167,7 +168,7 @@ Violations here are regressions, not exceptions:
   }
 
   .label {
-    font-family: var(--font-display);
+    font-family: var(--font-ui);
     font-size: var(--font-size-label);
     font-weight: var(--font-weight-medium);
     letter-spacing: var(--letter-spacing-label);
@@ -769,7 +770,7 @@ Build with React Email or plain HTML. All emails use the Prosapiam visual system
 - Error messages to users are always warm and human — never technical strings
 
 ### Styling
-- CSS custom properties defined in `app.css` — the single source of truth
+- CSS custom properties defined in `src/lib/styles/tokens.css` — the single source of truth
 - Scoped `<style>` blocks in Svelte components — no global class pollution
 - No inline styles except for dynamic values (e.g. node position on the tree canvas)
 - No Tailwind. No utility classes. CSS custom properties only.
