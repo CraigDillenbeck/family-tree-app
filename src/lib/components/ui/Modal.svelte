@@ -27,6 +27,11 @@
   const dur = prefersReducedMotion() ? 0 : 280;
   const titleId = `modal-title-${Math.random().toString(36).slice(2)}`;
 
+  // Dialog rises from 16px below on enter; parent overlay handles the fade.
+  function riseIn(_node: Element, { duration }: { duration: number }) {
+    return { duration, easing: cubicOut, css: (t: number) => `transform: translateY(${(1 - t) * 16}px)` };
+  }
+
   let previouslyFocused: HTMLElement | null = null;
 
   // Body scroll lock + focus return
@@ -87,15 +92,13 @@
 </script>
 
 {#if open}
-  <!--
-    Overlay: provides the scrim background + flex centering + click-to-close.
-    The dialog inside stops click propagation so only outside clicks close.
-  -->
+  <!-- Keyboard close is handled via Escape in the $effect above — the overlay is not a keyboard target. -->
+  <!-- svelte-ignore a11y_click_events_have_key_events -->
+  <!-- svelte-ignore a11y_no_static_element_interactions -->
   <div
     class="overlay"
     transition:fade={{ duration: dur, easing: cubicOut }}
     onclick={handleOverlayClick}
-    aria-hidden="true"
   >
     <div
       class="dialog {variant}"
@@ -103,6 +106,7 @@
       aria-modal="true"
       aria-labelledby={title ? titleId : undefined}
       tabindex="-1"
+      in:riseIn={{ duration: dur }}
       use:trapFocus
     >
       <div class="header">
