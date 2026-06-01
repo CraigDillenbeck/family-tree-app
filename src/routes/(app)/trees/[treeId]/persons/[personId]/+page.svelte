@@ -36,7 +36,7 @@
   )
 
   const hasDetails = $derived(
-    !!(data.person.biography || data.person.birth_date || data.person.birthplace)
+    !!(data.person.bio || data.person.birth_date || data.person.birth_place)
   )
 
   const canEdit = $derived(data.userRole === 'owner' || data.userRole === 'editor')
@@ -63,9 +63,9 @@
     <div class="header-info">
       <h1 class="name">{fullName}</h1>
 
-      {#if dateRange || data.person.birthplace}
+      {#if dateRange || data.person.birth_place}
         <p class="meta">
-          {[dateRange, data.person.birthplace].filter(Boolean).join(' · ')}
+          {[dateRange, data.person.birth_place].filter(Boolean).join(' · ')}
         </p>
       {/if}
 
@@ -75,8 +75,8 @@
         </Badge>
       </div>
 
-      {#if data.person.biography}
-        <p class="bio">{data.person.biography}</p>
+      {#if data.person.bio}
+        <p class="bio">{data.person.bio}</p>
       {:else}
         <p class="bio empty-bio">This person's story is waiting to be told.</p>
       {/if}
@@ -156,9 +156,9 @@
               <dt class="fact-label">Born</dt>
               <dd class="fact-value">{data.person.birth_date}</dd>
             {/if}
-            {#if data.person.birthplace}
+            {#if data.person.birth_place}
               <dt class="fact-label">Birthplace</dt>
-              <dd class="fact-value">{data.person.birthplace}</dd>
+              <dd class="fact-value">{data.person.birth_place}</dd>
             {/if}
             <dt class="fact-label">Status</dt>
             <dd class="fact-value">{data.person.is_living ? 'Living' : 'Deceased'}</dd>

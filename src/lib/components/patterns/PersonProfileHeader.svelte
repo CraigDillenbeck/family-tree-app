@@ -9,8 +9,8 @@
     lastName?: string | null
     birthDate?: string | null
     deathDate?: string | null
-    birthplace?: string | null
-    biography?: string | null
+    birth_place?: string | null
+    bio?: string | null
     avatarUrl?: string | null
     isLiving: boolean
   }
@@ -43,7 +43,7 @@
       const d = new Date(p.birthDate + 'T00:00:00')
       parts.push('Born ' + d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }))
     }
-    if (p.birthplace) parts.push(p.birthplace)
+    if (p.birth_place) parts.push(p.birth_place)
     return parts.join(' · ')
   }
 
@@ -107,8 +107,8 @@
         {/if}
       </div>
 
-      {#if person.biography}
-        <p class="biography">{person.biography}</p>
+      {#if person.bio}
+        <p class="biography">{person.bio}</p>
       {/if}
 
       <div class="action-row">

@@ -6,25 +6,17 @@ export type Database = {
       profiles: {
         Row: {
           id: string
-          full_name: string | null
+          auth_user_id: string
+          display_name: string | null
           avatar_url: string | null
-          plan: string
-          storage_used_bytes: number
-          storage_limit_bytes: number
-          lemon_squeezy_customer_id: string | null
-          lemon_squeezy_subscription_id: string | null
           created_at: string
           updated_at: string
         }
         Insert: {
-          id: string
-          full_name?: string | null
+          id?: string
+          auth_user_id: string
+          display_name?: string | null
           avatar_url?: string | null
-          plan?: string
-          storage_used_bytes?: number
-          storage_limit_bytes?: number
-          lemon_squeezy_customer_id?: string | null
-          lemon_squeezy_subscription_id?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -37,7 +29,7 @@ export type Database = {
           owner_id: string
           name: string
           description: string | null
-          is_active: boolean
+          is_public: boolean
           created_at: string
           updated_at: string
         }
@@ -46,7 +38,7 @@ export type Database = {
           owner_id: string
           name: string
           description?: string | null
-          is_active?: boolean
+          is_public?: boolean
           created_at?: string
           updated_at?: string
         }
@@ -65,17 +57,19 @@ export type Database = {
         Row: {
           id: string
           tree_id: string
-          user_id: string
+          profile_id: string
           role: string
           invited_by: string | null
+          accepted_at: string | null
           created_at: string
         }
         Insert: {
           id?: string
           tree_id: string
-          user_id: string
+          profile_id: string
           role?: string
           invited_by?: string | null
+          accepted_at?: string | null
           created_at?: string
         }
         Update: Partial<Database['public']['Tables']['tree_collaborators']['Insert']>
@@ -88,8 +82,8 @@ export type Database = {
             referencedColumns: ['id']
           },
           {
-            foreignKeyName: 'tree_collaborators_user_id_fkey'
-            columns: ['user_id']
+            foreignKeyName: 'tree_collaborators_profile_id_fkey'
+            columns: ['profile_id']
             isOneToOne: false
             referencedRelation: 'profiles'
             referencedColumns: ['id']
@@ -100,34 +94,38 @@ export type Database = {
         Row: {
           id: string
           tree_id: string
+          created_by: string
           first_name: string
           last_name: string | null
+          maiden_name: string | null
           birth_date: string | null
+          birth_place: string | null
+          primary_residence: string | null
           death_date: string | null
-          birthplace: string | null
-          nationality: string | null
           occupation: string | null
-          biography: string | null
+          bio: string | null
+          highlights: string | null
           avatar_url: string | null
           is_living: boolean
-          is_root: boolean
           created_at: string
           updated_at: string
         }
         Insert: {
           id?: string
           tree_id: string
+          created_by: string
           first_name: string
           last_name?: string | null
+          maiden_name?: string | null
           birth_date?: string | null
+          birth_place?: string | null
+          primary_residence?: string | null
           death_date?: string | null
-          birthplace?: string | null
-          nationality?: string | null
           occupation?: string | null
-          biography?: string | null
+          bio?: string | null
+          highlights?: string | null
           avatar_url?: string | null
           is_living?: boolean
-          is_root?: boolean
           created_at?: string
           updated_at?: string
         }

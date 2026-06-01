@@ -8,7 +8,7 @@ export type ActivityEntry = {
   target_type: string | null
   metadata: Json | null
   created_at: string
-  actor: { full_name: string | null } | null
+  actor: { display_name: string | null } | null
 }
 
 export type MemoryEntry = {
@@ -26,50 +26,46 @@ export type TreeSummary = {
   personCount: number
 }
 
-export const load: PageServerLoad = async ({ locals: { supabase, safeGetSession } }) => {
+export const load: PageServerLoad = async ({ locals: { supabase, safeGetSession }, parent }) => {
   const { user } = await safeGetSession()
   if (!user) error(401, 'Not authenticated')
 
-  // Load profile and owned trees together
-  const [profileRes, ownedTreesRes] = await Promise.all([
-    supabase
-      .from('profiles')
-      .select('full_name, plan, storage_used_bytes, storage_limit_bytes')
-      .eq('id', user.id)
-      .single(),
-    supabase
-      .from('trees')
-      .select('id, name, description')
-      .eq('owner_id', user.id)
-      .eq('is_active', true)
-      .order('created_at', { ascending: false })
-  ])
+  const { profile } = await parent()
+  const profileId = profile?.id
+
+  // Load owned trees (RLS filters to current user's trees automatically)
+  const ownedTreesRes = await supabase
+    .from('trees')
+    .select('id, name, description')
+    .order('created_at', { ascending: false })
 
   const ownedTrees = ownedTreesRes.data ?? []
 
-  // Fetch collaborated trees separately to avoid join type complexity
-  const collabRes = await supabase
-    .from('tree_collaborators')
-    .select('tree_id')
-    .eq('user_id', user.id)
-
-  const collabTreeIds = (collabRes.data ?? []).map((r) => r.tree_id)
+  // Fetch collaborated trees via the junction table
   let collabTrees: typeof ownedTrees = []
-  if (collabTreeIds.length > 0) {
-    const res = await supabase
-      .from('trees')
-      .select('id, name, description')
-      .in('id', collabTreeIds)
-      .eq('is_active', true)
-    collabTrees = res.data ?? []
+  if (profileId) {
+    const collabRes = await supabase
+      .from('tree_collaborators')
+      .select('tree_id')
+      .eq('profile_id', profileId)
+
+    const collabTreeIds = (collabRes.data ?? []).map((r) => r.tree_id)
+    if (collabTreeIds.length > 0) {
+      const res = await supabase
+        .from('trees')
+        .select('id, name, description')
+        .in('id', collabTreeIds)
+      collabTrees = res.data ?? []
+    }
   }
 
-  const allTreeRows = [...ownedTrees, ...collabTrees]
+  // Deduplicate (owner might also appear as collaborator)
+  const seen = new Set(ownedTrees.map((t) => t.id))
+  const allTreeRows = [...ownedTrees, ...collabTrees.filter((t) => !seen.has(t.id))]
 
   if (allTreeRows.length === 0) {
     return {
       user,
-      profile: profileRes.data ?? null,
       trees: [] as TreeSummary[],
       primaryTree: null,
       recentActivity: [] as ActivityEntry[],
@@ -77,23 +73,19 @@ export const load: PageServerLoad = async ({ locals: { supabase, safeGetSession 
     }
   }
 
-  // For each tree, get person count; for primary tree also get activity + memory
   const primaryTreeId = allTreeRows[0].id
 
   const [personCountsRes, activityRes, memoryRes] = await Promise.all([
-    // Count persons for all trees in one query, grouped by tree_id
     supabase
       .from('persons')
       .select('tree_id')
       .in('tree_id', allTreeRows.map((t) => t.id)),
-    // Recent activity for primary tree
     supabase
       .from('activity_log')
-      .select('id, action, target_type, metadata, created_at, actor:profiles!actor_id(full_name)')
+      .select('id, action, target_type, metadata, created_at, actor:profiles!actor_id(display_name)')
       .eq('tree_id', primaryTreeId)
       .order('created_at', { ascending: false })
       .limit(5),
-    // Latest memory for primary tree
     supabase
       .from('memories')
       .select('id, title, content, memory_date, created_at')
@@ -103,7 +95,6 @@ export const load: PageServerLoad = async ({ locals: { supabase, safeGetSession 
       .maybeSingle()
   ])
 
-  // Build per-tree person count map
   const countMap = new Map<string, number>()
   for (const row of personCountsRes.data ?? []) {
     countMap.set(row.tree_id, (countMap.get(row.tree_id) ?? 0) + 1)
@@ -118,7 +109,6 @@ export const load: PageServerLoad = async ({ locals: { supabase, safeGetSession 
 
   return {
     user,
-    profile: profileRes.data ?? null,
     trees,
     primaryTree: trees[0],
     recentActivity: (activityRes.data ?? []) as ActivityEntry[],

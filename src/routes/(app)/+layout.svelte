@@ -6,10 +6,14 @@
   const { data, children }: LayoutProps = $props()
 
   const given = $derived(
-    data.user?.user_metadata?.full_name?.split(' ')[0] ?? null
+    data.profile?.display_name?.split(' ')[0]
+    ?? data.user?.user_metadata?.full_name?.split(' ')[0]
+    ?? null
   )
   const family = $derived(
-    data.user?.user_metadata?.full_name?.split(' ').slice(-1)[0] ?? null
+    data.profile?.display_name?.split(' ').slice(-1)[0]
+    ?? data.user?.user_metadata?.full_name?.split(' ').slice(-1)[0]
+    ?? null
   )
 </script>
 

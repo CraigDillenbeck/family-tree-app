@@ -140,31 +140,48 @@ src/
 │   ├── supabase/
 │   │   ├── client.ts               — Browser Supabase client
 │   │   └── types.ts                — Generated DB types (regenerate after schema changes)
+│   ├── stores/
+│   │   ├── auth.ts
+│   │   ├── notifications.ts
+│   │   ├── toasts.ts
+│   │   └── tree.ts
 │   ├── components/
 │   │   ├── ui/                     — 24 core UI atoms (all complete)
 │   │   ├── patterns/               — 6 product patterns P01–P05, P11 (all complete)
-│   │   ├── tree/                   — TreeCanvas, PersonNode, RelationshipLine (not yet built)
-│   │   ├── person/                 — PersonCard, ProfileHeader (not yet built)
-│   │   ├── media/                  — MediaGrid, Uploader, MediaViewer (not yet built)
-│   │   ├── memory/                 — MemoryCard, MemoryEditor (not yet built)
-│   │   └── activity/               — ActivityFeed, ActivityItem (not yet built)
+│   │   ├── tree/                   — empty (TreeCanvas, PersonNode to build)
+│   │   ├── person/                 — empty (PersonCard, ProfileHeader to build)
+│   │   ├── media/                  — empty (MediaGrid, Uploader, MediaViewer to build)
+│   │   ├── memory/                 — empty (MemoryCard, MemoryEditor to build)
+│   │   └── activity/               — empty (ActivityFeed, ActivityItem to build)
 │   └── utils/
 │       ├── dates.ts
 │       ├── storage.ts              — Supabase Storage upload helpers
 │       ├── activity.ts             — Write activity log entries
 │       ├── permissions.ts          — isOwner(), canEdit() helpers
-│       ├── plans.ts                — Plan limits and enforcement
 │       └── motion.ts               — prefersReducedMotion() helper
+│       (plans.ts — TODO: plan limits and enforcement — not yet created)
 ├── routes/
 │   ├── +layout.svelte              — Root shell, PostHog init (TODO), Sentry init (TODO)
 │   ├── (marketing)/+page.svelte    — Landing page (stub)
 │   ├── (auth)/                     — login ✓, signup ✓, forgot-password (TODO)
 │   ├── (app)/                      — All protected routes
-│   │   ├── dashboard/              — S2: surface ✓, data layer TODO
-│   │   ├── trees/[treeId]/         — S3: surface ✓, @xyflow/svelte TODO, data layer TODO
-│   │   │   └── persons/[personId]/ — S4: surface ✓, data layer TODO
-│   │   └── account/                — stub
-│   └── api/trees/[treeId]/         — Mutation endpoints (persons, relationships, memories, media, collaborators)
+│   │   ├── dashboard/              — S2: surface + Supabase data layer ✓
+│   │   ├── account/                — stub
+│   │   └── trees/
+│   │       ├── new/                — stub form for creating a tree
+│   │       └── [treeId]/           — S3: surface + data layer ✓ (@xyflow/svelte TODO)
+│   │           ├── activity/       — stub
+│   │           ├── collaborators/  — stub
+│   │           ├── settings/       — stub
+│   │           └── persons/
+│   │               ├── new/        — stub form for adding a person
+│   │               └── [personId]/ — S4: surface + Supabase data layer ✓
+│   │                   ├── edit/   — stub
+│   │                   ├── media/  — stub
+│   │                   └── memories/ — stub
+│   └── api/
+│       ├── auth/signout/           — DELETE session endpoint
+│       └── trees/[treeId]/         — tree · persons · relationships · memories · media · collaborators
 └── admin/                          — Founder dashboard (not yet built)
 ```
 
@@ -211,7 +228,7 @@ activity_log      — APPEND ONLY: tree_id, actor_id, action, target_type, targe
 
 ## Subscription Plans
 
-Three tiers. Plan gating always enforced **server-side** — never trust client-side plan checks. Full limits in `src/lib/utils/plans.ts`.
+Three tiers. Plan gating always enforced **server-side** — never trust client-side plan checks. Full limits will live in `src/lib/utils/plans.ts` (TODO — not yet created).
 
 | Plan | Storage | Trees | Collaborators | Media |
 | --- | --- | --- | --- | --- |
@@ -455,14 +472,16 @@ npm install -D @types/dagre
 
 **Phase 4 — Screens (in progress):**
 - [x] S1 — Login + Signup (forgot-password TODO)
-- [x] S2 — Dashboard surface (data layer is stub — needs Supabase loads)
-- [x] S3 — Tree canvas surface (data layer stub; @xyflow/svelte not yet integrated)
-- [x] S4 — Person profile surface (data layer is stub)
-- [ ] S2/S3/S4 data layer — wire Supabase loads into all three server files
-- [ ] @xyflow/svelte + dagre — interactive tree canvas
+- [x] S2 — Dashboard: surface + Supabase data layer ✓
+- [x] S3 — Tree canvas: surface + data layer ✓ (@xyflow/svelte not yet integrated)
+- [x] S4 — Person profile: surface + data layer ✓
+- [x] API mutation endpoints — persons, relationships, memories, media, collaborators wired
+- [x] Route stubs — trees/new, persons/new, person/edit, activity, collaborators, settings, account
+- [x] Onboarding flow — 3-step Welcome → Begin with yourself → First leaf ✓
+- [ ] @xyflow/svelte + dagre — interactive tree canvas (NEXT)
 - [ ] Landing page — all sections, pricing
-- [ ] Onboarding flow — post-signup, first tree creation
 - [ ] forgot-password auth route
+- [ ] plans.ts — plan limit enforcement utility
 - [ ] Memory editor
 - [ ] Media upload flow
 - [ ] Collaborator invitations

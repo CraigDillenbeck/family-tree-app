@@ -9,9 +9,9 @@
     lastName?: string | null
     birthDate?: string | null
     deathDate?: string | null
-    birthplace?: string | null
+    birth_place?: string | null
     avatarUrl?: string | null
-    biography?: string | null
+    bio?: string | null
     isLiving: boolean
   }
 
@@ -38,7 +38,7 @@
     if (!birthYear) return ''
     if (!p.isLiving && deathYear) return `Lived ${birthYear}–${deathYear}`
     const parts = [`b. ${birthYear}`]
-    if (p.birthplace) parts.push(p.birthplace)
+    if (p.birth_place) parts.push(p.birth_place)
     return parts.join(', ')
   }
 
@@ -70,8 +70,8 @@
       <p class="dates">{dateLine}</p>
     {/if}
 
-    {#if person.biography}
-      <p class="bio">{person.biography}</p>
+    {#if person.bio}
+      <p class="bio">{person.bio}</p>
     {/if}
 
     {#if onviewprofile || onaddmemory}

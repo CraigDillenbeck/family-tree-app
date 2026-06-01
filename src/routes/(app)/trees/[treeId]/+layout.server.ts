@@ -12,20 +12,21 @@ export type TreeLayoutData = {
   userRole: 'owner' | 'editor' | 'viewer'
 }
 
-export const load: LayoutServerLoad = async ({ locals: { supabase, safeGetSession }, params }) => {
+export const load: LayoutServerLoad = async ({ locals: { supabase, safeGetSession }, params, parent }) => {
   const { user } = await safeGetSession()
   if (!user) error(401, 'Not authenticated')
 
+  const { profile } = await parent()
+
   const { data: tree } = await supabase
     .from('trees')
-    .select('id, name, description, owner_id, is_active')
+    .select('id, name, description, owner_id')
     .eq('id', params.treeId)
-    .eq('is_active', true)
     .single()
 
   if (!tree) error(404, 'Tree not found')
 
-  if (isOwner(tree.owner_id, user.id)) {
+  if (profile && isOwner(tree.owner_id, profile.id)) {
     return { tree, userRole: 'owner' as const }
   }
 
@@ -33,7 +34,7 @@ export const load: LayoutServerLoad = async ({ locals: { supabase, safeGetSessio
     .from('tree_collaborators')
     .select('role')
     .eq('tree_id', params.treeId)
-    .eq('user_id', user.id)
+    .eq('profile_id', profile?.id ?? '')
     .maybeSingle()
 
   if (!collab) error(403, 'You do not have access to this tree.')

@@ -26,6 +26,6 @@ export const actions: Actions = {
       return fail(400, { error: error.message })
     }
 
-    redirect(303, '/dashboard')
+    redirect(303, '/onboarding')
   }
 }

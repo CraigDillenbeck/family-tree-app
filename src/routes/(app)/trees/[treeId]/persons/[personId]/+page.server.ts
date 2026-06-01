@@ -7,8 +7,8 @@ export type ProfilePerson = {
   last_name: string | null
   birth_date: string | null
   death_date: string | null
-  birthplace: string | null
-  biography: string | null
+  birth_place: string | null
+  bio: string | null
   avatar_url: string | null
   is_living: boolean
 }
@@ -67,13 +67,12 @@ type RawMemory = {
   title: string
   content: string | null
   memory_date: string | null
-  memory_tags: Array<{ tags: { id: string; name: string } | null }>
 }
 
 export const load: PageServerLoad = async ({ locals: { supabase }, params }) => {
   const personRes = await supabase
     .from('persons')
-    .select('id, first_name, last_name, birth_date, death_date, birthplace, biography, avatar_url, is_living')
+    .select('id, first_name, last_name, birth_date, death_date, birth_place, bio, avatar_url, is_living')
     .eq('id', params.personId)
     .eq('tree_id', params.treeId)
     .single()
@@ -107,7 +106,7 @@ export const load: PageServerLoad = async ({ locals: { supabase }, params }) => 
     memoryIds.length > 0
       ? supabase
           .from('memories')
-          .select('id, title, content, memory_date, memory_tags(tags(id, name))')
+          .select('id, title, content, memory_date')
           .in('id', memoryIds)
           .order('created_at', { ascending: false })
       : Promise.resolve({ data: [] as RawMemory[] }),
@@ -126,7 +125,7 @@ export const load: PageServerLoad = async ({ locals: { supabase }, params }) => 
       title: m.title,
       excerpt: m.content ? m.content.slice(0, 160) : null,
       memory_date: m.memory_date,
-      tags: (m.memory_tags ?? []).flatMap((mt) => (mt.tags ? [mt.tags.name] : []))
+      tags: []
     })
   )
 

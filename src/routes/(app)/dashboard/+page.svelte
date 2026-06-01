@@ -8,7 +8,6 @@
 
   const givenName = $derived(
     data.user?.user_metadata?.full_name?.split(' ')[0]
-    ?? data.profile?.full_name?.split(' ')[0]
     ?? data.user?.email?.split('@')[0]
     ?? 'there'
   )
