@@ -164,6 +164,7 @@ src/
 │   ├── +layout.svelte              — Root shell, PostHog init (TODO), Sentry init (TODO)
 │   ├── (marketing)/+page.svelte    — Landing page (stub)
 │   ├── (auth)/                     — login ✓, signup ✓, forgot-password (TODO)
+│   ├── (onboarding)/onboarding/    — full-screen 3-step flow, no TopNav, auth-gated ✓
 │   ├── (app)/                      — All protected routes
 │   │   ├── dashboard/              — S2: surface + Supabase data layer ✓
 │   │   ├── account/                — stub
@@ -192,10 +193,15 @@ src/
 All tables in Supabase. RLS enabled on every table. All timestamps UTC.
 
 ```sql
-profiles          — extends auth.users; plan, storage_used_bytes, lemon_squeezy_*
-trees             — owner_id, name, description, is_active
-tree_collaborators — tree_id, user_id, role (viewer|editor), invited_by
-persons           — tree_id, first/last name, birth/death_date, biography, avatar_url, is_living, is_root
+profiles          — id (own UUID, NOT same as auth.users.id), auth_user_id (FK → auth.users),
+                    display_name, avatar_url
+                  -- plan/storage/lemon_squeezy columns NOT YET added — will come with billing
+trees             — owner_id (→ profiles.id), name, description, is_public
+tree_collaborators — tree_id, profile_id (→ profiles.id), role (viewer|editor),
+                     invited_by, accepted_at
+persons           — tree_id, created_by (→ profiles.id), first_name, last_name, maiden_name,
+                    birth_date, birth_place, primary_residence, death_date,
+                    occupation, bio, highlights, avatar_url, is_living
 relationships     — tree_id, person_a_id, person_b_id, relationship_type, is_current
                   -- types: spouse | divorced | parent_child | adopted | step | uncertain
                   -- is_current=false = historical; hidden in canvas, visible on profile
@@ -203,12 +209,14 @@ memories          — tree_id, title, content, memory_date, memory_date_precisio
 memory_persons    — junction: memory ↔ person tags
 media             — tree_id, owner_id, file_url, file_type, file_size_bytes, caption
 media_persons     — junction: media ↔ person tags
-tags / memory_tags — memory categorization
+tags / memory_tags — NOT YET CREATED — memory categorization (planned)
 activity_log      — APPEND ONLY: tree_id, actor_id, action, target_type, target_id, metadata
 ```
 
 **Key decisions:**
-- `current_profile_id()` Supabase helper used in all RLS policies
+- `profiles.id` is its **own UUID** — it is NOT equal to `auth.uid()`. Always look up via `auth_user_id = user.id`. All FK references (`trees.owner_id`, `persons.created_by`, `tree_collaborators.profile_id`, etc.) use `profiles.id`, not the auth user ID.
+- `current_profile_id()` — `SECURITY DEFINER` SQL function. Returns `profiles.id` for `auth.uid()`. Used in all RLS policies. Must stay SECURITY DEFINER or policies recurse.
+- `is_tree_collaborator(tree_id uuid)` — `SECURITY DEFINER` SQL function. Used in the trees SELECT policy to avoid a circular RLS cycle between `trees` and `tree_collaborators`.
 - Profile row created automatically via database trigger on `auth.users` insert
 - Activity log: never add UPDATE or DELETE RLS policies
 - Storage paths: `avatars/{profile_id}` and `tree-media/{tree_id}/{media_id}`
@@ -449,9 +457,12 @@ npm install -D @types/dagre
 - **Never import `$lib/server/` in `.svelte` or client `.ts`** — leaks service role key
 - **Always use `event.locals.supabase`** in server load functions, not the browser client
 - **RLS is active** — missing data → check RLS policies first (queries return empty, not errors)
+- **`profiles.id` ≠ `auth.uid()`** — `profiles` has its own UUID PK. To get the profile for the current user, query `profiles` where `auth_user_id = user.id`. All FKs (`owner_id`, `created_by`, `profile_id`) use `profiles.id`.
+- **`(app)/+layout.server.ts` loads `profile`** — child routes access `profiles.id` via `await parent()`, not a second query.
 - **`profiles` table**, not `auth.users`, is the source of truth for user data
 - **`is_current` on relationships** controls tree canvas rendering — always set correctly
 - **Activity log is append-only** — never add UPDATE or DELETE policies to `activity_log`
+- **`current_profile_id()` and `is_tree_collaborator()` must stay `SECURITY DEFINER`** — removing this breaks RLS with infinite recursion
 - **Lemon Squeezy in test mode** until founder confirms DBA/LLC setup
 - **Svelte 5 runes throughout** — verify any external examples are Svelte 5, not Svelte 4
 - **Emotional register is paramount** — error messages, empty states, and edge cases need the same warmth as primary screens
