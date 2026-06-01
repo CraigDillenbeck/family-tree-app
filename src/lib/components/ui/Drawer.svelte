@@ -87,6 +87,9 @@
 </script>
 
 {#if open}
+  <!-- Keyboard close is handled via Escape in the $effect above — the scrim is not a keyboard target. -->
+  <!-- svelte-ignore a11y_click_events_have_key_events -->
+  <!-- svelte-ignore a11y_no_static_element_interactions -->
   <div
     class="scrim"
     transition:fade={{ duration: dur, easing: cubicOut }}
