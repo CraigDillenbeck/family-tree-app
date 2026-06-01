@@ -1,48 +1,45 @@
 <script lang="ts">
+  import type { PageProps } from './$types'
   import Badge from '$lib/components/ui/Badge.svelte'
   import Button from '$lib/components/ui/Button.svelte'
   import Avatar from '$lib/components/ui/Avatar.svelte'
   import Card from '$lib/components/ui/Card.svelte'
   import Tabs from '$lib/components/ui/Tabs.svelte'
   import Tag from '$lib/components/ui/Tag.svelte'
-  import { page } from '$app/stores'
 
-  // Server will populate this in a future step:
-  // data.person, data.memories[], data.media[], data.relationships[]
-  const treeId = $page.params.treeId
-
-  // Placeholder — will come from data.person once server load is wired up
-  const person = {
-    firstName: '',
-    lastName: '',
-    isLiving: true,
-    birthDate: null as string | null,
-    deathDate: null as string | null,
-    birthplace: null as string | null,
-    biography: null as string | null,
-  }
-
-  const memories: { id: string; title: string; excerpt: string; date: string; tags: string[] }[] = []
-  const mediaItems: { id: string; caption: string | null }[] = []
-  const relationships: { id: string; label: string; personName: string; dates: string }[] = []
+  const { data }: PageProps = $props()
 
   let activeTab = $state('memories')
 
-  const tabs = [
+  const tabs = $derived([
     { value: 'about', label: 'About' },
-    { value: 'memories', label: 'Memories', count: memories.length || undefined },
-    { value: 'media', label: 'Media', count: mediaItems.length || undefined },
-    { value: 'relationships', label: 'Relationships', count: relationships.length || undefined },
-  ]
+    { value: 'memories', label: 'Memories', count: data.memories.length || undefined },
+    { value: 'media', label: 'Media', count: data.media.length || undefined },
+    { value: 'relationships', label: 'Relationships', count: data.relationships.length || undefined },
+  ])
 
-  const hasData = $derived(person.firstName !== '')
   const fullName = $derived(
-    [person.firstName, person.lastName].filter(Boolean).join(' ') || 'Unknown person'
+    [data.person.first_name, data.person.last_name].filter(Boolean).join(' ') || 'Unknown person'
   )
+
+  function yearOf(iso: string | null): string | null {
+    if (!iso) return null
+    return new Date(iso + 'T00:00:00').getFullYear().toString()
+  }
+
+  const birthYear = $derived(yearOf(data.person.birth_date))
+  const deathYear = $derived(yearOf(data.person.death_date))
   const dateRange = $derived(
-    [person.birthDate, person.deathDate].filter(Boolean).join(' – ') ||
-    (person.birthDate ? `b. ${person.birthDate}` : null)
+    data.person.is_living
+      ? birthYear ? `b. ${birthYear}` : null
+      : [birthYear, deathYear].filter(Boolean).join('–') || null
   )
+
+  const hasDetails = $derived(
+    !!(data.person.biography || data.person.birth_date || data.person.birthplace)
+  )
+
+  const canEdit = $derived(data.userRole === 'owner' || data.userRole === 'editor')
 </script>
 
 <svelte:head>
@@ -53,41 +50,43 @@
 
   <!-- ── Breadcrumb ── -->
   <div class="breadcrumb">
-    <a href="/trees/{treeId}" class="back-link">&#8592; Back to tree</a>
+    <a href="/trees/{data.tree.id}" class="back-link">&#8592; Back to tree</a>
   </div>
 
   <!-- ── Profile header ── -->
   <header class="header">
     <Avatar
-      person={{ given: person.firstName || '?', family: person.lastName, status: person.isLiving ? 'living' : 'deceased' }}
+      person={{ given: data.person.first_name, family: data.person.last_name ?? '', status: data.person.is_living ? 'living' : 'deceased' }}
       size={128}
     />
 
     <div class="header-info">
       <h1 class="name">{fullName}</h1>
 
-      {#if dateRange || person.birthplace}
+      {#if dateRange || data.person.birthplace}
         <p class="meta">
-          {[dateRange, person.birthplace].filter(Boolean).join(' · ')}
+          {[dateRange, data.person.birthplace].filter(Boolean).join(' · ')}
         </p>
       {/if}
 
       <div class="status-row">
-        <Badge variant={person.isLiving ? 'sage' : 'terra'} dot>
-          {person.isLiving ? 'Living' : 'Deceased'}
+        <Badge variant={data.person.is_living ? 'sage' : 'terra'} dot>
+          {data.person.is_living ? 'Living' : 'Deceased'}
         </Badge>
       </div>
 
-      {#if person.biography}
-        <p class="bio">{person.biography}</p>
-      {:else if !hasData}
+      {#if data.person.biography}
+        <p class="bio">{data.person.biography}</p>
+      {:else}
         <p class="bio empty-bio">This person's story is waiting to be told.</p>
       {/if}
 
       <div class="actions">
-        <Button>Add a memory</Button>
-        <Button variant="secondary">Edit profile</Button>
-        <Button variant="ghost">Add relationship</Button>
+        {#if canEdit}
+          <Button>Add a memory</Button>
+          <Button variant="secondary">Edit profile</Button>
+          <Button variant="ghost">Add relationship</Button>
+        {/if}
       </div>
     </div>
   </header>
@@ -111,19 +110,19 @@
           <Tag>All memories</Tag>
         </div>
 
-        {#if memories.length === 0}
+        {#if data.memories.length === 0}
           <div class="empty-state">
             <p class="empty-text">The first memory you add will live here.</p>
-            <Button variant="secondary">Add a memory</Button>
+            {#if canEdit}<Button variant="secondary">Add a memory</Button>{/if}
           </div>
         {:else}
           <div class="memory-list">
-            {#each memories as m (m.id)}
+            {#each data.memories as m (m.id)}
               <Card interactive>
                 <h3 class="memory-title">{m.title}</h3>
-                <p class="memory-excerpt">{m.excerpt}</p>
+                {#if m.excerpt}<p class="memory-excerpt">{m.excerpt}</p>{/if}
                 <div class="memory-foot">
-                  <span class="memory-date">{m.date}</span>
+                  {#if m.memory_date}<span class="memory-date">{yearOf(m.memory_date)}</span>{/if}
                   {#if m.tags.length}
                     <span class="dot">·</span>
                     {#each m.tags as t}
@@ -140,31 +139,29 @@
 
     {#if activeTab === 'about'}
       <div class="tab-inner narrow">
-        {#if !hasData}
+        {#if !hasDetails}
           <div class="empty-state">
             <p class="empty-text">Edit this person's profile to add their details.</p>
-            <Button variant="secondary">Edit profile</Button>
+            {#if canEdit}<Button variant="secondary">Edit profile</Button>{/if}
           </div>
         {:else}
           <dl class="facts">
-            {#if person.firstName}
-              <dt class="fact-label">Given name</dt>
-              <dd class="fact-value">{person.firstName}</dd>
-            {/if}
-            {#if person.lastName}
+            <dt class="fact-label">Given name</dt>
+            <dd class="fact-value">{data.person.first_name}</dd>
+            {#if data.person.last_name}
               <dt class="fact-label">Family name</dt>
-              <dd class="fact-value">{person.lastName}</dd>
+              <dd class="fact-value">{data.person.last_name}</dd>
             {/if}
-            {#if person.birthDate}
+            {#if data.person.birth_date}
               <dt class="fact-label">Born</dt>
-              <dd class="fact-value">{person.birthDate}</dd>
+              <dd class="fact-value">{data.person.birth_date}</dd>
             {/if}
-            {#if person.birthplace}
+            {#if data.person.birthplace}
               <dt class="fact-label">Birthplace</dt>
-              <dd class="fact-value">{person.birthplace}</dd>
+              <dd class="fact-value">{data.person.birthplace}</dd>
             {/if}
             <dt class="fact-label">Status</dt>
-            <dd class="fact-value">{person.isLiving ? 'Living' : 'Deceased'}</dd>
+            <dd class="fact-value">{data.person.is_living ? 'Living' : 'Deceased'}</dd>
           </dl>
         {/if}
       </div>
@@ -172,14 +169,14 @@
 
     {#if activeTab === 'media'}
       <div class="tab-inner">
-        {#if mediaItems.length === 0}
+        {#if data.media.length === 0}
           <div class="empty-state">
             <p class="empty-text">Photographs, letters, recordings — add them here.</p>
-            <Button variant="secondary">Upload media</Button>
+            {#if canEdit}<Button variant="secondary">Upload media</Button>{/if}
           </div>
         {:else}
           <div class="media-grid">
-            {#each mediaItems as item (item.id)}
+            {#each data.media as item (item.id)}
               <div class="media-cell">
                 <div class="media-thumb"></div>
                 {#if item.caption}
@@ -194,22 +191,26 @@
 
     {#if activeTab === 'relationships'}
       <div class="tab-inner narrow">
-        {#if relationships.length === 0}
+        {#if data.relationships.length === 0}
           <div class="empty-state">
             <p class="empty-text">Connect this person to others in your tree.</p>
-            <Button variant="secondary">Add relationship</Button>
+            {#if canEdit}<Button variant="secondary">Add relationship</Button>{/if}
           </div>
         {:else}
           <div class="rel-list">
-            {#each relationships as r (r.id)}
-              <div class="rel-row">
-                <Avatar person={{ given: r.personName }} size={48} />
+            {#each data.relationships as r (r.id)}
+              {@const relName = [r.person.first_name, r.person.last_name].filter(Boolean).join(' ')}
+              <a href="/trees/{data.tree.id}/persons/{r.person.id}" class="rel-row">
+                <Avatar
+                  person={{ given: r.person.first_name, family: r.person.last_name ?? '', status: r.person.is_living ? 'living' : 'deceased' }}
+                  size={48}
+                />
                 <div class="rel-info">
-                  <p class="rel-name">{r.personName}</p>
-                  <p class="rel-dates">{r.dates}</p>
+                  <p class="rel-name">{relName}</p>
+                  {#if r.dates}<p class="rel-dates">{r.dates}</p>{/if}
                 </div>
                 <Badge variant="warm">{r.label}</Badge>
-              </div>
+              </a>
             {/each}
           </div>
         {/if}
@@ -472,7 +473,10 @@
     background: var(--color-bg-surface-1);
     border: var(--border-default);
     border-radius: var(--radius-lg);
+    text-decoration: none;
+    transition: border-color var(--dur-fast) var(--ease);
   }
+  .rel-row:hover { border-color: var(--color-border-strong); }
 
   .rel-info { flex: 1; }
 
