@@ -5,8 +5,9 @@ import type { Json } from '$lib/supabase/types'
 export type ActivityEntry = {
   id: string
   action: string
-  target_type: string | null
-  metadata: Json | null
+  entity_type: string
+  entity_id: string
+  diff: Json | null
   created_at: string
   actor: { display_name: string | null } | null
 }
@@ -14,7 +15,7 @@ export type ActivityEntry = {
 export type MemoryEntry = {
   id: string
   title: string
-  content: string | null
+  body: string | null
   memory_date: string | null
   created_at: string
 }
@@ -82,13 +83,13 @@ export const load: PageServerLoad = async ({ locals: { supabase, safeGetSession 
       .in('tree_id', allTreeRows.map((t) => t.id)),
     supabase
       .from('activity_log')
-      .select('id, action, target_type, metadata, created_at, actor:profiles!actor_id(display_name)')
+      .select('id, action, entity_type, entity_id, diff, created_at, actor:profiles!actor_id(display_name)')
       .eq('tree_id', primaryTreeId)
       .order('created_at', { ascending: false })
       .limit(5),
     supabase
       .from('memories')
-      .select('id, title, content, memory_date, created_at')
+      .select('id, title, body, memory_date, created_at')
       .eq('tree_id', primaryTreeId)
       .order('created_at', { ascending: false })
       .limit(1)

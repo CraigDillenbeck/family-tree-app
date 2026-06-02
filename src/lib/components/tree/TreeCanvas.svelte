@@ -23,7 +23,7 @@
     id: string
     person_a_id: string
     person_b_id: string
-    relationship_type: string
+    type: string
   }
 
   let {
@@ -80,9 +80,9 @@
     // Only parent_child-like edges go into the dagre hierarchy;
     // spouse edges are added as zero-weight to pull spouses close together
     for (const r of rs) {
-      if (['parent_child', 'adopted', 'step'].includes(r.relationship_type)) {
+      if (['parent_child', 'adopted', 'step'].includes(r.type)) {
         g.setEdge(r.person_a_id, r.person_b_id)
-      } else if (['spouse', 'divorced'].includes(r.relationship_type)) {
+      } else if (['spouse', 'divorced'].includes(r.type)) {
         // minlen=1 with weight=0 keeps spouses on the same rank
         g.setEdge(r.person_a_id, r.person_b_id, { weight: 0, minlen: 0 })
       }
@@ -113,7 +113,7 @@
       source: r.person_a_id,
       target: r.person_b_id,
       type: 'relationship',
-      data: { relType: r.relationship_type },
+      data: { relType: r.type },
       selectable: false,
       deletable: false,
       focusable: false,

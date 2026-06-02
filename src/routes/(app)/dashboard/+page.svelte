@@ -22,8 +22,8 @@
     primaryTree ? `/trees/${primaryTree.id}/persons/new` : '/trees/new'
   )
 
-  function activityLabel(action: string, metadata: Json | null): string {
-    const m = (metadata ?? {}) as Record<string, unknown>
+  function activityLabel(action: string, diff: Json | null): string {
+    const m = (diff ?? {}) as Record<string, unknown>
     switch (action) {
       case 'person_added': {
         const name = [m.first_name, m.last_name].filter(Boolean).join(' ')
@@ -98,7 +98,7 @@
             <ul class="activity-list" role="list">
               {#each data.recentActivity as entry (entry.id)}
                 <li class="activity-item">
-                  <span class="activity-label">{activityLabel(entry.action, entry.metadata)}</span>
+                  <span class="activity-label">{activityLabel(entry.action, entry.diff)}</span>
                   <span class="activity-time">{timeAgo(entry.created_at)}</span>
                 </li>
               {/each}
@@ -124,8 +124,8 @@
               aria-label="View memory: {data.latestMemory.title}"
             >
               <p class="memory-title">{data.latestMemory.title}</p>
-              {#if data.latestMemory.content}
-                <p class="memory-excerpt">{memoryExcerpt(data.latestMemory.content)}</p>
+              {#if data.latestMemory.body}
+                <p class="memory-excerpt">{memoryExcerpt(data.latestMemory.body)}</p>
               {/if}
               <p class="memory-date">{timeAgo(data.latestMemory.created_at)}</p>
             </a>

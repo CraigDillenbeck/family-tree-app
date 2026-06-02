@@ -14,7 +14,7 @@ export type CanvasRelationship = {
   id: string
   person_a_id: string
   person_b_id: string
-  relationship_type: string
+  type: string
 }
 
 export const load: PageServerLoad = async ({ locals: { supabase }, params }) => {
@@ -26,7 +26,7 @@ export const load: PageServerLoad = async ({ locals: { supabase }, params }) => 
       .order('created_at', { ascending: true }),
     supabase
       .from('relationships')
-      .select('id, person_a_id, person_b_id, relationship_type')
+      .select('id, person_a_id, person_b_id, type')
       .eq('tree_id', params.treeId)
       .eq('is_current', true)
   ])

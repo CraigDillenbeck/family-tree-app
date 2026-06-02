@@ -188,9 +188,10 @@ export const actions: Actions = {
 
     const form = await request.formData()
     const title = (form.get('title') as string | null)?.trim()
-    const content = (form.get('content') as string | null)?.trim() || null
+    const body = (form.get('content') as string | null)?.trim() || null
     const memoryDate = (form.get('memory_date') as string | null) || null
-    const precision = (form.get('memory_date_precision') as string) || 'full'
+    const precision = ((form.get('memory_date_precision') as string) || 'exact') as
+      'exact' | 'month' | 'year' | 'decade' | 'circa'
     const personId = form.get('personId') as string | null
 
     if (!title) return fail(400, { error: 'A title is required.' })
@@ -200,10 +201,10 @@ export const actions: Actions = {
       .insert({
         tree_id: params.treeId,
         title,
-        content,
+        body,
         memory_date: memoryDate,
         memory_date_precision: precision,
-        author_id: profile.id,
+        created_by: profile.id,
       })
       .select('id')
       .single()
@@ -245,23 +246,24 @@ export const actions: Actions = {
     const form = await request.formData()
     const memoryId = form.get('memoryId') as string | null
     const title = (form.get('title') as string | null)?.trim()
-    const content = (form.get('content') as string | null)?.trim() || null
+    const body = (form.get('content') as string | null)?.trim() || null
     const memoryDate = (form.get('memory_date') as string | null) || null
-    const precision = (form.get('memory_date_precision') as string) || 'full'
+    const precision = ((form.get('memory_date_precision') as string) || 'exact') as
+      'exact' | 'month' | 'year' | 'decade' | 'circa'
 
     if (!memoryId) return fail(400, { error: 'Memory ID missing.' })
     if (!title) return fail(400, { error: 'A title is required.' })
 
     const { data: existing } = await supabase
       .from('memories')
-      .select('id, author_id')
+      .select('id, created_by')
       .eq('id', memoryId)
       .eq('tree_id', params.treeId)
       .single()
 
     if (!existing) return fail(404, { error: 'Memory not found.' })
 
-    if (existing.author_id !== profile.id) {
+    if (existing.created_by !== profile.id) {
       const { data: tree } = await supabase
         .from('trees')
         .select('owner_id')
@@ -274,7 +276,7 @@ export const actions: Actions = {
 
     const { error: updateErr } = await supabase
       .from('memories')
-      .update({ title, content, memory_date: memoryDate, memory_date_precision: precision })
+      .update({ title, body, memory_date: memoryDate, memory_date_precision: precision })
       .eq('id', memoryId)
 
     if (updateErr) {
@@ -312,14 +314,14 @@ export const actions: Actions = {
 
     const { data: existing } = await supabase
       .from('memories')
-      .select('id, author_id')
+      .select('id, created_by')
       .eq('id', memoryId)
       .eq('tree_id', params.treeId)
       .single()
 
     if (!existing) return fail(404, { error: 'Memory not found.' })
 
-    if (existing.author_id !== profile.id) {
+    if (existing.created_by !== profile.id) {
       const { data: tree } = await supabase
         .from('trees')
         .select('owner_id')

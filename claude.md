@@ -37,8 +37,8 @@ The emphasis is on **beauty, celebration, and emotional resonance** — not dry 
 | Payments | Lemon Squeezy | Merchant of Record — handles all tax compliance |
 | Analytics | PostHog | User analytics, funnels, feature flags |
 | Error monitoring | Sentry | @sentry/sveltekit |
-| Tree canvas | @xyflow/svelte | XYFlow official Svelte port (not yet installed) |
-| Tree layout | Dagre | Auto-layout algorithm (not yet installed) |
+| Tree canvas | @xyflow/svelte | XYFlow official Svelte port ✓ |
+| Tree layout | Dagre | Auto-layout algorithm ✓ |
 | Styling | CSS custom properties + scoped Svelte styles | **No Tailwind. No utility classes.** |
 
 ---
@@ -163,7 +163,7 @@ src/
 ├── routes/
 │   ├── +layout.svelte              — Root shell, PostHog init (TODO), Sentry init (TODO)
 │   ├── (marketing)/+page.svelte    — Landing page (stub)
-│   ├── (auth)/                     — login ✓, signup ✓, forgot-password (TODO)
+│   ├── (auth)/                     — login ✓, signup ✓, forgot-password ✓, reset-password ✓
 │   ├── (onboarding)/onboarding/    — full-screen 3-step flow, no TopNav, auth-gated ✓
 │   ├── (app)/                      — All protected routes
 │   │   ├── dashboard/              — S2: surface + Supabase data layer ✓
@@ -194,23 +194,61 @@ All tables in Supabase. RLS enabled on every table. All timestamps UTC.
 
 ```sql
 profiles          — id (own UUID, NOT same as auth.users.id), auth_user_id (FK → auth.users),
-                    display_name, avatar_url
+                    display_name, avatar_url, created_at, updated_at
                   -- plan/storage/lemon_squeezy columns NOT YET added — will come with billing
-trees             — owner_id (→ profiles.id), name, description, is_public
-tree_collaborators — tree_id, profile_id (→ profiles.id), role (viewer|editor),
-                     invited_by, accepted_at
-persons           — tree_id, created_by (→ profiles.id), first_name, last_name, maiden_name,
-                    birth_date, birth_place, primary_residence, death_date,
-                    occupation, bio, highlights, avatar_url, is_living
-relationships     — tree_id, person_a_id, person_b_id, relationship_type, is_current
-                  -- types: spouse | divorced | parent_child | adopted | step | uncertain
-                  -- is_current=false = historical; hidden in canvas, visible on profile
-memories          — tree_id, title, content, memory_date, memory_date_precision, author_id
-memory_persons    — junction: memory ↔ person tags
-media             — tree_id, owner_id, file_url, file_type, file_size_bytes, caption
-media_persons     — junction: media ↔ person tags
+
+trees             — id, owner_id (→ profiles.id), name, description, is_public,
+                    created_at, updated_at
+
+tree_collaborators — id, tree_id (→ trees.id), profile_id (→ profiles.id),
+                     role (viewer|editor), invited_by (→ profiles.id, nullable),
+                     invited_at, accepted_at (nullable)
+
+persons           — id, tree_id (→ trees.id), created_by (→ profiles.id),
+                    first_name, last_name (nullable), maiden_name (nullable),
+                    birth_date (nullable), birth_place (nullable), primary_residence (nullable),
+                    death_date (nullable), occupation (nullable), bio (nullable),
+                    highlights (nullable), avatar_url (nullable), is_living,
+                    created_at, updated_at
+
+relationships     — id, tree_id (→ trees.id), person_a_id (→ persons.id),
+                    person_b_id (→ persons.id), type (relationship_type enum), is_current,
+                    start_date (nullable), end_date (nullable), created_at
+                  -- relationship_type enum:
+                  --   spouse | divorced | partner           ← symmetric pairs
+                  --   parent_child                          ← person_a IS THE PARENT of person_b
+                  --   adopted_parent_child                  ← person_a IS THE ADOPTIVE PARENT
+                  --   step_parent_child                     ← person_a IS THE STEP-PARENT
+                  --   sibling | half_sibling | step_sibling ← symmetric pairs
+                  -- NEVER store child/grandchild — those are derived by reversing parent_child
+                  -- is_current=false = historical (divorced, ended partnership); hidden in
+                  -- canvas by default, visible on profile
+
+memories          — id, tree_id (→ trees.id), created_by (→ profiles.id),
+                    title, body (nullable), memory_date (nullable),
+                    memory_date_precision (date_precision enum, default 'exact'),
+                    created_at, updated_at
+                  -- date_precision enum: exact | month | year | decade | circa
+                  -- Use 'circa' for approximate dates ("around 1920"),
+                  -- 'decade' for "sometime in the 1960s", etc.
+
+memory_persons    — memory_id, person_id  ← junction: memory ↔ person tags
+
+media             — id, tree_id (→ trees.id), created_by (→ profiles.id),
+                    media_type (media_type enum: image|video|audio|document),
+                    storage_path (path within Supabase Storage — NOT a full URL),
+                    title (nullable), caption (nullable),
+                    file_size_bytes (bigint, default 0), created_at
+                  -- Always generate signed URLs on the fly; never store them in the DB
+                  -- file_size_bytes is required for storage quota enforcement
+
+media_persons     — media_id, person_id  ← junction: media ↔ person tags
+
 tags / memory_tags — NOT YET CREATED — memory categorization (planned)
-activity_log      — APPEND ONLY: tree_id, actor_id, action, target_type, target_id, metadata
+
+activity_log      — APPEND ONLY: id, tree_id (→ trees.id), actor_id (→ profiles.id, nullable),
+                    action (activity_action enum: created|updated|deleted|uploaded|tagged|invited),
+                    entity_type (text), entity_id (uuid), diff (jsonb, nullable), created_at
 ```
 
 **Key decisions:**
@@ -220,6 +258,7 @@ activity_log      — APPEND ONLY: tree_id, actor_id, action, target_type, targe
 - Profile row created automatically via database trigger on `auth.users` insert
 - Activity log: never add UPDATE or DELETE RLS policies
 - Storage paths: `avatars/{profile_id}` and `tree-media/{tree_id}/{media_id}`
+- `media.storage_path` is a bucket-relative path — generate signed URLs server-side on demand, never persist them
 
 ---
 
@@ -281,7 +320,7 @@ Image thumbnails via `sharp` (server-side): 128×128 and 48×48 for avatars, 400
 
 ## Family Tree Canvas
 
-Uses `@xyflow/svelte` (not yet installed — `npm install @xyflow/svelte dagre @types/dagre`).
+Uses `@xyflow/svelte` + `dagre` (both installed ✓).
 
 ```svelte
 <script lang="ts">
@@ -419,9 +458,8 @@ npm run preview    # preview build
 ## Packages Still to Install
 
 ```bash
-npm install @xyflow/svelte dagre @lemonsqueezy/lemonsqueezy-js posthog-js
+npm install @lemonsqueezy/lemonsqueezy-js posthog-js
 npm install @sentry/sveltekit sharp
-npm install -D @types/dagre
 ```
 
 ---
@@ -457,7 +495,7 @@ npm install -D @types/dagre
 - **Never import `$lib/server/` in `.svelte` or client `.ts`** — leaks service role key
 - **Always use `event.locals.supabase`** in server load functions, not the browser client
 - **RLS is active** — missing data → check RLS policies first (queries return empty, not errors)
-- **`profiles.id` ≠ `auth.uid()`** — `profiles` has its own UUID PK. To get the profile for the current user, query `profiles` where `auth_user_id = user.id`. All FKs (`owner_id`, `created_by`, `profile_id`) use `profiles.id`.
+- **`profiles.id` ≠ `auth.uid()`** — `profiles` has its own UUID PK. To get the profile for the current user, query `profiles` where `auth_user_id = user.id`. All FKs (`owner_id`, `created_by`, `profile_id`, `actor_id`, `invited_by`) use `profiles.id`.
 - **`(app)/+layout.server.ts` loads `profile`** — child routes access `profiles.id` via `await parent()`, not a second query.
 - **`profiles` table**, not `auth.users`, is the source of truth for user data
 - **`is_current` on relationships** controls tree canvas rendering — always set correctly
