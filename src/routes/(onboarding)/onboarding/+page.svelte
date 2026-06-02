@@ -4,6 +4,7 @@
   import type { PageData } from './$types'
   import Input from '$lib/components/ui/Input.svelte'
   import Button from '$lib/components/ui/Button.svelte'
+  import { capture } from '$lib/utils/analytics'
 
   let { data }: { data: PageData } = $props()
 
@@ -171,6 +172,7 @@
                 if (result.type === 'success' && result.data) {
                   savedTreeId = result.data.treeId as string
                   savedFirstName = result.data.firstName as string
+                  capture('tree_created', { tree_id: savedTreeId })
                   step = 3
                 } else if (result.type === 'failure') {
                   serverError = (result.data as { error?: string })?.error ?? 'Something went wrong.'

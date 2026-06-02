@@ -162,7 +162,7 @@ src/
 │       └── plans.ts                — plan limit enforcement (checkFileAllowed, checkStorageAllowed) ✓
 ├── routes/
 │   ├── +layout.svelte              — Root shell, PostHog init (TODO), Sentry init (TODO)
-│   ├── (marketing)/+page.svelte    — Landing page (stub)
+│   ├── (marketing)/+page.svelte    — Landing page ✓
 │   ├── (auth)/                     — login ✓, signup ✓, forgot-password ✓, reset-password ✓
 │   ├── (onboarding)/onboarding/    — full-screen 3-step flow, no TopNav, auth-gated ✓
 │   ├── (app)/                      — All protected routes
@@ -280,8 +280,10 @@ Three tiers. Plan gating always enforced **server-side** — never trust client-
 | Plan | Storage | Trees | Collaborators | Media |
 | --- | --- | --- | --- | --- |
 | Remembrance (free) | 500MB | 1 | 0 | Images only (2MB max) |
-| Heritage ($6/mo) | 50GB | 3 | 10 | Images + audio |
-| Legacy ($12/mo) | Unlimited | ∞ | ∞ | Images + audio + video |
+| Heritage ($7.99/mo · $76.70/yr) | 50GB | 3 | 10 | Images + audio |
+| Legacy ($14.99/mo · $143.90/yr) | Unlimited* | ∞ | ∞ | Images + audio + video |
+
+*Unlimited is effectively uncapped for now. Watch infrastructure costs — at ~$0.02/GB/month on Supabase, a heavy Legacy user uploading 4K video could cost $10+/mo in storage alone. Consider adding a soft ceiling (e.g. 500GB) or revisiting Legacy pricing ($17.99) before launch if video upload usage is high.
 
 **Every upload endpoint must check:** storage quota · tree count · collaborator count · allowed media types.
 
@@ -458,8 +460,8 @@ npm run preview    # preview build
 ## Packages Still to Install
 
 ```bash
-npm install @lemonsqueezy/lemonsqueezy-js posthog-js
-npm install @sentry/sveltekit sharp
+npm install @lemonsqueezy/lemonsqueezy-js
+npm install sharp
 ```
 
 ---
@@ -470,8 +472,8 @@ npm install @sentry/sveltekit sharp
 - [ ] Supabase RLS enabled and tested on every table
 - [ ] Lemon Squeezy webhook endpoint verified, signing secret confirmed
 - [ ] Supabase Storage CORS configured for production domain
-- [ ] Sentry source maps uploading correctly
-- [ ] PostHog events firing on key actions (signup, plan upgrade, tree created, memory added)
+- [ ] Sentry source maps uploading correctly (config done — requires SENTRY_AUTH_TOKEN in Vercel)
+- [ ] PostHog events firing on key actions (signup ✓, tree_created ✓, plan upgrade — pending Lemon Squeezy, memory added — pending memory editor)
 - [ ] All Resend email templates tested end to end
 - [ ] robots.txt — /admin disallowed, noindex header on admin routes
 - [ ] Privacy policy and Terms of service pages live (required by Lemon Squeezy)
@@ -533,12 +535,17 @@ npm install @sentry/sveltekit sharp
 - [x] Memory editor ✓
 - [x] Media upload flow — MediaUploader, MediaGrid, /media page, API endpoint, plan gating ✓
 - [x] activity.ts — logActivity() writes to activity_log table ✓
-- [ ] Landing page — all sections, pricing
+- [x] Landing page — all sections, pricing ✓
+- [x] PostHog — installed, initialized, user identification, key events (user_signed_up, tree_created) ✓
+- [x] Sentry — installed, initialized, source maps config, session replays, user context ✓
+- [x] persons/new — Add Person form (name, status, dates, occupation, bio), server action, activity log ✓
+- [x] persons/[id]/edit — Edit Person form (pre-populated), update + delete actions, danger zone ✓
+- [x] Button href bug fix — Button is always <button>; all nav buttons now use goto() ✓
+- [ ] Relationships — add/remove connections between people (next)
+- [ ] trees/new — create a second tree from dashboard
 - [ ] Collaborator invitations
 - [ ] Activity log screen
 - [ ] Account / settings page
 - [ ] Admin dashboard
 - [ ] Lemon Squeezy — install, integration, webhook handler
-- [ ] PostHog — install and initialize
-- [ ] Sentry — install and initialize
 - [ ] Vercel deployment

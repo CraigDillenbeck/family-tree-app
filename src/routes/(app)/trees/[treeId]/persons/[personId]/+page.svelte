@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { invalidateAll } from '$app/navigation'
+  import { invalidateAll, goto } from '$app/navigation'
   import type { PageProps } from './$types'
   import type { ProfileMemory, ProfileMedia } from './+page.server'
   import Badge from '$lib/components/ui/Badge.svelte'
@@ -118,7 +118,7 @@
       <div class="actions">
         {#if canEdit}
           <Button onclick={openCreateDrawer}>Add a memory</Button>
-          <Button variant="secondary">Edit profile</Button>
+          <Button variant="secondary" onclick={() => goto(`/trees/${data.tree.id}/persons/${data.person.id}/edit`)}>Edit profile</Button>
           <Button variant="ghost">Add relationship</Button>
         {/if}
       </div>
@@ -176,7 +176,7 @@
         {#if !hasDetails}
           <div class="empty-state">
             <p class="empty-text">Edit this person's profile to add their details.</p>
-            {#if canEdit}<Button variant="secondary">Edit profile</Button>{/if}
+            {#if canEdit}<Button variant="secondary" onclick={() => goto(`/trees/${data.tree.id}/persons/${data.person.id}/edit`)}>Edit profile</Button>{/if}
           </div>
         {:else}
           <dl class="facts">

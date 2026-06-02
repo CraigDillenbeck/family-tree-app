@@ -3,6 +3,7 @@
   import type { ActionData } from './$types'
   import Input from '$lib/components/ui/Input.svelte'
   import Button from '$lib/components/ui/Button.svelte'
+  import { capture } from '$lib/utils/analytics'
 
   let { form }: { form: ActionData } = $props()
   let loading = $state(false)
@@ -36,7 +37,11 @@
         action="?/signup"
         use:enhance={() => {
           loading = true
-          return async ({ update }) => { await update(); loading = false }
+          return async ({ result, update }) => {
+            if (result.type === 'redirect') capture('user_signed_up')
+            await update()
+            loading = false
+          }
         }}
       >
         <div class="fields">

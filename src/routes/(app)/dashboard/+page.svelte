@@ -3,6 +3,7 @@
   import type { Json } from '$lib/supabase/types'
   import Card from '$lib/components/ui/Card.svelte'
   import Button from '$lib/components/ui/Button.svelte'
+  import { goto } from '$app/navigation'
 
   let { data }: { data: PageData } = $props()
 
@@ -91,7 +92,7 @@
           <div class="card-head">
             <span class="section-label">Recent activity</span>
             {#if primaryTree}
-              <Button variant="ghost" size="sm" href="/trees/{primaryTree.id}/activity">See all</Button>
+              <Button variant="ghost" size="sm" onclick={() => goto(`/trees/${primaryTree.id}/activity`)}>See all</Button>
             {/if}
           </div>
           {#if data.recentActivity.length > 0}
@@ -114,7 +115,7 @@
           <div class="card-head">
             <span class="section-label">Latest memory</span>
             {#if primaryTree}
-              <Button variant="ghost" size="sm" href="/trees/{primaryTree.id}/persons">Add memory</Button>
+              <Button variant="ghost" size="sm" onclick={() => goto(`/trees/${primaryTree.id}/persons`)}>Add memory</Button>
             {/if}
           </div>
           {#if data.latestMemory}
@@ -165,7 +166,7 @@
         <Card>
           <p class="section-label">Quick add</p>
           <div class="quick-add">
-            <Button href={addPersonHref}>Add a person</Button>
+            <Button onclick={() => goto(addPersonHref)}>Add a person</Button>
             <Button variant="secondary" disabled={!primaryTree}>Add a memory</Button>
             <Button variant="secondary" disabled={!primaryTree}>Upload media</Button>
           </div>

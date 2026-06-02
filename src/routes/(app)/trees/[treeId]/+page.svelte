@@ -1,6 +1,7 @@
 <script lang="ts">
   import { fade, fly } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
+  import { goto } from '$app/navigation'
   import type { PageProps } from './$types'
   import Badge from '$lib/components/ui/Badge.svelte'
   import Button from '$lib/components/ui/Button.svelte'
@@ -65,7 +66,7 @@
         </button>
       {/if}
       {#if canEdit}
-        <Button variant="secondary" size="sm" href="/trees/{data.tree.id}/persons/new">
+        <Button variant="secondary" size="sm" onclick={() => goto(`/trees/${data.tree.id}/persons/new`)}>
           {#snippet icon()}<Icon icon={Plus} size={16} color="currentColor" />{/snippet}
           Add person
         </Button>
@@ -85,7 +86,7 @@
           <p class="empty-title">Begin with yourself.</p>
           <p class="empty-body">Add the first person to your tree and watch your family's story take shape.</p>
           {#if canEdit}
-            <Button href="/trees/{data.tree.id}/persons/new">
+            <Button onclick={() => goto(`/trees/${data.tree.id}/persons/new`)}>
               {#snippet icon()}<Icon icon={Plus} size={16} color="currentColor" />{/snippet}
               Add a person
             </Button>
@@ -166,9 +167,9 @@
         </div>
 
         <div class="drawer-actions">
-          <Button style="flex:1;justify-content:center" href="/trees/{data.tree.id}/persons/{selected.id}">View profile</Button>
+          <Button style="flex:1;justify-content:center" onclick={() => goto(`/trees/${data.tree.id}/persons/${selected.id}`)}>View profile</Button>
           {#if canEdit}
-            <Button variant="secondary" href="/trees/{data.tree.id}/persons/{selected.id}#memories">Add memory</Button>
+            <Button variant="secondary" onclick={() => goto(`/trees/${data.tree.id}/persons/${selected.id}#memories`)}>Add memory</Button>
           {/if}
         </div>
       </aside>

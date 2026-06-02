@@ -2,8 +2,17 @@
   import type { LayoutProps } from './$types'
   import TopNav from '$lib/components/ui/TopNav.svelte'
   import Avatar from '$lib/components/ui/Avatar.svelte'
+  import { identify, analyticsReset } from '$lib/utils/analytics'
+  import * as Sentry from '@sentry/sveltekit'
 
   const { data, children }: LayoutProps = $props()
+
+  $effect(() => {
+    if (data.profile) {
+      identify(data.profile.id, { display_name: data.profile.display_name ?? undefined })
+      Sentry.setUser({ id: data.profile.id, username: data.profile.display_name ?? undefined })
+    }
+  })
 
   const given = $derived(
     data.profile?.display_name?.split(' ')[0]
@@ -20,7 +29,7 @@
 <TopNav active="dashboard">
   {#snippet avatar()}
     <Avatar person={{ given, family }} size={32} />
-    <form method="POST" action="/api/auth/signout" style="display:contents">
+    <form method="POST" action="/api/auth/signout" style="display:contents" onsubmit={() => { analyticsReset(); Sentry.setUser(null) }}>
       <button type="submit" class="signout">Sign out</button>
     </form>
   {/snippet}
