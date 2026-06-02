@@ -1,6 +1,7 @@
 import { error, fail } from '@sveltejs/kit'
 import type { Actions, PageServerLoad } from './$types'
 import { logActivity } from '$lib/utils/activity'
+import { signedDownloadUrls } from '$lib/server/storage'
 
 export type ProfilePerson = {
   id: string
@@ -26,9 +27,11 @@ export type ProfileMemory = {
 
 export type ProfileMedia = {
   id: string
-  file_url: string
-  file_type: string
+  media_type: 'image' | 'video' | 'audio' | 'document'
+  storage_path: string
+  title: string | null
   caption: string | null
+  signedUrl: string | null
 }
 
 export type ProfileRelationship = {
@@ -117,7 +120,7 @@ export const load: PageServerLoad = async ({ locals: { supabase }, params }) => 
     mediaIds.length > 0
       ? supabase
           .from('media')
-          .select('id, file_url, file_type, caption')
+          .select('id, media_type, storage_path, title, caption')
           .in('id', mediaIds)
           .order('created_at', { ascending: false })
       : Promise.resolve({ data: [] as ProfileMedia[] })
@@ -135,7 +138,17 @@ export const load: PageServerLoad = async ({ locals: { supabase }, params }) => 
     })
   )
 
-  const media: ProfileMedia[] = (mediaRes.data ?? []) as ProfileMedia[]
+  type RawMedia = { id: string; media_type: string; storage_path: string; title: string | null; caption: string | null }
+  const rawMedia = (mediaRes.data ?? []) as RawMedia[]
+  const urlMap = await signedDownloadUrls(rawMedia.map((m) => m.storage_path))
+  const media: ProfileMedia[] = rawMedia.map((m) => ({
+    id: m.id,
+    media_type: m.media_type as ProfileMedia['media_type'],
+    storage_path: m.storage_path,
+    title: m.title,
+    caption: m.caption,
+    signedUrl: urlMap.get(m.storage_path) ?? null,
+  }))
 
   const relationships: ProfileRelationship[] = (
     (relsRes.data ?? []) as unknown as RawRelationship[]

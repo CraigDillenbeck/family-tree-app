@@ -1,6 +1,7 @@
 <script lang="ts">
+  import { invalidateAll } from '$app/navigation'
   import type { PageProps } from './$types'
-  import type { ProfileMemory } from './+page.server'
+  import type { ProfileMemory, ProfileMedia } from './+page.server'
   import Badge from '$lib/components/ui/Badge.svelte'
   import Button from '$lib/components/ui/Button.svelte'
   import Avatar from '$lib/components/ui/Avatar.svelte'
@@ -10,12 +11,25 @@
   import Drawer from '$lib/components/ui/Drawer.svelte'
   import MemoryStoryCard from '$lib/components/patterns/MemoryStoryCard.svelte'
   import MemoryEditor from '$lib/components/memory/MemoryEditor.svelte'
+  import MediaGrid from '$lib/components/media/MediaGrid.svelte'
+  import MediaUploader from '$lib/components/media/MediaUploader.svelte'
 
   const { data }: PageProps = $props()
 
   let activeTab = $state('memories')
   let drawerOpen = $state(false)
   let editingMemory = $state<ProfileMemory | null>(null)
+  let uploaderOpen = $state(false)
+
+  async function handleMediaUploaded() {
+    uploaderOpen = false
+    await invalidateAll()
+  }
+
+  async function handleMediaDeleted(mediaId: string) {
+    await fetch(`/api/trees/${data.tree.id}/media?mediaId=${mediaId}`, { method: 'DELETE' })
+    await invalidateAll()
+  }
 
   function openCreateDrawer() {
     editingMemory = null
@@ -189,22 +203,22 @@
 
     {#if activeTab === 'media'}
       <div class="tab-inner">
+        {#if canEdit}
+          <div class="media-toolbar">
+            <Button variant="secondary" onclick={() => (uploaderOpen = true)}>Upload media</Button>
+          </div>
+        {/if}
+
         {#if data.media.length === 0}
           <div class="empty-state">
             <p class="empty-text">Photographs, letters, recordings — add them here.</p>
-            {#if canEdit}<Button variant="secondary">Upload media</Button>{/if}
           </div>
         {:else}
-          <div class="media-grid">
-            {#each data.media as item (item.id)}
-              <div class="media-cell">
-                <div class="media-thumb"></div>
-                {#if item.caption}
-                  <p class="media-caption">{item.caption}</p>
-                {/if}
-              </div>
-            {/each}
-          </div>
+          <MediaGrid
+            items={data.media}
+            {canEdit}
+            onDelete={handleMediaDeleted}
+          />
         {/if}
       </div>
     {/if}
@@ -255,6 +269,21 @@
       onCancel={closeDrawer}
     />
   {/key}
+</Drawer>
+
+<!-- ── Media uploader drawer ── -->
+<Drawer
+  open={uploaderOpen}
+  title="Upload media"
+  variant="detail"
+  onclose={() => (uploaderOpen = false)}
+>
+  <MediaUploader
+    treeId={data.tree.id}
+    personId={data.person.id}
+    onUploaded={handleMediaUploaded}
+    onCancel={() => (uploaderOpen = false)}
+  />
 </Drawer>
 
 <style>
@@ -431,32 +460,9 @@
   }
 
   /* ── Media ── */
-  .media-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: var(--space-4);
-    max-width: 900px;
-    margin: 0 auto;
-  }
-
-  .media-cell {
-    background: var(--color-bg-surface-1);
-    border: var(--border-default);
-    border-radius: var(--radius-lg);
-    overflow: hidden;
-  }
-
-  .media-thumb {
-    aspect-ratio: 4 / 3;
-    background: var(--color-bg-surface-2);
-  }
-
-  .media-caption {
-    padding: var(--space-3);
-    font-family: var(--font-ui);
-    font-size: 12px;
-    color: var(--color-text-body);
-    margin: 0;
+  .media-toolbar {
+    display: flex;
+    justify-content: flex-end;
   }
 
   /* ── Relationships ── */
