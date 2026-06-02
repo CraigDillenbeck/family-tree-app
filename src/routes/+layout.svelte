@@ -2,8 +2,18 @@
 	import '$lib/styles/tokens.css';
 	import favicon from '$lib/assets/favicon.svg';
 	import Toast from '$lib/components/ui/Toast.svelte';
+	import { afterNavigate } from '$app/navigation';
+	import { initAnalytics, capturePageview } from '$lib/utils/analytics';
 
 	let { children } = $props();
+
+	$effect(() => {
+		initAnalytics();
+	});
+
+	afterNavigate(() => {
+		capturePageview();
+	});
 </script>
 
 <svelte:head>

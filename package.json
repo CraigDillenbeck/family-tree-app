@@ -35,11 +35,13 @@
 		"vite": "^8.0.7"
 	},
 	"dependencies": {
+		"@sentry/sveltekit": "^10.56.0",
 		"@supabase/ssr": "^0.10.2",
 		"@supabase/supabase-js": "^2.105.1",
 		"@types/dagre": "^0.7.54",
 		"@xyflow/svelte": "^1.6.0",
 		"dagre": "^0.8.5",
-		"lucide-svelte": "^1.0.1"
+		"lucide-svelte": "^1.0.1",
+		"posthog-js": "^1.378.1"
 	}
 }
