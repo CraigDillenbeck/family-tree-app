@@ -1,15 +1,35 @@
 <script lang="ts">
   import type { PageProps } from './$types'
+  import type { ProfileMemory } from './+page.server'
   import Badge from '$lib/components/ui/Badge.svelte'
   import Button from '$lib/components/ui/Button.svelte'
   import Avatar from '$lib/components/ui/Avatar.svelte'
   import Card from '$lib/components/ui/Card.svelte'
   import Tabs from '$lib/components/ui/Tabs.svelte'
   import Tag from '$lib/components/ui/Tag.svelte'
+  import Drawer from '$lib/components/ui/Drawer.svelte'
+  import MemoryStoryCard from '$lib/components/patterns/MemoryStoryCard.svelte'
+  import MemoryEditor from '$lib/components/memory/MemoryEditor.svelte'
 
   const { data }: PageProps = $props()
 
   let activeTab = $state('memories')
+  let drawerOpen = $state(false)
+  let editingMemory = $state<ProfileMemory | null>(null)
+
+  function openCreateDrawer() {
+    editingMemory = null
+    drawerOpen = true
+  }
+
+  function openEditDrawer(m: ProfileMemory) {
+    editingMemory = m
+    drawerOpen = true
+  }
+
+  function closeDrawer() {
+    drawerOpen = false
+  }
 
   const tabs = $derived([
     { value: 'about', label: 'About' },
@@ -83,7 +103,7 @@
 
       <div class="actions">
         {#if canEdit}
-          <Button>Add a memory</Button>
+          <Button onclick={openCreateDrawer}>Add a memory</Button>
           <Button variant="secondary">Edit profile</Button>
           <Button variant="ghost">Add relationship</Button>
         {/if}
@@ -113,24 +133,24 @@
         {#if data.memories.length === 0}
           <div class="empty-state">
             <p class="empty-text">The first memory you add will live here.</p>
-            {#if canEdit}<Button variant="secondary">Add a memory</Button>{/if}
+            {#if canEdit}
+              <Button variant="secondary" onclick={openCreateDrawer}>Add a memory</Button>
+            {/if}
           </div>
         {:else}
           <div class="memory-list">
             {#each data.memories as m (m.id)}
-              <Card interactive>
-                <h3 class="memory-title">{m.title}</h3>
-                {#if m.excerpt}<p class="memory-excerpt">{m.excerpt}</p>{/if}
-                <div class="memory-foot">
-                  {#if m.memory_date}<span class="memory-date">{yearOf(m.memory_date)}</span>{/if}
-                  {#if m.tags.length}
-                    <span class="dot">·</span>
-                    {#each m.tags as t}
-                      <Badge variant="warm">{t}</Badge>
-                    {/each}
-                  {/if}
-                </div>
-              </Card>
+              <MemoryStoryCard
+                memory={{
+                  id: m.id,
+                  title: m.title,
+                  content: m.excerpt,
+                  memoryDate: m.memory_date,
+                  memoryDatePrecision: m.memory_date_precision as 'full' | 'month_year' | 'year' | 'approximate',
+                  tags: [],
+                }}
+                onclick={canEdit ? () => openEditDrawer(m) : undefined}
+              />
             {/each}
           </div>
         {/if}
@@ -219,6 +239,23 @@
 
   </div>
 </div>
+
+<!-- ── Memory editor drawer ── -->
+<Drawer
+  open={drawerOpen}
+  title={editingMemory ? 'Edit memory' : 'Add a memory'}
+  variant="detail"
+  onclose={closeDrawer}
+>
+  {#key editingMemory?.id ?? 'new'}
+    <MemoryEditor
+      memory={editingMemory}
+      personId={data.person.id}
+      onSuccess={closeDrawer}
+      onCancel={closeDrawer}
+    />
+  {/key}
+</Drawer>
 
 <style>
   .profile {
@@ -365,42 +402,6 @@
     display: flex;
     flex-direction: column;
     gap: var(--space-6);
-  }
-
-  .memory-title {
-    font-family: var(--font-ui);
-    font-weight: var(--font-weight-medium);
-    font-size: 16px;
-    color: var(--color-text-primary);
-    margin: 0;
-  }
-
-  .memory-excerpt {
-    font-family: var(--font-body);
-    font-size: 14px;
-    font-style: italic;
-    color: var(--color-text-body);
-    line-height: var(--line-height-story);
-    margin: var(--space-2) 0 0 0;
-  }
-
-  .memory-foot {
-    display: flex;
-    align-items: center;
-    gap: var(--space-2);
-    margin-top: var(--space-3);
-  }
-
-  .memory-date {
-    font-family: var(--font-ui);
-    font-size: var(--font-size-label);
-    color: var(--color-text-secondary);
-  }
-
-  .dot {
-    font-family: var(--font-ui);
-    font-size: var(--font-size-label);
-    color: var(--color-text-hint);
   }
 
   /* ── About ── */

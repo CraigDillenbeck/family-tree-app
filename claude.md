@@ -241,8 +241,8 @@ Three tiers. Plan gating always enforced **server-side** — never trust client-
 | Plan | Storage | Trees | Collaborators | Media |
 | --- | --- | --- | --- | --- |
 | Remembrance (free) | 500MB | 1 | 0 | Images only (2MB max) |
-| Heritage ($7.99/mo) | 50GB | 3 | 10 | Images + audio |
-| Legacy ($14.99/mo) | Unlimited | ∞ | ∞ | Images + audio + video |
+| Heritage ($6/mo) | 50GB | 3 | 10 | Images + audio |
+| Legacy ($12/mo) | Unlimited | ∞ | ∞ | Images + audio + video |
 
 **Every upload endpoint must check:** storage quota · tree count · collaborator count · allowed media types.
 
@@ -482,18 +482,18 @@ npm install -D @types/dagre
 - P01 FamilyTreeNode, P02 RelationshipConnector, P03 PersonSummaryCard, P04 PersonProfileHeader, P05 MemoryStoryCard, P11 ProfileTimeline
 
 **Phase 4 — Screens (in progress):**
-- [x] S1 — Login + Signup (forgot-password TODO)
+- [x] S1 — Login + Signup + forgot-password + reset-password ✓
 - [x] S2 — Dashboard: surface + Supabase data layer ✓
-- [x] S3 — Tree canvas: surface + data layer ✓ (@xyflow/svelte not yet integrated)
+- [x] S3 — Tree canvas: surface + data layer ✓ + @xyflow/svelte + dagre integrated ✓
 - [x] S4 — Person profile: surface + data layer ✓
 - [x] API mutation endpoints — persons, relationships, memories, media, collaborators wired
 - [x] Route stubs — trees/new, persons/new, person/edit, activity, collaborators, settings, account
 - [x] Onboarding flow — 3-step Welcome → Begin with yourself → First leaf ✓
-- [ ] @xyflow/svelte + dagre — interactive tree canvas (NEXT)
+- [x] @xyflow/svelte + dagre — interactive tree canvas ✓
 - [ ] Landing page — all sections, pricing
-- [ ] forgot-password auth route
-- [ ] plans.ts — plan limit enforcement utility
-- [ ] Memory editor
+- [x] forgot-password + reset-password auth routes ✓
+- [x] plans.ts — plan limit enforcement utility ✓
+- [x] Memory editor ✓
 - [ ] Media upload flow
 - [ ] Collaborator invitations
 - [ ] Activity log screen

@@ -1,5 +1,6 @@
-import { error } from '@sveltejs/kit'
-import type { PageServerLoad } from './$types'
+import { error, fail } from '@sveltejs/kit'
+import type { Actions, PageServerLoad } from './$types'
+import { logActivity } from '$lib/utils/activity'
 
 export type ProfilePerson = {
   id: string
@@ -16,8 +17,10 @@ export type ProfilePerson = {
 export type ProfileMemory = {
   id: string
   title: string
+  content: string | null
   excerpt: string | null
   memory_date: string | null
+  memory_date_precision: string
   tags: string[]
 }
 
@@ -67,6 +70,7 @@ type RawMemory = {
   title: string
   content: string | null
   memory_date: string | null
+  memory_date_precision: string
 }
 
 export const load: PageServerLoad = async ({ locals: { supabase }, params }) => {
@@ -106,7 +110,7 @@ export const load: PageServerLoad = async ({ locals: { supabase }, params }) => 
     memoryIds.length > 0
       ? supabase
           .from('memories')
-          .select('id, title, content, memory_date')
+          .select('id, title, content, memory_date, memory_date_precision')
           .in('id', memoryIds)
           .order('created_at', { ascending: false })
       : Promise.resolve({ data: [] as RawMemory[] }),
@@ -123,8 +127,10 @@ export const load: PageServerLoad = async ({ locals: { supabase }, params }) => 
     (m) => ({
       id: m.id,
       title: m.title,
+      content: m.content,
       excerpt: m.content ? m.content.slice(0, 160) : null,
       memory_date: m.memory_date,
+      memory_date_precision: m.memory_date_precision ?? 'full',
       tags: []
     })
   )
@@ -167,6 +173,187 @@ export const load: PageServerLoad = async ({ locals: { supabase }, params }) => 
   }
 }
 
+export const actions: Actions = {
+  createMemory: async ({ request, params, locals: { supabase, safeGetSession } }) => {
+    const { user } = await safeGetSession()
+    if (!user) return fail(401, { error: 'Not authenticated.' })
+
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('auth_user_id', user.id)
+      .single()
+
+    if (!profile) return fail(401, { error: 'Could not find your profile.' })
+
+    const form = await request.formData()
+    const title = (form.get('title') as string | null)?.trim()
+    const content = (form.get('content') as string | null)?.trim() || null
+    const memoryDate = (form.get('memory_date') as string | null) || null
+    const precision = (form.get('memory_date_precision') as string) || 'full'
+    const personId = form.get('personId') as string | null
+
+    if (!title) return fail(400, { error: 'A title is required.' })
+
+    const { data: memory, error: memErr } = await supabase
+      .from('memories')
+      .insert({
+        tree_id: params.treeId,
+        title,
+        content,
+        memory_date: memoryDate,
+        memory_date_precision: precision,
+        author_id: profile.id,
+      })
+      .select('id')
+      .single()
+
+    if (memErr || !memory) {
+      return fail(500, { error: 'Could not save the memory. Please try again.' })
+    }
+
+    if (personId) {
+      await supabase
+        .from('memory_persons')
+        .insert({ memory_id: memory.id, person_id: personId })
+    }
+
+    await logActivity({
+      supabase,
+      treeId: params.treeId,
+      profileId: profile.id,
+      action: 'created',
+      entityType: 'memory',
+      entityId: memory.id,
+    })
+
+    return { created: true }
+  },
+
+  updateMemory: async ({ request, params, locals: { supabase, safeGetSession } }) => {
+    const { user } = await safeGetSession()
+    if (!user) return fail(401, { error: 'Not authenticated.' })
+
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('auth_user_id', user.id)
+      .single()
+
+    if (!profile) return fail(401, { error: 'Could not find your profile.' })
+
+    const form = await request.formData()
+    const memoryId = form.get('memoryId') as string | null
+    const title = (form.get('title') as string | null)?.trim()
+    const content = (form.get('content') as string | null)?.trim() || null
+    const memoryDate = (form.get('memory_date') as string | null) || null
+    const precision = (form.get('memory_date_precision') as string) || 'full'
+
+    if (!memoryId) return fail(400, { error: 'Memory ID missing.' })
+    if (!title) return fail(400, { error: 'A title is required.' })
+
+    const { data: existing } = await supabase
+      .from('memories')
+      .select('id, author_id')
+      .eq('id', memoryId)
+      .eq('tree_id', params.treeId)
+      .single()
+
+    if (!existing) return fail(404, { error: 'Memory not found.' })
+
+    if (existing.author_id !== profile.id) {
+      const { data: tree } = await supabase
+        .from('trees')
+        .select('owner_id')
+        .eq('id', params.treeId)
+        .single()
+      if (!tree || tree.owner_id !== profile.id) {
+        return fail(403, { error: 'You do not have permission to edit this memory.' })
+      }
+    }
+
+    const { error: updateErr } = await supabase
+      .from('memories')
+      .update({ title, content, memory_date: memoryDate, memory_date_precision: precision })
+      .eq('id', memoryId)
+
+    if (updateErr) {
+      return fail(500, { error: 'Could not save changes. Please try again.' })
+    }
+
+    await logActivity({
+      supabase,
+      treeId: params.treeId,
+      profileId: profile.id,
+      action: 'updated',
+      entityType: 'memory',
+      entityId: memoryId,
+    })
+
+    return { updated: true }
+  },
+
+  deleteMemory: async ({ request, params, locals: { supabase, safeGetSession } }) => {
+    const { user } = await safeGetSession()
+    if (!user) return fail(401, { error: 'Not authenticated.' })
+
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('auth_user_id', user.id)
+      .single()
+
+    if (!profile) return fail(401, { error: 'Could not find your profile.' })
+
+    const form = await request.formData()
+    const memoryId = form.get('memoryId') as string | null
+
+    if (!memoryId) return fail(400, { error: 'Memory ID missing.' })
+
+    const { data: existing } = await supabase
+      .from('memories')
+      .select('id, author_id')
+      .eq('id', memoryId)
+      .eq('tree_id', params.treeId)
+      .single()
+
+    if (!existing) return fail(404, { error: 'Memory not found.' })
+
+    if (existing.author_id !== profile.id) {
+      const { data: tree } = await supabase
+        .from('trees')
+        .select('owner_id')
+        .eq('id', params.treeId)
+        .single()
+      if (!tree || tree.owner_id !== profile.id) {
+        return fail(403, { error: 'You do not have permission to delete this memory.' })
+      }
+    }
+
+    await supabase.from('memory_persons').delete().eq('memory_id', memoryId)
+
+    const { error: deleteErr } = await supabase
+      .from('memories')
+      .delete()
+      .eq('id', memoryId)
+
+    if (deleteErr) {
+      return fail(500, { error: 'Could not delete the memory. Please try again.' })
+    }
+
+    await logActivity({
+      supabase,
+      treeId: params.treeId,
+      profileId: profile.id,
+      action: 'deleted',
+      entityType: 'memory',
+      entityId: memoryId,
+    })
+
+    return { deleted: true }
+  }
+}
+
 function relLabel(type: string, isPersonA: boolean): string {
   switch (type) {
     case 'spouse':
@@ -174,7 +361,6 @@ function relLabel(type: string, isPersonA: boolean): string {
     case 'divorced':
       return 'Former spouse'
     case 'parent_child':
-      // person_a is the parent; person_b is the child
       return isPersonA ? 'Child' : 'Parent'
     case 'adopted':
       return isPersonA ? 'Adopted child' : 'Adoptive parent'
