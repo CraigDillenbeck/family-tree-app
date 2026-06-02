@@ -1,7 +1,10 @@
+import type { SupabaseClient } from '@supabase/supabase-js'
+import type { Database } from '$lib/supabase/types'
+
 export type ActivityAction = 'created' | 'updated' | 'deleted' | 'uploaded' | 'tagged' | 'invited'
 
 export async function logActivity(params: {
-  supabase: unknown
+  supabase: SupabaseClient<Database>
   treeId: string
   profileId: string
   action: ActivityAction
@@ -9,6 +12,12 @@ export async function logActivity(params: {
   entityId: string
   diff?: Record<string, unknown>
 }) {
-  // Implementation coming in Phase 3
-  console.log('[activity]', params.action, params.entityType, params.entityId)
+  await params.supabase.from('activity_log').insert({
+    tree_id: params.treeId,
+    actor_id: params.profileId,
+    action: params.action,
+    entity_type: params.entityType,
+    entity_id: params.entityId,
+    diff: (params.diff ?? null) as import('$lib/supabase/types').Json | null,
+  })
 }
