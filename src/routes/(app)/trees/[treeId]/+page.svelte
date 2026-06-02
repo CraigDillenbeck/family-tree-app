@@ -6,18 +6,24 @@
   import Button from '$lib/components/ui/Button.svelte'
   import Avatar from '$lib/components/ui/Avatar.svelte'
   import Icon from '$lib/components/ui/Icon.svelte'
-  import { X, Plus, GitBranch } from 'lucide-svelte'
+  import TreeCanvas from '$lib/components/tree/TreeCanvas.svelte'
+  import { X, Plus, GitBranch, List } from 'lucide-svelte'
 
   const { data }: PageProps = $props()
 
   const canEdit = $derived(data.userRole === 'owner' || data.userRole === 'editor')
 
   let selectedId = $state<string | null>(null)
+  let listView = $state(false)
   const selected = $derived(data.persons.find(p => p.id === selectedId) ?? null)
 
   const dur = 280
 
   function closeDrawer() { selectedId = null }
+
+  function handleNodeClick(id: string) {
+    selectedId = id || null
+  }
 
   function formatDate(iso: string | null): string | null {
     if (!iso) return null
@@ -42,16 +48,27 @@
     </div>
 
     <div class="toolbar-right">
-      <span class="legend">
-        <span class="legend-line parent"></span>Parent
-        <span class="legend-line spouse"></span>Spouse
-      </span>
+      {#if data.persons.length > 0}
+        <span class="legend">
+          <span class="legend-line parent"></span>Parent
+          <span class="legend-line spouse"></span>Spouse
+        </span>
+        <button
+          class="view-toggle"
+          class:active={listView}
+          type="button"
+          onclick={() => { listView = !listView }}
+          aria-label={listView ? 'Switch to canvas view' : 'Switch to list view'}
+          title={listView ? 'Canvas view' : 'List view'}
+        >
+          <Icon icon={List} size={16} color="currentColor" />
+        </button>
+      {/if}
       {#if canEdit}
         <Button variant="secondary" size="sm" href="/trees/{data.tree.id}/persons/new">
           {#snippet icon()}<Icon icon={Plus} size={16} color="currentColor" />{/snippet}
           Add person
         </Button>
-        <Button size="sm">Add relationship</Button>
       {/if}
     </div>
   </div>
@@ -74,39 +91,38 @@
             </Button>
           {/if}
         </div>
-      {:else}
-        <!-- Node layer — will be replaced by @xyflow/svelte canvas -->
-        <div class="nodes">
+      {:else if listView}
+        <!-- Accessible list-view alternative -->
+        <div class="list-view" role="list" aria-label="Family members">
           {#each data.persons as p (p.id)}
             {@const birthYear = formatDate(p.birth_date)}
             {@const deathYear = formatDate(p.death_date)}
-            <button
-              class="node"
-              class:selected={selectedId === p.id}
-              onclick={() => selectedId = p.id}
-              type="button"
+            <a
+              class="list-row"
+              href="/trees/{data.tree.id}/persons/{p.id}"
             >
               <Avatar
                 person={{ given: p.first_name, family: p.last_name ?? '', status: p.is_living ? 'living' : 'deceased' }}
-                size={44}
+                size={36}
               />
-              <span class="node-name">{p.first_name}{p.last_name ? ' ' + p.last_name : ''}</span>
+              <span class="list-name">{p.first_name}{p.last_name ? ' ' + p.last_name : ''}</span>
               {#if birthYear || deathYear}
-                <span class="node-dates">
-                  {#if p.is_living}
-                    b. {birthYear}
-                  {:else if birthYear && deathYear}
-                    {birthYear}–{deathYear}
-                  {:else if birthYear}
-                    b. {birthYear}
-                  {:else if deathYear}
-                    d. {deathYear}
-                  {/if}
+                <span class="list-dates">
+                  {p.is_living && birthYear ? `b. ${birthYear}` : birthYear && deathYear ? `${birthYear}–${deathYear}` : birthYear ? `b. ${birthYear}` : `d. ${deathYear}`}
                 </span>
               {/if}
-            </button>
+              <Badge variant={p.is_living ? 'sage' : 'terra'} dot>{p.is_living ? 'Living' : 'Deceased'}</Badge>
+            </a>
           {/each}
         </div>
+      {:else}
+        <!-- Interactive tree canvas -->
+        <TreeCanvas
+          persons={data.persons}
+          relationships={data.relationships}
+          {selectedId}
+          onNodeClick={handleNodeClick}
+        />
       {/if}
     </div>
 
@@ -230,9 +246,6 @@
     position: absolute;
     inset: 0;
     background-color: var(--color-bg-page);
-    background-image: radial-gradient(rgba(196, 185, 168, 0.35) 1px, transparent 1px);
-    background-size: 18px 18px;
-    overflow: auto;
     transition: right var(--dur-base) var(--ease);
   }
 
@@ -280,55 +293,73 @@
     margin: 0;
   }
 
-  /* ── Nodes (placeholder layout — replaced by @xyflow/svelte) ── */
-  .nodes {
-    position: absolute;
-    inset: 0;
-    padding: var(--space-8);
+  /* ── View toggle button ── */
+  .view-toggle {
     display: flex;
-    flex-wrap: wrap;
-    gap: var(--space-6);
-    align-content: flex-start;
-  }
-
-  .node {
-    display: flex;
-    flex-direction: column;
     align-items: center;
-    gap: var(--space-2);
-    width: 160px;
-    min-height: 110px;
-    padding: var(--space-3);
-    background: var(--color-bg-page);
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    background: none;
     border: var(--border-default);
-    border-radius: var(--radius-md);
+    border-radius: var(--radius-sm);
     cursor: pointer;
-    transition: background var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease);
+    color: var(--color-text-secondary);
+    transition: background var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease);
   }
 
-  .node:hover {
+  .view-toggle:hover {
     background: var(--color-bg-surface-1);
+    color: var(--color-text-primary);
     border-color: var(--color-border-strong);
   }
 
-  .node.selected {
-    background: var(--color-bg-surface-1);
-    border: var(--border-featured);
+  .view-toggle.active {
+    background: var(--color-bg-surface-2);
+    color: var(--color-text-primary);
+    border-color: var(--color-border-strong);
   }
 
-  .node-name {
+  /* ── List view (accessible alternative to canvas) ── */
+  .list-view {
+    position: absolute;
+    inset: 0;
+    overflow-y: auto;
+    padding: var(--space-4) var(--space-8);
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .list-row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-3) var(--space-4);
+    border-bottom: var(--border-subtle);
+    text-decoration: none;
+    color: inherit;
+    transition: background var(--dur-fast) var(--ease);
+    border-radius: var(--radius-sm);
+  }
+
+  .list-row:hover {
+    background: var(--color-bg-surface-1);
+  }
+
+  .list-name {
     font-family: var(--font-ui);
     font-weight: var(--font-weight-medium);
-    font-size: 13px;
+    font-size: var(--font-size-body);
     color: var(--color-text-primary);
-    text-align: center;
-    line-height: var(--line-height-heading);
+    flex: 1;
   }
 
-  .node-dates {
+  .list-dates {
     font-family: var(--font-ui);
     font-size: var(--font-size-label);
     color: var(--color-text-secondary);
+    flex-shrink: 0;
   }
 
   /* ── Drawer ── */

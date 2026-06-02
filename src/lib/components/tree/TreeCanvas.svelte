@@ -1,0 +1,202 @@
+<script lang="ts">
+  import { setContext } from 'svelte'
+  import { SvelteFlow, Background, MiniMap } from '@xyflow/svelte'
+  import '@xyflow/svelte/dist/style.css'
+  import type { Node, Edge, Viewport } from '@xyflow/svelte'
+  import dagre from 'dagre'
+  import type { NodeTypes, EdgeTypes } from '@xyflow/svelte'
+  import TreeCanvasNode from '$lib/components/tree/TreeCanvasNode.svelte'
+  import TreeCanvasEdge from '$lib/components/tree/TreeCanvasEdge.svelte'
+  import type { TreePerson } from '$lib/components/patterns/FamilyTreeNode.svelte'
+
+  export type CanvasPerson = {
+    id: string
+    first_name: string
+    last_name: string | null
+    birth_date: string | null
+    death_date: string | null
+    avatar_url: string | null
+    is_living: boolean
+  }
+
+  export type CanvasRelationship = {
+    id: string
+    person_a_id: string
+    person_b_id: string
+    relationship_type: string
+  }
+
+  let {
+    persons,
+    relationships,
+    selectedId = null,
+    onNodeClick,
+  }: {
+    persons: CanvasPerson[]
+    relationships: CanvasRelationship[]
+    selectedId?: string | null
+    onNodeClick?: (personId: string) => void
+  } = $props()
+
+  const NODE_W = 160
+  const NODE_H = 110
+
+  // Cast to NodeTypes/EdgeTypes — our components are compatible at runtime but TypeScript's
+  // generic constraints on NodeTypes are too strict for narrowed NodeData types
+  const nodeTypes: NodeTypes = { familyNode: TreeCanvasNode as NodeTypes[string] }
+  const edgeTypes: EdgeTypes = { relationship: TreeCanvasEdge as EdgeTypes[string] }
+
+  // Viewport zoom shared with child node/edge components via context
+  const viewportCtx = $state({ zoom: 1 })
+  setContext('tree-viewport', viewportCtx)
+
+  function handleMove(_e: MouseEvent | TouchEvent | null, vp: Viewport) {
+    viewportCtx.zoom = vp.zoom
+  }
+
+  function toPerson(p: CanvasPerson): TreePerson {
+    return {
+      id: p.id,
+      firstName: p.first_name,
+      lastName: p.last_name,
+      birthDate: p.birth_date,
+      deathDate: p.death_date,
+      avatarUrl: p.avatar_url,
+      isLiving: p.is_living,
+    }
+  }
+
+  function buildLayout(ps: CanvasPerson[], rs: CanvasRelationship[]) {
+    if (ps.length === 0) return { nodes: [], edges: [] }
+
+    const g = new dagre.graphlib.Graph()
+    g.setGraph({ rankdir: 'TB', ranksep: 80, nodesep: 40, marginx: 80, marginy: 80 })
+    g.setDefaultEdgeLabel(() => ({}))
+
+    for (const p of ps) {
+      g.setNode(p.id, { width: NODE_W, height: NODE_H })
+    }
+
+    // Only parent_child-like edges go into the dagre hierarchy;
+    // spouse edges are added as zero-weight to pull spouses close together
+    for (const r of rs) {
+      if (['parent_child', 'adopted', 'step'].includes(r.relationship_type)) {
+        g.setEdge(r.person_a_id, r.person_b_id)
+      } else if (['spouse', 'divorced'].includes(r.relationship_type)) {
+        // minlen=1 with weight=0 keeps spouses on the same rank
+        g.setEdge(r.person_a_id, r.person_b_id, { weight: 0, minlen: 0 })
+      }
+    }
+
+    dagre.layout(g)
+
+    const nodes: Node[] = ps.map(p => {
+      const pos = g.node(p.id)
+      return {
+        id: p.id,
+        type: 'familyNode',
+        // dagre gives center positions; XYFlow wants top-left → offset by half node size
+        position: { x: (pos?.x ?? 0) - NODE_W / 2, y: (pos?.y ?? 0) - NODE_H / 2 },
+        data: { person: toPerson(p) },
+        selected: p.id === selectedId,
+        selectable: true,
+        draggable: false,
+        connectable: false,
+        deletable: false,
+        width: NODE_W,
+        height: NODE_H,
+      }
+    })
+
+    const edges: Edge[] = rs.map(r => ({
+      id: r.id,
+      source: r.person_a_id,
+      target: r.person_b_id,
+      type: 'relationship',
+      data: { relType: r.relationship_type },
+      selectable: false,
+      deletable: false,
+      focusable: false,
+    }))
+
+    return { nodes, edges }
+  }
+
+  const layout = $derived(buildLayout(persons, relationships))
+  const nodes = $derived(layout.nodes)
+  const edges = $derived(layout.edges)
+
+  function handleNodeClick({ node }: { node: Node; event: MouseEvent | TouchEvent }) {
+    onNodeClick?.(node.id)
+  }
+
+  function handlePaneClick() {
+    onNodeClick?.('')
+  }
+</script>
+
+<div class="canvas-root">
+  <SvelteFlow
+    {nodes}
+    {edges}
+    {nodeTypes}
+    {edgeTypes}
+    fitView
+    fitViewOptions={{ padding: 0.15 }}
+    minZoom={0.15}
+    maxZoom={2}
+    nodesDraggable={false}
+    nodesConnectable={false}
+    elementsSelectable={true}
+    deleteKey={null}
+    panOnScroll={true}
+    onmove={handleMove}
+    onnodeclick={handleNodeClick}
+    onpaneclick={handlePaneClick}
+    colorMode="light"
+    style="width:100%;height:100%;background:var(--color-bg-page)"
+  >
+    <Background
+      gap={18}
+      size={1}
+      patternColor="rgba(196, 185, 168, 0.5)"
+      bgColor="var(--color-bg-page)"
+    />
+    <MiniMap
+      position="bottom-right"
+      style="background:var(--color-bg-surface-1);border:var(--border-subtle)"
+    />
+  </SvelteFlow>
+</div>
+
+<style>
+  .canvas-root {
+    width: 100%;
+    height: 100%;
+  }
+
+  /* Override XYFlow defaults to match our token system */
+  :global(.svelte-flow) {
+    --xy-background-color: var(--color-bg-page);
+  }
+
+  /* Hide XYFlow node selection outline — we handle selection styling in FamilyTreeNode */
+  :global(.svelte-flow .svelte-flow__node.selected) {
+    outline: none;
+  }
+
+  /* Remove default node box-shadow */
+  :global(.svelte-flow .svelte-flow__node) {
+    box-shadow: none;
+  }
+
+  /* Edge SVG layer: ensure connectors render correctly */
+  :global(.svelte-flow .svelte-flow__edge path) {
+    fill: none;
+  }
+
+  /* MiniMap node color — living: Sage, deceased: Terra */
+  :global(.svelte-flow .svelte-flow__minimap-node[data-living="true"]) {
+    fill: var(--color-sage-light);
+  }
+</style>
