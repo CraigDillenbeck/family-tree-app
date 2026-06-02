@@ -150,16 +150,16 @@ src/
 │   │   ├── patterns/               — 6 product patterns P01–P05, P11 (all complete)
 │   │   ├── tree/                   — empty (TreeCanvas, PersonNode to build)
 │   │   ├── person/                 — empty (PersonCard, ProfileHeader to build)
-│   │   ├── media/                  — empty (MediaGrid, Uploader, MediaViewer to build)
+│   │   ├── media/                  — MediaGrid.svelte ✓, MediaUploader.svelte ✓
 │   │   ├── memory/                 — empty (MemoryCard, MemoryEditor to build)
 │   │   └── activity/               — empty (ActivityFeed, ActivityItem to build)
 │   └── utils/
 │       ├── dates.ts
-│       ├── storage.ts              — Supabase Storage upload helpers
-│       ├── activity.ts             — Write activity log entries
+│       ├── storage.ts              — Supabase Storage upload helpers (client-safe)
+│       ├── activity.ts             — logActivity() — writes to activity_log table ✓
 │       ├── permissions.ts          — isOwner(), canEdit() helpers
-│       └── motion.ts               — prefersReducedMotion() helper
-│       (plans.ts — TODO: plan limits and enforcement — not yet created)
+│       ├── motion.ts               — prefersReducedMotion() helper
+│       └── plans.ts                — plan limit enforcement (checkFileAllowed, checkStorageAllowed) ✓
 ├── routes/
 │   ├── +layout.svelte              — Root shell, PostHog init (TODO), Sentry init (TODO)
 │   ├── (marketing)/+page.svelte    — Landing page (stub)
@@ -178,7 +178,7 @@ src/
 │   │               ├── new/        — stub form for adding a person
 │   │               └── [personId]/ — S4: surface + Supabase data layer ✓
 │   │                   ├── edit/   — stub
-│   │                   ├── media/  — stub
+│   │                   ├── media/  — full media gallery + upload + delete ✓
 │   │                   └── memories/ — stub
 │   └── api/
 │       ├── auth/signout/           — DELETE session endpoint
@@ -275,7 +275,7 @@ activity_log      — APPEND ONLY: id, tree_id (→ trees.id), actor_id (→ pro
 
 ## Subscription Plans
 
-Three tiers. Plan gating always enforced **server-side** — never trust client-side plan checks. Full limits will live in `src/lib/utils/plans.ts` (TODO — not yet created).
+Three tiers. Plan gating always enforced **server-side** — never trust client-side plan checks. Limits live in `src/lib/utils/plans.ts` ✓.
 
 | Plan | Storage | Trees | Collaborators | Media |
 | --- | --- | --- | --- | --- |
@@ -528,11 +528,12 @@ npm install @sentry/sveltekit sharp
 - [x] Route stubs — trees/new, persons/new, person/edit, activity, collaborators, settings, account
 - [x] Onboarding flow — 3-step Welcome → Begin with yourself → First leaf ✓
 - [x] @xyflow/svelte + dagre — interactive tree canvas ✓
-- [ ] Landing page — all sections, pricing
 - [x] forgot-password + reset-password auth routes ✓
 - [x] plans.ts — plan limit enforcement utility ✓
 - [x] Memory editor ✓
-- [ ] Media upload flow
+- [x] Media upload flow — MediaUploader, MediaGrid, /media page, API endpoint, plan gating ✓
+- [x] activity.ts — logActivity() writes to activity_log table ✓
+- [ ] Landing page — all sections, pricing
 - [ ] Collaborator invitations
 - [ ] Activity log screen
 - [ ] Account / settings page
