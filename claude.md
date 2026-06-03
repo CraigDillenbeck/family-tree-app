@@ -167,11 +167,11 @@ src/
 │   ├── (onboarding)/onboarding/    — full-screen 3-step flow, no TopNav, auth-gated ✓
 │   ├── (app)/                      — All protected routes
 │   │   ├── dashboard/              — S2: surface + Supabase data layer ✓
-│   │   ├── account/                — stub
+│   │   ├── account/                — profile, plan/storage, security, GDPR delete ✓
 │   │   └── trees/
-│   │       ├── new/                — stub form for creating a tree
+│   │       ├── new/                — create tree form ✓
 │   │       └── [treeId]/           — S3: surface + data layer ✓ (@xyflow/svelte TODO)
-│   │           ├── activity/       — stub
+│   │           ├── activity/       — timeline feed, grouped by day ✓
 │   │           ├── collaborators/  — stub
 │   │           ├── settings/       — stub
 │   │           └── persons/
@@ -550,10 +550,10 @@ npm install sharp
   - POST /api/trees/[treeId]/persons — quick person creation from modal (name only; full details filled on profile)
   - Person profile: delete button on each relationship row with confirmation modal
   - Fixed: relLabel() now covers all 9 DB enum types; column name bug (relationship_type → type); RelationshipConnector, TreeCanvasEdge, TreeCanvas dagre checks all corrected
-- [ ] trees/new — create a second tree from dashboard
+- [x] trees/new — create a second tree from dashboard ✓
+- [x] Activity log screen — timeline view, grouped by day, relative timestamps ✓
+- [x] Account / settings page — profile edit, plan & storage display, security, GDPR delete ✓
 - [ ] Collaborator invitations
-- [ ] Activity log screen
-- [ ] Account / settings page
 - [ ] Admin dashboard
 - [ ] Lemon Squeezy — install, integration, webhook handler
 - [ ] Vercel deployment
