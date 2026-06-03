@@ -9,7 +9,7 @@
   import Icon from '$lib/components/ui/Icon.svelte'
   import TreeCanvas from '$lib/components/tree/TreeCanvas.svelte'
   import AddRelationshipModal from '$lib/components/tree/AddRelationshipModal.svelte'
-  import { X, Plus, GitBranch, List, Users } from 'lucide-svelte'
+  import { X, Plus, GitBranch, List, Users, Activity } from 'lucide-svelte'
 
   const { data }: PageProps = $props()
 
@@ -105,6 +105,16 @@
         >
           <Icon icon={List} size={16} color="currentColor" />
         </button>
+      {/if}
+      {#if data.userRole === 'owner'}
+        <a
+          class="view-toggle"
+          href="/trees/{data.tree.id}/activity"
+          aria-label="Activity log"
+          title="Activity log"
+        >
+          <Icon icon={Activity} size={16} color="currentColor" />
+        </a>
       {/if}
       {#if canEdit}
         <Button variant="secondary" size="sm" onclick={() => goto(`/trees/${data.tree.id}/persons/new`)}>
