@@ -541,7 +541,15 @@ npm install sharp
 - [x] persons/new — Add Person form (name, status, dates, occupation, bio), server action, activity log ✓
 - [x] persons/[id]/edit — Edit Person form (pre-populated), update + delete actions, danger zone ✓
 - [x] Button href bug fix — Button is always <button>; all nav buttons now use goto() ✓
-- [ ] Relationships — add/remove connections between people (next)
+- [x] Relationships — full add/remove flow ✓
+  - Canvas drawer: click node → Add parent / child / sibling / partner buttons
+  - AddRelationshipModal: live search-or-create (find existing person or type a new name to create + connect in one step)
+  - People roster: collapsible left panel, all persons listed, gold dot on unconnected members
+  - Unconnected persons excluded from dagre layout (canvas stays clean; roster is the staging area)
+  - POST + DELETE /api/trees/[treeId]/relationships — auth, permission, type validation, dupe check, activity log
+  - POST /api/trees/[treeId]/persons — quick person creation from modal (name only; full details filled on profile)
+  - Person profile: delete button on each relationship row with confirmation modal
+  - Fixed: relLabel() now covers all 9 DB enum types; column name bug (relationship_type → type); RelationshipConnector, TreeCanvasEdge, TreeCanvas dagre checks all corrected
 - [ ] trees/new — create a second tree from dashboard
 - [ ] Collaborator invitations
 - [ ] Activity log screen
