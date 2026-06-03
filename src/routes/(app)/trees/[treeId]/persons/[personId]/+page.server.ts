@@ -62,7 +62,7 @@ type RawRelationship = {
   id: string
   person_a_id: string
   person_b_id: string
-  relationship_type: string
+  type: string
   is_current: boolean
   person_a: RawRelatedPerson
   person_b: RawRelatedPerson
@@ -98,7 +98,7 @@ export const load: PageServerLoad = async ({ locals: { supabase }, params }) => 
     supabase
       .from('relationships')
       .select(
-        'id, person_a_id, person_b_id, relationship_type, is_current,' +
+        'id, person_a_id, person_b_id, type, is_current,' +
         'person_a:persons!relationships_person_a_id_fkey(id, first_name, last_name, birth_date, death_date, avatar_url, is_living),' +
         'person_b:persons!relationships_person_b_id_fkey(id, first_name, last_name, birth_date, death_date, avatar_url, is_living)'
       )
@@ -165,7 +165,7 @@ export const load: PageServerLoad = async ({ locals: { supabase }, params }) => 
 
     return {
       id: row.id,
-      label: relLabel(row.relationship_type, isPersonA),
+      label: relLabel(row.type, isPersonA),
       person: {
         id: other.id,
         first_name: other.first_name,
@@ -375,14 +375,20 @@ function relLabel(type: string, isPersonA: boolean): string {
       return 'Spouse'
     case 'divorced':
       return 'Former spouse'
+    case 'partner':
+      return 'Partner'
     case 'parent_child':
       return isPersonA ? 'Child' : 'Parent'
-    case 'adopted':
+    case 'adopted_parent_child':
       return isPersonA ? 'Adopted child' : 'Adoptive parent'
-    case 'step':
+    case 'step_parent_child':
       return isPersonA ? 'Step-child' : 'Step-parent'
-    case 'uncertain':
-      return 'Family relation'
+    case 'sibling':
+      return 'Sibling'
+    case 'half_sibling':
+      return 'Half-sibling'
+    case 'step_sibling':
+      return 'Step-sibling'
     default:
       return type
   }

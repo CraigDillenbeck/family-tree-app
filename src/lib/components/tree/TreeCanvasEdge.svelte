@@ -3,7 +3,16 @@
   import type { EdgeProps } from '@xyflow/svelte'
   import RelationshipConnector from '$lib/components/patterns/RelationshipConnector.svelte'
 
-  type RelationshipType = 'parent_child' | 'spouse' | 'divorced' | 'adopted' | 'uncertain'
+  type RelationshipType =
+    | 'parent_child'
+    | 'adopted_parent_child'
+    | 'step_parent_child'
+    | 'spouse'
+    | 'divorced'
+    | 'partner'
+    | 'sibling'
+    | 'half_sibling'
+    | 'step_sibling'
   type EdgeData = { relType: RelationshipType }
 
   // Use base EdgeProps — cast data to EdgeData internally

@@ -77,36 +77,47 @@
       g.setNode(p.id, { width: NODE_W, height: NODE_H })
     }
 
-    // Only parent_child-like edges go into the dagre hierarchy;
-    // spouse edges are added as zero-weight to pull spouses close together
+    // Parent-child edges drive the dagre hierarchy;
+    // spouse/partner/sibling edges are zero-weight to pull them to the same rank
+    const connectedIds = new Set<string>()
     for (const r of rs) {
-      if (['parent_child', 'adopted', 'step'].includes(r.type)) {
+      connectedIds.add(r.person_a_id)
+      connectedIds.add(r.person_b_id)
+      if (['parent_child', 'adopted_parent_child', 'step_parent_child'].includes(r.type)) {
         g.setEdge(r.person_a_id, r.person_b_id)
-      } else if (['spouse', 'divorced'].includes(r.type)) {
-        // minlen=1 with weight=0 keeps spouses on the same rank
+      } else if (['spouse', 'divorced', 'partner', 'sibling', 'half_sibling', 'step_sibling'].includes(r.type)) {
         g.setEdge(r.person_a_id, r.person_b_id, { weight: 0, minlen: 0 })
+      }
+    }
+
+    // Only lay out connected persons — unconnected persons appear in the roster panel only
+    for (const p of ps) {
+      if (!connectedIds.has(p.id)) {
+        g.removeNode(p.id)
       }
     }
 
     dagre.layout(g)
 
-    const nodes: Node[] = ps.map(p => {
-      const pos = g.node(p.id)
-      return {
-        id: p.id,
-        type: 'familyNode',
-        // dagre gives center positions; XYFlow wants top-left → offset by half node size
-        position: { x: (pos?.x ?? 0) - NODE_W / 2, y: (pos?.y ?? 0) - NODE_H / 2 },
-        data: { person: toPerson(p) },
-        selected: p.id === selectedId,
-        selectable: true,
-        draggable: false,
-        connectable: false,
-        deletable: false,
-        width: NODE_W,
-        height: NODE_H,
-      }
-    })
+    const nodes: Node[] = ps
+      .filter(p => connectedIds.has(p.id))
+      .map(p => {
+        const pos = g.node(p.id)
+        return {
+          id: p.id,
+          type: 'familyNode',
+          // dagre gives center positions; XYFlow wants top-left → offset by half node size
+          position: { x: (pos?.x ?? 0) - NODE_W / 2, y: (pos?.y ?? 0) - NODE_H / 2 },
+          data: { person: toPerson(p) },
+          selected: p.id === selectedId,
+          selectable: true,
+          draggable: false,
+          connectable: false,
+          deletable: false,
+          width: NODE_W,
+          height: NODE_H,
+        }
+      })
 
     const edges: Edge[] = rs.map(r => ({
       id: r.id,

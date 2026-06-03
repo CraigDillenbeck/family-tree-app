@@ -13,7 +13,16 @@
    *   const edgeTypes = { relationship: RelationshipConnector }
    */
 
-  type RelationshipType = 'parent_child' | 'spouse' | 'divorced' | 'adopted' | 'uncertain'
+  type RelationshipType =
+    | 'parent_child'
+    | 'adopted_parent_child'
+    | 'step_parent_child'
+    | 'spouse'
+    | 'divorced'
+    | 'partner'
+    | 'sibling'
+    | 'half_sibling'
+    | 'step_sibling'
 
   let {
     sourceX,
@@ -59,6 +68,16 @@
       stroke: 'var(--color-warm-light)',
       strokeWidth: 1,
     },
+    adopted_parent_child: {
+      stroke: 'var(--color-warm-mid)',
+      strokeWidth: 1,
+      strokeDasharray: '2 6',
+    },
+    step_parent_child: {
+      stroke: 'var(--color-warm-mid)',
+      strokeWidth: 1,
+      strokeDasharray: '4 2',
+    },
     spouse: {
       stroke: 'var(--color-gold-light)',
       strokeWidth: 1.5,
@@ -68,15 +87,24 @@
       strokeWidth: 1,
       strokeDasharray: '4 4',
     },
-    adopted: {
-      stroke: 'var(--color-warm-mid)',
+    partner: {
+      stroke: 'var(--color-gold-light)',
       strokeWidth: 1,
-      strokeDasharray: '2 6',
+      strokeDasharray: '6 3',
     },
-    uncertain: {
+    sibling: {
       stroke: 'var(--color-warm-light)',
-      strokeWidth: 0.5,
-      strokeDasharray: '4 4',
+      strokeWidth: 1,
+    },
+    half_sibling: {
+      stroke: 'var(--color-warm-light)',
+      strokeWidth: 1,
+      strokeDasharray: '4 2',
+    },
+    step_sibling: {
+      stroke: 'var(--color-warm-light)',
+      strokeWidth: 1,
+      strokeDasharray: '2 4',
     },
   }
 
@@ -99,7 +127,7 @@
   />
 
   <!-- Junction dot at the bend midpoint -->
-  {#if type === 'parent_child' || type === 'adopted'}
+  {#if type === 'parent_child' || type === 'adopted_parent_child' || type === 'step_parent_child'}
     <circle
       cx={sourceX}
       cy={midY}

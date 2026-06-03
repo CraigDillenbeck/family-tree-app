@@ -9,6 +9,9 @@
   import Tabs from '$lib/components/ui/Tabs.svelte'
   import Tag from '$lib/components/ui/Tag.svelte'
   import Drawer from '$lib/components/ui/Drawer.svelte'
+  import Modal from '$lib/components/ui/Modal.svelte'
+  import Icon from '$lib/components/ui/Icon.svelte'
+  import { Trash2 } from 'lucide-svelte'
   import MemoryStoryCard from '$lib/components/patterns/MemoryStoryCard.svelte'
   import MemoryEditor from '$lib/components/memory/MemoryEditor.svelte'
   import MediaGrid from '$lib/components/media/MediaGrid.svelte'
@@ -74,6 +77,31 @@
   )
 
   const canEdit = $derived(data.userRole === 'owner' || data.userRole === 'editor')
+
+  // Relationship deletion
+  let deletingRelId = $state<string | null>(null)
+  let deleteRelError = $state<string | null>(null)
+  let deleteRelSubmitting = $state(false)
+
+  async function confirmDeleteRelationship() {
+    if (!deletingRelId || deleteRelSubmitting) return
+    deleteRelSubmitting = true
+    deleteRelError = null
+    try {
+      const res = await fetch(`/api/trees/${data.tree.id}/relationships?id=${deletingRelId}`, { method: 'DELETE' })
+      if (!res.ok) {
+        const d = await res.json() as { error?: string }
+        deleteRelError = d.error ?? 'Could not remove the connection. Please try again.'
+        return
+      }
+      deletingRelId = null
+      await invalidateAll()
+    } catch {
+      deleteRelError = 'Something went wrong. Please try again.'
+    } finally {
+      deleteRelSubmitting = false
+    }
+  }
 </script>
 
 <svelte:head>
@@ -119,7 +147,7 @@
         {#if canEdit}
           <Button onclick={openCreateDrawer}>Add a memory</Button>
           <Button variant="secondary" onclick={() => goto(`/trees/${data.tree.id}/persons/${data.person.id}/edit`)}>Edit profile</Button>
-          <Button variant="ghost">Add relationship</Button>
+          <Button variant="ghost" onclick={() => goto(`/trees/${data.tree.id}`)}>Add relationship</Button>
         {/if}
       </div>
     </div>
@@ -228,23 +256,37 @@
         {#if data.relationships.length === 0}
           <div class="empty-state">
             <p class="empty-text">Connect this person to others in your tree.</p>
-            {#if canEdit}<Button variant="secondary">Add relationship</Button>{/if}
+            {#if canEdit}
+              <Button variant="secondary" onclick={() => goto(`/trees/${data.tree.id}`)}>Go to tree to add connections</Button>
+            {/if}
           </div>
         {:else}
           <div class="rel-list">
             {#each data.relationships as r (r.id)}
               {@const relName = [r.person.first_name, r.person.last_name].filter(Boolean).join(' ')}
-              <a href="/trees/{data.tree.id}/persons/{r.person.id}" class="rel-row">
-                <Avatar
-                  person={{ given: r.person.first_name, family: r.person.last_name ?? '', status: r.person.is_living ? 'living' : 'deceased' }}
-                  size={48}
-                />
-                <div class="rel-info">
-                  <p class="rel-name">{relName}</p>
-                  {#if r.dates}<p class="rel-dates">{r.dates}</p>{/if}
-                </div>
-                <Badge variant="warm">{r.label}</Badge>
-              </a>
+              <div class="rel-row">
+                <a class="rel-link" href="/trees/{data.tree.id}/persons/{r.person.id}">
+                  <Avatar
+                    person={{ given: r.person.first_name, family: r.person.last_name ?? '', status: r.person.is_living ? 'living' : 'deceased' }}
+                    size={48}
+                  />
+                  <div class="rel-info">
+                    <p class="rel-name">{relName}</p>
+                    {#if r.dates}<p class="rel-dates">{r.dates}</p>{/if}
+                  </div>
+                  <Badge variant="warm">{r.label}</Badge>
+                </a>
+                {#if canEdit}
+                  <button
+                    class="rel-delete"
+                    type="button"
+                    onclick={() => { deletingRelId = r.id; deleteRelError = null }}
+                    aria-label={`Remove ${r.label} connection to ${relName}`}
+                  >
+                    <Icon icon={Trash2} size={14} color="currentColor" />
+                  </button>
+                {/if}
+              </div>
             {/each}
           </div>
         {/if}
@@ -253,6 +295,29 @@
 
   </div>
 </div>
+
+<!-- ── Delete relationship confirmation ── -->
+<Modal
+  open={deletingRelId !== null}
+  title="Remove connection"
+  variant="confirmation"
+  onclose={() => { deletingRelId = null; deleteRelError = null }}
+>
+  {#snippet children()}
+    <p style="font-family:var(--font-body);font-size:var(--font-size-body-story);line-height:var(--line-height-story);color:var(--color-text-primary);margin:0">
+      This will remove the connection from the tree. The two people will remain in your tree — only their link is removed.
+    </p>
+    {#if deleteRelError}
+      <p style="font-family:var(--font-ui);font-size:var(--font-size-label);color:var(--color-terra);margin:var(--space-3) 0 0">{deleteRelError}</p>
+    {/if}
+  {/snippet}
+  {#snippet footer()}
+    <Button variant="ghost" onclick={() => { deletingRelId = null; deleteRelError = null }} disabled={deleteRelSubmitting}>Cancel</Button>
+    <Button variant="destructive" onclick={confirmDeleteRelationship} disabled={deleteRelSubmitting}>
+      {deleteRelSubmitting ? 'Removing…' : 'Remove connection'}
+    </Button>
+  {/snippet}
+</Modal>
 
 <!-- ── Memory editor drawer ── -->
 <Drawer
@@ -475,17 +540,46 @@
   .rel-row {
     display: flex;
     align-items: center;
-    gap: var(--space-3);
-    padding: var(--space-3) var(--space-4);
+    gap: var(--space-2);
     background: var(--color-bg-surface-1);
     border: var(--border-default);
     border-radius: var(--radius-lg);
-    text-decoration: none;
     transition: border-color var(--dur-fast) var(--ease);
   }
-  .rel-row:hover { border-color: var(--color-border-strong); }
+  .rel-row:has(.rel-link:hover) { border-color: var(--color-border-strong); }
 
-  .rel-info { flex: 1; }
+  .rel-link {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-3) var(--space-4);
+    text-decoration: none;
+    color: inherit;
+    min-width: 0;
+  }
+
+  .rel-delete {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    margin-right: var(--space-2);
+    background: none;
+    border: none;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    color: var(--color-text-secondary);
+    flex-shrink: 0;
+    transition: background var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
+  }
+  .rel-delete:hover {
+    background: color-mix(in srgb, var(--color-terra) 10%, transparent);
+    color: var(--color-terra);
+  }
+
+  .rel-info { flex: 1; min-width: 0; }
 
   .rel-name {
     font-family: var(--font-ui);

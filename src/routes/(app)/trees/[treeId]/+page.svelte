@@ -1,14 +1,15 @@
 <script lang="ts">
   import { fade, fly } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
-  import { goto } from '$app/navigation'
+  import { goto, invalidateAll } from '$app/navigation'
   import type { PageProps } from './$types'
   import Badge from '$lib/components/ui/Badge.svelte'
   import Button from '$lib/components/ui/Button.svelte'
   import Avatar from '$lib/components/ui/Avatar.svelte'
   import Icon from '$lib/components/ui/Icon.svelte'
   import TreeCanvas from '$lib/components/tree/TreeCanvas.svelte'
-  import { X, Plus, GitBranch, List } from 'lucide-svelte'
+  import AddRelationshipModal from '$lib/components/tree/AddRelationshipModal.svelte'
+  import { X, Plus, GitBranch, List, Users } from 'lucide-svelte'
 
   const { data }: PageProps = $props()
 
@@ -16,7 +17,21 @@
 
   let selectedId = $state<string | null>(null)
   let listView = $state(false)
+  let rosterOpen = $state(false)
   const selected = $derived(data.persons.find(p => p.id === selectedId) ?? null)
+
+  // Relationship modal
+  type RelAction = 'parent' | 'child' | 'sibling' | 'partner'
+  let modalAction = $state<RelAction | null>(null)
+  const modalOpen = $derived(modalAction !== null)
+
+  // Which persons have at least one relationship (used by roster + modal)
+  const connectedIds = $derived(
+    new Set<string>(
+      data.relationships.flatMap(r => [r.person_a_id, r.person_b_id])
+    )
+  )
+  const unconnectedCount = $derived(data.persons.filter(p => !connectedIds.has(p.id)).length)
 
   const dur = 280
 
@@ -24,6 +39,19 @@
 
   function handleNodeClick(id: string) {
     selectedId = id || null
+  }
+
+  function openModal(action: RelAction) {
+    modalAction = action
+  }
+
+  function closeModal() {
+    modalAction = null
+  }
+
+  async function onRelationshipSuccess() {
+    modalAction = null
+    await invalidateAll()
   }
 
   function formatDate(iso: string | null): string | null {
@@ -44,7 +72,10 @@
     <div class="toolbar-left">
       <h1 class="tree-name">{data.tree.name}</h1>
       {#if data.persons.length > 0}
-        <Badge variant="warm">{data.persons.length} {data.persons.length === 1 ? 'person' : 'people'}</Badge>
+        <Badge variant="warm">
+          {data.persons.length} {data.persons.length === 1 ? 'person' : 'people'}
+          {#if unconnectedCount > 0}· {unconnectedCount} unconnected{/if}
+        </Badge>
       {/if}
     </div>
 
@@ -56,9 +87,19 @@
         </span>
         <button
           class="view-toggle"
+          class:active={rosterOpen}
+          type="button"
+          onclick={() => { rosterOpen = !rosterOpen; listView = false }}
+          aria-label={rosterOpen ? 'Close people roster' : 'Open people roster'}
+          title="All people"
+        >
+          <Icon icon={Users} size={16} color="currentColor" />
+        </button>
+        <button
+          class="view-toggle"
           class:active={listView}
           type="button"
-          onclick={() => { listView = !listView }}
+          onclick={() => { listView = !listView; rosterOpen = false }}
           aria-label={listView ? 'Switch to canvas view' : 'Switch to list view'}
           title={listView ? 'Canvas view' : 'List view'}
         >
@@ -76,7 +117,48 @@
 
   <!-- ── Canvas ── -->
   <div class="canvas-wrap">
-    <div class="canvas" class:has-drawer={!!selectedId}>
+
+    <!-- People roster (left panel) -->
+    {#if rosterOpen}
+      <aside
+        class="roster"
+        transition:fly={{ x: -320, duration: dur, easing: cubicOut }}
+      >
+        <div class="roster-head">
+          <span class="panel-label">All people</span>
+          <button class="close" type="button" onclick={() => rosterOpen = false} aria-label="Close roster">
+            <Icon icon={X} size={16} color="var(--color-text-secondary)" />
+          </button>
+        </div>
+        <div class="roster-body">
+          {#each data.persons as p (p.id)}
+            {@const birthYear = formatDate(p.birth_date)}
+            {@const isUnconnected = !connectedIds.has(p.id)}
+            <a class="roster-row" href="/trees/{data.tree.id}/persons/{p.id}">
+              <Avatar
+                person={{ given: p.first_name, family: p.last_name ?? '', status: p.is_living ? 'living' : 'deceased' }}
+                size={32}
+              />
+              <span class="roster-info">
+                <span class="roster-name">{p.first_name}{p.last_name ? ' ' + p.last_name : ''}</span>
+                {#if birthYear}
+                  <span class="roster-meta">b. {birthYear}</span>
+                {/if}
+              </span>
+              {#if isUnconnected}
+                <span class="unconnected-dot" title="Not yet connected to the tree" aria-label="Not yet connected"></span>
+              {/if}
+            </a>
+          {/each}
+        </div>
+      </aside>
+    {/if}
+
+    <div
+      class="canvas"
+      class:has-drawer={!!selectedId}
+      class:has-roster={rosterOpen}
+    >
 
       {#if data.persons.length === 0}
         <div class="empty" transition:fade={{ duration: dur, easing: cubicOut }}>
@@ -136,7 +218,7 @@
         transition:fly={{ x: 380, duration: dur, easing: cubicOut }}
       >
         <div class="drawer-head">
-          <span class="drawer-label">Quick view</span>
+          <span class="panel-label">Quick view</span>
           <button class="close" type="button" onclick={closeDrawer} aria-label="Close drawer">
             <Icon icon={X} size={16} color="var(--color-text-secondary)" />
           </button>
@@ -172,11 +254,37 @@
             <Button variant="secondary" onclick={() => goto(`/trees/${data.tree.id}/persons/${selected.id}#memories`)}>Add memory</Button>
           {/if}
         </div>
+
+        {#if canEdit}
+          <div class="drawer-connections">
+            <span class="connections-label">Add connection</span>
+            <div class="connections-grid">
+              <button class="conn-btn" type="button" onclick={() => openModal('parent')}>+ Parent</button>
+              <button class="conn-btn" type="button" onclick={() => openModal('child')}>+ Child</button>
+              <button class="conn-btn" type="button" onclick={() => openModal('sibling')}>+ Sibling</button>
+              <button class="conn-btn" type="button" onclick={() => openModal('partner')}>+ Partner</button>
+            </div>
+          </div>
+        {/if}
       </aside>
     {/if}
   </div>
 
 </div>
+
+<!-- Relationship modal — rendered outside canvas-wrap to avoid stacking context issues -->
+{#if selected && modalAction}
+  <AddRelationshipModal
+    open={modalOpen}
+    treeId={data.tree.id}
+    sourcePerson={selected}
+    action={modalAction}
+    allPersons={data.persons}
+    {connectedIds}
+    onclose={closeModal}
+    onsuccess={onRelationshipSuccess}
+  />
+{/if}
 
 <style>
   .view {
@@ -236,7 +344,7 @@
   .legend-line.parent { background: var(--color-warm-light); }
   .legend-line.spouse { background: var(--color-gold-light); }
 
-  /* ── Canvas ── */
+  /* ── Canvas wrap ── */
   .canvas-wrap {
     flex: 1;
     position: relative;
@@ -247,10 +355,96 @@
     position: absolute;
     inset: 0;
     background-color: var(--color-bg-page);
-    transition: right var(--dur-base) var(--ease);
+    transition: left var(--dur-base) var(--ease), right var(--dur-base) var(--ease);
   }
 
   .canvas.has-drawer { right: 380px; }
+  .canvas.has-roster { left: 280px; }
+
+  /* ── People roster (left panel) ── */
+  .roster {
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 280px;
+    background: var(--color-bg-page);
+    border-right: var(--border-default);
+    display: flex;
+    flex-direction: column;
+    z-index: 10;
+  }
+
+  .roster-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-4) var(--space-6);
+    border-bottom: var(--border-subtle);
+    flex-shrink: 0;
+  }
+
+  .roster-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: var(--space-2) 0;
+  }
+
+  .roster-row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-3) var(--space-6);
+    text-decoration: none;
+    color: inherit;
+    transition: background var(--dur-fast) var(--ease);
+  }
+
+  .roster-row:hover {
+    background: var(--color-bg-surface-1);
+  }
+
+  .roster-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    min-width: 0;
+  }
+
+  .roster-name {
+    font-family: var(--font-ui);
+    font-size: var(--font-size-body);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .roster-meta {
+    font-family: var(--font-ui);
+    font-size: var(--font-size-label);
+    color: var(--color-text-secondary);
+  }
+
+  .unconnected-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: var(--radius-full);
+    background: var(--color-gold);
+    flex-shrink: 0;
+  }
+
+  /* ── Shared panel label ── */
+  .panel-label {
+    font-family: var(--font-ui);
+    font-size: var(--font-size-label);
+    font-weight: var(--font-weight-medium);
+    letter-spacing: var(--letter-spacing-label);
+    text-transform: uppercase;
+    color: var(--color-text-secondary);
+  }
 
   /* ── Empty state ── */
   .empty {
@@ -375,24 +569,16 @@
     display: flex;
     flex-direction: column;
     overflow-y: auto;
+    z-index: 10;
   }
 
   .drawer-head {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: var(--space-6);
+    padding: var(--space-4) var(--space-6);
     border-bottom: var(--border-subtle);
     flex-shrink: 0;
-  }
-
-  .drawer-label {
-    font-family: var(--font-ui);
-    font-size: var(--font-size-label);
-    font-weight: var(--font-weight-medium);
-    letter-spacing: var(--letter-spacing-label);
-    text-transform: uppercase;
-    color: var(--color-text-secondary);
   }
 
   .close {
@@ -415,7 +601,6 @@
     align-items: center;
     gap: var(--space-3);
     padding: var(--space-8) var(--space-6);
-    flex: 1;
   }
 
   .drawer-name {
@@ -441,5 +626,48 @@
     padding: var(--space-6);
     border-top: var(--border-subtle);
     flex-shrink: 0;
+  }
+
+  /* ── Add connection section ── */
+  .drawer-connections {
+    padding: var(--space-6);
+    border-top: var(--border-subtle);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+  }
+
+  .connections-label {
+    font-family: var(--font-ui);
+    font-size: var(--font-size-label);
+    font-weight: var(--font-weight-medium);
+    letter-spacing: var(--letter-spacing-label);
+    text-transform: uppercase;
+    color: var(--color-text-secondary);
+  }
+
+  .connections-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-2);
+  }
+
+  .conn-btn {
+    padding: var(--space-2) var(--space-3);
+    background: var(--color-bg-surface-1);
+    border: var(--border-default);
+    border-radius: var(--radius-sm);
+    font-family: var(--font-ui);
+    font-size: var(--font-size-label);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-text-primary);
+    cursor: pointer;
+    text-align: center;
+    transition: background var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease);
+  }
+
+  .conn-btn:hover {
+    background: var(--color-bg-surface-2);
+    border-color: var(--color-border-strong);
   }
 </style>
