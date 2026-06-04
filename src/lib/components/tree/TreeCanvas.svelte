@@ -66,6 +66,11 @@
     }
   }
 
+  const SPOUSE_TYPES = new Set(['spouse', 'divorced', 'partner'])
+  const SIBLING_TYPES = new Set(['sibling', 'half_sibling', 'step_sibling'])
+  const PARENT_CHILD_TYPES = new Set(['parent_child', 'adopted_parent_child', 'step_parent_child'])
+  const SPOUSE_GAP = 40
+
   function buildLayout(ps: CanvasPerson[], rs: CanvasRelationship[]) {
     if (ps.length === 0) return { nodes: [], edges: [] }
 
@@ -77,15 +82,17 @@
       g.setNode(p.id, { width: NODE_W, height: NODE_H })
     }
 
-    // Parent-child edges drive the dagre hierarchy;
-    // spouse/partner/sibling edges are zero-weight to pull them to the same rank
+    // Parent-child edges drive the dagre hierarchy.
+    // Spouse/partner edges are kept zero-weight so dagre clusters them together,
+    // but we post-process their positions to force horizontal alignment.
+    // Sibling edges are zero-weight to pull them to the same rank.
     const connectedIds = new Set<string>()
     for (const r of rs) {
       connectedIds.add(r.person_a_id)
       connectedIds.add(r.person_b_id)
-      if (['parent_child', 'adopted_parent_child', 'step_parent_child'].includes(r.type)) {
+      if (PARENT_CHILD_TYPES.has(r.type)) {
         g.setEdge(r.person_a_id, r.person_b_id)
-      } else if (['spouse', 'divorced', 'partner', 'sibling', 'half_sibling', 'step_sibling'].includes(r.type)) {
+      } else if (SPOUSE_TYPES.has(r.type) || SIBLING_TYPES.has(r.type)) {
         g.setEdge(r.person_a_id, r.person_b_id, { weight: 0, minlen: 0 })
       }
     }
@@ -98,6 +105,24 @@
     }
 
     dagre.layout(g)
+
+    // Post-process spouse/partner pairs: force same Y row and horizontal side-by-side placement.
+    // Dagre's TB layout can stack them vertically; this overrides that for all couple types.
+    for (const r of rs) {
+      if (!SPOUSE_TYPES.has(r.type)) continue
+      const posA = g.node(r.person_a_id)
+      const posB = g.node(r.person_b_id)
+      if (!posA || !posB) continue
+
+      const avgY = (posA.y + posB.y) / 2
+      const avgX = (posA.x + posB.x) / 2
+      const halfSpan = NODE_W / 2 + SPOUSE_GAP / 2
+
+      posA.x = avgX - halfSpan
+      posB.x = avgX + halfSpan
+      posA.y = avgY
+      posB.y = avgY
+    }
 
     const nodes: Node[] = ps
       .filter(p => connectedIds.has(p.id))

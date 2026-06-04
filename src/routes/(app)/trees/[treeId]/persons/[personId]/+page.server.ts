@@ -86,7 +86,7 @@ export const load: PageServerLoad = async ({ locals: { supabase }, params }) => 
 
   if (!personRes.data) error(404, 'Person not found')
 
-  const [memPersonRes, mediaPersonRes, relsRes] = await Promise.all([
+  const [memPersonRes, mediaPersonRes, relsRes, allPersonsRes] = await Promise.all([
     supabase
       .from('memory_persons')
       .select('memory_id')
@@ -103,7 +103,12 @@ export const load: PageServerLoad = async ({ locals: { supabase }, params }) => 
         'person_b:persons!relationships_person_b_id_fkey(id, first_name, last_name, birth_date, death_date, avatar_url, is_living)'
       )
       .eq('tree_id', params.treeId)
-      .or(`person_a_id.eq.${params.personId},person_b_id.eq.${params.personId}`)
+      .or(`person_a_id.eq.${params.personId},person_b_id.eq.${params.personId}`),
+    supabase
+      .from('persons')
+      .select('id, first_name, last_name, birth_date, death_date, avatar_url, is_living')
+      .eq('tree_id', params.treeId)
+      .order('first_name'),
   ])
 
   const memoryIds = (memPersonRes.data ?? []).map((r) => r.memory_id)
@@ -178,11 +183,15 @@ export const load: PageServerLoad = async ({ locals: { supabase }, params }) => 
     }
   })
 
+  type RawAllPerson = { id: string; first_name: string; last_name: string | null; birth_date: string | null; death_date: string | null; avatar_url: string | null; is_living: boolean }
+  const allPersons: RawAllPerson[] = (allPersonsRes.data ?? []) as RawAllPerson[]
+
   return {
     person: personRes.data as ProfilePerson,
     memories,
     media,
-    relationships
+    relationships,
+    allPersons,
   }
 }
 

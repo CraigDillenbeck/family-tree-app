@@ -16,6 +16,7 @@
   import MemoryEditor from '$lib/components/memory/MemoryEditor.svelte'
   import MediaGrid from '$lib/components/media/MediaGrid.svelte'
   import MediaUploader from '$lib/components/media/MediaUploader.svelte'
+  import AddRelationshipModal from '$lib/components/tree/AddRelationshipModal.svelte'
 
   const { data }: PageProps = $props()
 
@@ -77,6 +78,23 @@
   )
 
   const canEdit = $derived(data.userRole === 'owner' || data.userRole === 'editor')
+
+  // Add relationship modal
+  type RelAction = 'parent' | 'child' | 'sibling' | 'partner'
+  let relPickerOpen = $state(false)
+  let addRelAction = $state<RelAction | null>(null)
+
+  const connectedIds = $derived(new Set(data.relationships.map(r => r.person.id)))
+
+  function openRelPicker() { relPickerOpen = true }
+  function selectRelAction(action: RelAction) {
+    relPickerOpen = false
+    addRelAction = action
+  }
+  async function onRelationshipSuccess() {
+    addRelAction = null
+    await invalidateAll()
+  }
 
   // Relationship deletion
   let deletingRelId = $state<string | null>(null)
@@ -147,7 +165,7 @@
         {#if canEdit}
           <Button onclick={openCreateDrawer}>Add a memory</Button>
           <Button variant="secondary" onclick={() => goto(`/trees/${data.tree.id}/persons/${data.person.id}/edit`)}>Edit profile</Button>
-          <Button variant="ghost" onclick={() => goto(`/trees/${data.tree.id}`)}>Add relationship</Button>
+          <Button variant="ghost" onclick={openRelPicker}>Add relationship</Button>
         {/if}
       </div>
     </div>
@@ -257,7 +275,7 @@
           <div class="empty-state">
             <p class="empty-text">Connect this person to others in your tree.</p>
             {#if canEdit}
-              <Button variant="secondary" onclick={() => goto(`/trees/${data.tree.id}`)}>Go to tree to add connections</Button>
+              <Button variant="secondary" onclick={openRelPicker}>Add a connection</Button>
             {/if}
           </div>
         {:else}
@@ -318,6 +336,52 @@
     </Button>
   {/snippet}
 </Modal>
+
+<!-- ── Relationship type picker ── -->
+<Modal
+  open={relPickerOpen}
+  title="What kind of connection?"
+  variant="standard"
+  onclose={() => (relPickerOpen = false)}
+>
+  {#snippet children()}
+    <div class="rel-picker">
+      <button class="conn-opt" type="button" onclick={() => selectRelAction('parent')}>
+        <span class="conn-opt-title">Parent</span>
+        <span class="conn-opt-desc">Someone who is a parent of {data.person.first_name}</span>
+      </button>
+      <button class="conn-opt" type="button" onclick={() => selectRelAction('child')}>
+        <span class="conn-opt-title">Child</span>
+        <span class="conn-opt-desc">Someone who is a child of {data.person.first_name}</span>
+      </button>
+      <button class="conn-opt" type="button" onclick={() => selectRelAction('sibling')}>
+        <span class="conn-opt-title">Sibling</span>
+        <span class="conn-opt-desc">A brother, sister, or sibling of {data.person.first_name}</span>
+      </button>
+      <button class="conn-opt" type="button" onclick={() => selectRelAction('partner')}>
+        <span class="conn-opt-title">Partner</span>
+        <span class="conn-opt-desc">A spouse or partner of {data.person.first_name}</span>
+      </button>
+    </div>
+  {/snippet}
+  {#snippet footer()}
+    <Button variant="ghost" onclick={() => (relPickerOpen = false)}>Cancel</Button>
+  {/snippet}
+</Modal>
+
+<!-- ── Add relationship modal ── -->
+{#if addRelAction}
+  <AddRelationshipModal
+    open={addRelAction !== null}
+    treeId={data.tree.id}
+    sourcePerson={data.person}
+    action={addRelAction}
+    allPersons={data.allPersons}
+    {connectedIds}
+    onclose={() => (addRelAction = null)}
+    onsuccess={onRelationshipSuccess}
+  />
+{/if}
 
 <!-- ── Memory editor drawer ── -->
 <Drawer
@@ -594,5 +658,45 @@
     font-size: 12px;
     color: var(--color-text-secondary);
     margin: 0;
+  }
+
+  /* ── Relationship type picker ── */
+  .rel-picker {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+
+  .conn-opt {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+    width: 100%;
+    padding: var(--space-4) var(--space-4);
+    background: var(--color-bg-surface-1);
+    border: var(--border-default);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    text-align: left;
+    transition: border-color var(--dur-fast) var(--ease), background var(--dur-fast) var(--ease);
+  }
+
+  .conn-opt:hover {
+    border-color: var(--color-border-strong);
+    background: var(--color-bg-surface-2);
+  }
+
+  .conn-opt-title {
+    font-family: var(--font-ui);
+    font-size: var(--font-size-body-ui);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-text-primary);
+  }
+
+  .conn-opt-desc {
+    font-family: var(--font-ui);
+    font-size: var(--font-size-label);
+    color: var(--color-text-secondary);
   }
 </style>
