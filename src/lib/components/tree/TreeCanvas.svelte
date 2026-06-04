@@ -7,6 +7,7 @@
   import type { NodeTypes, EdgeTypes } from '@xyflow/svelte'
   import TreeCanvasNode from '$lib/components/tree/TreeCanvasNode.svelte'
   import TreeCanvasEdge from '$lib/components/tree/TreeCanvasEdge.svelte'
+  import TreeCanvasJunction from '$lib/components/tree/TreeCanvasJunction.svelte'
   import type { TreePerson } from '$lib/components/patterns/FamilyTreeNode.svelte'
 
   export type CanvasPerson = {
@@ -43,7 +44,10 @@
 
   // Cast to NodeTypes/EdgeTypes — our components are compatible at runtime but TypeScript's
   // generic constraints on NodeTypes are too strict for narrowed NodeData types
-  const nodeTypes: NodeTypes = { familyNode: TreeCanvasNode as NodeTypes[string] }
+  const nodeTypes: NodeTypes = {
+    familyNode: TreeCanvasNode as NodeTypes[string],
+    junctionNode: TreeCanvasJunction as NodeTypes[string],
+  }
   const edgeTypes: EdgeTypes = { relationship: TreeCanvasEdge as EdgeTypes[string] }
 
   // Viewport zoom shared with child node/edge components via context
@@ -75,26 +79,68 @@
     if (ps.length === 0) return { nodes: [], edges: [] }
 
     const g = new dagre.graphlib.Graph()
-    g.setGraph({ rankdir: 'TB', ranksep: 80, nodesep: 40, marginx: 80, marginy: 80 })
+    g.setGraph({ rankdir: 'TB', ranksep: 60, nodesep: 40, marginx: 80, marginy: 80 })
     g.setDefaultEdgeLabel(() => ({}))
 
     for (const p of ps) {
       g.setNode(p.id, { width: NODE_W, height: NODE_H })
     }
 
-    // Parent-child edges drive the dagre hierarchy.
-    // Spouse/partner edges are kept zero-weight so dagre clusters them together,
-    // but we post-process their positions to force horizontal alignment.
-    // Sibling edges are zero-weight to pull them to the same rank.
+    // Phase A: Create virtual junction nodes for each couple.
+    // The junction sits at the couple midpoint and serves as the single parent
+    // node that all children connect to, producing a clean T-branch layout.
+    type JunctionMeta = { id: string; personA: string; personB: string; relType: string }
+    const junctions: JunctionMeta[] = []
+    const junctionMap = new Map<string, string>() // sorted 'a_b' key → junctionId
+
     const connectedIds = new Set<string>()
     for (const r of rs) {
       connectedIds.add(r.person_a_id)
       connectedIds.add(r.person_b_id)
-      if (PARENT_CHILD_TYPES.has(r.type)) {
-        g.setEdge(r.person_a_id, r.person_b_id)
-      } else if (SPOUSE_TYPES.has(r.type) || SIBLING_TYPES.has(r.type)) {
-        g.setEdge(r.person_a_id, r.person_b_id, { weight: 0, minlen: 0 })
+      if (SPOUSE_TYPES.has(r.type)) {
+        const jxnId = '__jxn_' + [r.person_a_id, r.person_b_id].sort().join('_')
+        g.setNode(jxnId, { width: 2, height: 2 })
+        // Zero-minlen keeps junction at same rank as couple; high weight pulls it to midpoint
+        g.setEdge(r.person_a_id, jxnId, { weight: 5, minlen: 0 })
+        g.setEdge(r.person_b_id, jxnId, { weight: 5, minlen: 0 })
+        const key = [r.person_a_id, r.person_b_id].sort().join('_')
+        junctionMap.set(key, jxnId)
+        junctions.push({ id: jxnId, personA: r.person_a_id, personB: r.person_b_id, relType: r.type })
       }
+    }
+
+    // Phase B: Route parent→child edges through junctions where possible.
+    // Build child→parents map first, then for each child find if parents are a couple.
+    const childToParents = new Map<string, string[]>()
+    for (const r of rs) {
+      if (PARENT_CHILD_TYPES.has(r.type)) {
+        const arr = childToParents.get(r.person_b_id) ?? []
+        arr.push(r.person_a_id)
+        childToParents.set(r.person_b_id, arr)
+      }
+    }
+
+    function findJunctionForChild(childId: string): string | null {
+      const parents = childToParents.get(childId) ?? []
+      for (let i = 0; i < parents.length; i++) {
+        for (let j = i + 1; j < parents.length; j++) {
+          const key = [parents[i], parents[j]].sort().join('_')
+          if (junctionMap.has(key)) return junctionMap.get(key)!
+        }
+      }
+      return null
+    }
+
+    // Each child gets exactly one dagre edge (from junction or single parent).
+    // Sibling edges are omitted — siblings co-rank naturally by sharing the same junction parent.
+    const childEdgeAdded = new Set<string>()
+    for (const r of rs) {
+      if (!PARENT_CHILD_TYPES.has(r.type)) continue
+      const childId = r.person_b_id
+      if (childEdgeAdded.has(childId)) continue
+      const jxnId = findJunctionForChild(childId)
+      g.setEdge(jxnId ?? r.person_a_id, childId)
+      childEdgeAdded.add(childId)
     }
 
     // Only lay out connected persons — unconnected persons appear in the roster panel only
@@ -106,12 +152,10 @@
 
     dagre.layout(g)
 
-    // Post-process spouse/partner pairs: force same Y row and horizontal side-by-side placement.
-    // Dagre's TB layout can stack them vertically; this overrides that for all couple types.
-    for (const r of rs) {
-      if (!SPOUSE_TYPES.has(r.type)) continue
-      const posA = g.node(r.person_a_id)
-      const posB = g.node(r.person_b_id)
+    // Post-process: force couples into horizontal pairs, then snap junction to their midpoint.
+    for (const jxn of junctions) {
+      const posA = g.node(jxn.personA)
+      const posB = g.node(jxn.personB)
       if (!posA || !posB) continue
 
       const avgY = (posA.y + posB.y) / 2
@@ -122,38 +166,92 @@
       posB.x = avgX + halfSpan
       posA.y = avgY
       posB.y = avgY
+
+      const jxnPos = g.node(jxn.id)
+      if (jxnPos) {
+        jxnPos.x = avgX
+        jxnPos.y = avgY
+      }
     }
 
-    const nodes: Node[] = ps
-      .filter(p => connectedIds.has(p.id))
-      .map(p => {
-        const pos = g.node(p.id)
+    // Phase F: Assemble XYFlow nodes — persons + invisible junction anchors.
+    const nodes: Node[] = [
+      ...ps
+        .filter(p => connectedIds.has(p.id))
+        .map(p => {
+          const pos = g.node(p.id)
+          return {
+            id: p.id,
+            type: 'familyNode',
+            position: { x: (pos?.x ?? 0) - NODE_W / 2, y: (pos?.y ?? 0) - NODE_H / 2 },
+            data: { person: toPerson(p) },
+            selected: p.id === selectedId,
+            selectable: true,
+            draggable: false,
+            connectable: false,
+            deletable: false,
+            width: NODE_W,
+            height: NODE_H,
+          }
+        }),
+      ...junctions.map(jxn => {
+        const pos = g.node(jxn.id)
         return {
-          id: p.id,
-          type: 'familyNode',
-          // dagre gives center positions; XYFlow wants top-left → offset by half node size
-          position: { x: (pos?.x ?? 0) - NODE_W / 2, y: (pos?.y ?? 0) - NODE_H / 2 },
-          data: { person: toPerson(p) },
-          selected: p.id === selectedId,
-          selectable: true,
+          id: jxn.id,
+          type: 'junctionNode',
+          position: { x: (pos?.x ?? 0) - 1, y: (pos?.y ?? 0) - 1 },
+          data: {},
+          selectable: false,
           draggable: false,
           connectable: false,
           deletable: false,
-          width: NODE_W,
-          height: NODE_H,
+          width: 2,
+          height: 2,
         }
-      })
+      }),
+    ]
 
-    const edges: Edge[] = rs.map(r => ({
-      id: r.id,
-      source: r.person_a_id,
-      target: r.person_b_id,
-      type: 'relationship',
-      data: { relType: r.type },
-      selectable: false,
-      deletable: false,
-      focusable: false,
-    }))
+    // Phase G: Assemble XYFlow edges.
+    // - Couple edges: person_a ↔ person_b horizontal connector (unchanged)
+    // - Parent→child: one edge per child, sourced from junction (or single parent)
+    // - Sibling edges: omitted
+    const edges: Edge[] = []
+
+    for (const r of rs) {
+      if (SIBLING_TYPES.has(r.type)) continue
+
+      if (SPOUSE_TYPES.has(r.type)) {
+        edges.push({
+          id: r.id,
+          source: r.person_a_id,
+          target: r.person_b_id,
+          type: 'relationship',
+          data: { relType: r.type },
+          selectable: false,
+          deletable: false,
+          focusable: false,
+        })
+        continue
+      }
+
+      if (PARENT_CHILD_TYPES.has(r.type)) {
+        const childId = r.person_b_id
+        const jxnId = findJunctionForChild(childId)
+        const edgeId = jxnId ? `jxn-child-${jxnId}-${childId}` : r.id
+        if (!edges.some(e => e.id === edgeId)) {
+          edges.push({
+            id: edgeId,
+            source: jxnId ?? r.person_a_id,
+            target: childId,
+            type: 'relationship',
+            data: { relType: r.type },
+            selectable: false,
+            deletable: false,
+            focusable: false,
+          })
+        }
+      }
+    }
 
     return { nodes, edges }
   }
