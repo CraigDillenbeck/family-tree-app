@@ -97,10 +97,6 @@
 
     <div class="toolbar-right">
       {#if data.persons.length > 0}
-        <span class="legend">
-          <span class="legend-line parent"></span>Parent
-          <span class="legend-line spouse"></span>Spouse
-        </span>
         <button
           class="view-toggle"
           class:active={listView}
@@ -347,24 +343,6 @@
     align-items: center;
     gap: var(--space-2);
   }
-
-  .legend {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--space-2);
-    font-family: var(--font-ui);
-    font-size: 12px;
-    color: var(--color-text-secondary);
-    margin-right: var(--space-2);
-  }
-
-  .legend-line {
-    display: inline-block;
-    width: 14px;
-    height: 1.5px;
-  }
-  .legend-line.parent { background: var(--color-warm-light); }
-  .legend-line.spouse { background: var(--color-gold-light); }
 
   /* ── Canvas wrap ── */
   .canvas-wrap {

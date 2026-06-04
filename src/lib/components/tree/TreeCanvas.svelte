@@ -185,7 +185,7 @@
     nodesConnectable={false}
     elementsSelectable={true}
     deleteKey={null}
-    panOnScroll={true}
+    panOnScroll={false}
     elevateEdgesOnSelect={false}
     onmove={handleMove}
     onnodeclick={handleNodeClick}
