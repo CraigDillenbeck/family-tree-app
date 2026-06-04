@@ -186,6 +186,7 @@
     elementsSelectable={true}
     deleteKey={null}
     panOnScroll={true}
+    elevateEdgesOnSelect={false}
     onmove={handleMove}
     onnodeclick={handleNodeClick}
     onpaneclick={handlePaneClick}

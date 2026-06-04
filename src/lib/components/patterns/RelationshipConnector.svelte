@@ -49,10 +49,17 @@
   const midX = $derived((sourceX + targetX) / 2)
   const midY = $derived((sourceY + targetY) / 2)
 
-  // Orthogonal path: go vertical to midpoint, then horizontal, then vertical
-  // This produces a clean top-to-bottom T shape common in genealogy trees
+  // Couple types (spouse, partner, divorced) sit side-by-side at the same Y level.
+  // XYFlow routes their edge bottom→top, so sourceY and targetY are on opposite sides
+  // of the node center. Drawing the full orthogonal path creates phantom stubs above/below
+  // the tiles. Instead, draw a clean horizontal line at midY (= true node center).
+  // For all other types use the standard orthogonal T-shape.
+  const isCoupleType = $derived(type === 'spouse' || type === 'partner' || type === 'divorced')
+
   const d = $derived(
-    `M ${sourceX} ${sourceY} L ${sourceX} ${midY} L ${targetX} ${midY} L ${targetX} ${targetY}`
+    isCoupleType
+      ? `M ${sourceX} ${midY} L ${targetX} ${midY}`
+      : `M ${sourceX} ${sourceY} L ${sourceX} ${midY} L ${targetX} ${midY} L ${targetX} ${targetY}`
   )
 
   // Visual properties per relationship type
