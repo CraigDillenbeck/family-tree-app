@@ -9,7 +9,7 @@
   import Icon from '$lib/components/ui/Icon.svelte'
   import TreeCanvas from '$lib/components/tree/TreeCanvas.svelte'
   import AddRelationshipModal from '$lib/components/tree/AddRelationshipModal.svelte'
-  import { X, Plus, GitBranch, List, Users, Activity } from 'lucide-svelte'
+  import { X, Plus, GitBranch, List, ChevronLeft, ChevronRight, Activity } from 'lucide-svelte'
 
   const { data }: PageProps = $props()
 
@@ -17,7 +17,7 @@
 
   let selectedId = $state<string | null>(null)
   let listView = $state(false)
-  let rosterOpen = $state(false)
+  let stagingOpen = $state(false)
   const selected = $derived(data.persons.find(p => p.id === selectedId) ?? null)
 
   // Relationship modal
@@ -25,19 +25,35 @@
   let modalAction = $state<RelAction | null>(null)
   const modalOpen = $derived(modalAction !== null)
 
-  // Which persons have at least one relationship (used by roster + modal)
+  // Which persons have at least one relationship (used by staging tray + modal)
   const connectedIds = $derived(
     new Set<string>(
       data.relationships.flatMap(r => [r.person_a_id, r.person_b_id])
     )
   )
   const unconnectedCount = $derived(data.persons.filter(p => !connectedIds.has(p.id)).length)
+  const unconnectedPersons = $derived(data.persons.filter(p => !connectedIds.has(p.id)))
 
   const dur = 280
+
+  // Auto-open staging tray when a new unconnected person is added; auto-close when all are connected
+  let _prevUnconnectedCount = 0
+  $effect(() => {
+    const current = unconnectedCount
+    if (current > _prevUnconnectedCount) stagingOpen = true
+    if (current === 0) stagingOpen = false
+    _prevUnconnectedCount = current
+  })
+
+  function openStaging() {
+    selectedId = null
+    stagingOpen = true
+  }
 
   function closeDrawer() { selectedId = null }
 
   function handleNodeClick(id: string) {
+    if (id) stagingOpen = false
     selectedId = id || null
   }
 
@@ -87,19 +103,9 @@
         </span>
         <button
           class="view-toggle"
-          class:active={rosterOpen}
-          type="button"
-          onclick={() => { rosterOpen = !rosterOpen; listView = false }}
-          aria-label={rosterOpen ? 'Close people roster' : 'Open people roster'}
-          title="All people"
-        >
-          <Icon icon={Users} size={16} color="currentColor" />
-        </button>
-        <button
-          class="view-toggle"
           class:active={listView}
           type="button"
-          onclick={() => { listView = !listView; rosterOpen = false }}
+          onclick={() => { listView = !listView }}
           aria-label={listView ? 'Switch to canvas view' : 'Switch to list view'}
           title={listView ? 'Canvas view' : 'List view'}
         >
@@ -128,46 +134,10 @@
   <!-- ── Canvas ── -->
   <div class="canvas-wrap">
 
-    <!-- People roster (left panel) -->
-    {#if rosterOpen}
-      <aside
-        class="roster"
-        transition:fly={{ x: -320, duration: dur, easing: cubicOut }}
-      >
-        <div class="roster-head">
-          <span class="panel-label">All people</span>
-          <button class="close" type="button" onclick={() => rosterOpen = false} aria-label="Close roster">
-            <Icon icon={X} size={16} color="var(--color-text-secondary)" />
-          </button>
-        </div>
-        <div class="roster-body">
-          {#each data.persons as p (p.id)}
-            {@const birthYear = formatDate(p.birth_date)}
-            {@const isUnconnected = !connectedIds.has(p.id)}
-            <a class="roster-row" href="/trees/{data.tree.id}/persons/{p.id}">
-              <Avatar
-                person={{ given: p.first_name, family: p.last_name ?? '', status: p.is_living ? 'living' : 'deceased' }}
-                size={32}
-              />
-              <span class="roster-info">
-                <span class="roster-name">{p.first_name}{p.last_name ? ' ' + p.last_name : ''}</span>
-                {#if birthYear}
-                  <span class="roster-meta">b. {birthYear}</span>
-                {/if}
-              </span>
-              {#if isUnconnected}
-                <span class="unconnected-dot" title="Not yet connected to the tree" aria-label="Not yet connected"></span>
-              {/if}
-            </a>
-          {/each}
-        </div>
-      </aside>
-    {/if}
-
     <div
       class="canvas"
       class:has-drawer={!!selectedId}
-      class:has-roster={rosterOpen}
+      class:has-staging={stagingOpen}
     >
 
       {#if data.persons.length === 0}
@@ -218,6 +188,48 @@
         />
       {/if}
     </div>
+
+    <!-- ── Staging pull-tab (visible when tray is closed and unconnected persons exist) ── -->
+    {#if unconnectedCount > 0 && !stagingOpen && !selectedId}
+      <button
+        class="staging-pull-tab"
+        type="button"
+        onclick={openStaging}
+        aria-label="Open staging area — {unconnectedCount} {unconnectedCount === 1 ? 'person' : 'people'} waiting to connect"
+        title="Waiting to connect"
+      >
+        <Icon icon={ChevronLeft} size={14} color="currentColor" />
+        <span class="tab-count">{unconnectedCount}</span>
+      </button>
+    {/if}
+
+    <!-- ── Staging tray (right panel — unconnected persons) ── -->
+    {#if stagingOpen}
+      <aside
+        class="staging-tray"
+        transition:fly={{ x: 220, duration: dur, easing: cubicOut }}
+      >
+        <div class="staging-head">
+          <span class="panel-label">Waiting to connect</span>
+          <button class="close" type="button" onclick={() => stagingOpen = false} aria-label="Close staging area">
+            <Icon icon={ChevronRight} size={16} color="var(--color-text-secondary)" />
+          </button>
+        </div>
+        <p class="staging-intro">Add a connection from their profile to place them on your tree.</p>
+        <div class="staging-body">
+          {#each unconnectedPersons as p (p.id)}
+            <a class="staging-row" href="/trees/{data.tree.id}/persons/{p.id}">
+              <Avatar
+                person={{ given: p.first_name, family: p.last_name ?? '', status: p.is_living ? 'living' : 'deceased' }}
+                size={32}
+              />
+              <span class="staging-name">{p.first_name}{p.last_name ? ' ' + p.last_name : ''}</span>
+              <span class="unconnected-dot" title="Not yet on the tree" aria-label="Not yet on the tree"></span>
+            </a>
+          {/each}
+        </div>
+      </aside>
+    {/if}
 
     <!-- ── Detail drawer ── -->
     {#if selected}
@@ -369,73 +381,107 @@
   }
 
   .canvas.has-drawer { right: 380px; }
-  .canvas.has-roster { left: 280px; }
+  .canvas.has-staging { right: 220px; }
 
-  /* ── People roster (left panel) ── */
-  .roster {
+  /* ── Staging pull-tab ── */
+  .staging-pull-tab {
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    width: 28px;
+    padding: var(--space-3) 0;
+    background: var(--color-bg-page);
+    border: var(--border-default);
+    border-right: none;
+    border-radius: var(--radius-sm) 0 0 var(--radius-sm);
+    cursor: pointer;
+    color: var(--color-text-secondary);
+    z-index: 5;
+    transition: background var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
+  }
+
+  .staging-pull-tab:hover {
+    background: var(--color-bg-surface-1);
+    color: var(--color-text-primary);
+  }
+
+  .tab-count {
+    font-family: var(--font-ui);
+    font-size: 10px;
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-gold);
+    line-height: 1;
+  }
+
+  /* ── Staging tray (right panel) ── */
+  .staging-tray {
     position: absolute;
     top: 0;
-    left: 0;
+    right: 0;
     bottom: 0;
-    width: 280px;
+    width: 220px;
     background: var(--color-bg-page);
-    border-right: var(--border-default);
+    border-left: var(--border-default);
     display: flex;
     flex-direction: column;
     z-index: 10;
   }
 
-  .roster-head {
+  .staging-head {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: var(--space-4) var(--space-6);
+    padding: var(--space-4);
     border-bottom: var(--border-subtle);
     flex-shrink: 0;
   }
 
-  .roster-body {
+  .staging-intro {
+    font-family: var(--font-body);
+    font-style: italic;
+    font-size: var(--font-size-label);
+    color: var(--color-text-secondary);
+    line-height: var(--line-height-story);
+    padding: var(--space-3) var(--space-4);
+    margin: 0;
+    border-bottom: var(--border-subtle);
+  }
+
+  .staging-body {
     flex: 1;
     overflow-y: auto;
     padding: var(--space-2) 0;
   }
 
-  .roster-row {
+  .staging-row {
     display: flex;
     align-items: center;
-    gap: var(--space-3);
-    padding: var(--space-3) var(--space-6);
+    gap: var(--space-2);
+    padding: var(--space-3) var(--space-4);
     text-decoration: none;
     color: inherit;
     transition: background var(--dur-fast) var(--ease);
   }
 
-  .roster-row:hover {
+  .staging-row:hover {
     background: var(--color-bg-surface-1);
   }
 
-  .roster-info {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 1px;
-    min-width: 0;
-  }
-
-  .roster-name {
+  .staging-name {
     font-family: var(--font-ui);
-    font-size: var(--font-size-body);
+    font-size: var(--font-size-label);
     font-weight: var(--font-weight-medium);
     color: var(--color-text-primary);
+    flex: 1;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-  }
-
-  .roster-meta {
-    font-family: var(--font-ui);
-    font-size: var(--font-size-label);
-    color: var(--color-text-secondary);
   }
 
   .unconnected-dot {
