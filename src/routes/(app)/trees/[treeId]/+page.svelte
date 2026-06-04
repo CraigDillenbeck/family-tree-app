@@ -21,6 +21,11 @@
   const selected = $derived(data.persons.find(p => p.id === selectedId) ?? null)
 
   // Relationship modal
+  let deletingRelId = $state<string | null>(null)
+  let deletingPerson = $state(false)
+  let deleteRelLoading = $state(false)
+  let deletePersonLoading = $state(false)
+
   type RelAction = 'parent' | 'child' | 'sibling' | 'partner'
   let modalAction = $state<RelAction | null>(null)
   const modalOpen = $derived(modalAction !== null)
@@ -33,6 +38,35 @@
   )
   const unconnectedCount = $derived(data.persons.filter(p => !connectedIds.has(p.id)).length)
   const unconnectedPersons = $derived(data.persons.filter(p => !connectedIds.has(p.id)))
+
+  const selectedConnections = $derived(
+    selected
+      ? data.relationships
+          .filter(r => r.person_a_id === selected.id || r.person_b_id === selected.id)
+          .map(r => {
+            const isPersonA = r.person_a_id === selected.id
+            const otherId = isPersonA ? r.person_b_id : r.person_a_id
+            const other = data.persons.find(p => p.id === otherId)
+            return { relId: r.id, relType: r.type, isPersonA, other }
+          })
+          .filter((c): c is { relId: string; relType: string; isPersonA: boolean; other: NonNullable<typeof c.other> } => c.other !== undefined)
+      : []
+  )
+
+  function relLabel(type: string, isPersonA: boolean): string {
+    switch (type) {
+      case 'spouse': return 'Spouse'
+      case 'divorced': return 'Former spouse'
+      case 'partner': return 'Partner'
+      case 'parent_child': return isPersonA ? 'Child' : 'Parent'
+      case 'adopted_parent_child': return isPersonA ? 'Adopted child' : 'Adoptive parent'
+      case 'step_parent_child': return isPersonA ? 'Step-child' : 'Step-parent'
+      case 'sibling': return 'Sibling'
+      case 'half_sibling': return 'Half-sibling'
+      case 'step_sibling': return 'Step-sibling'
+      default: return type
+    }
+  }
 
   const dur = 280
 
@@ -50,11 +84,35 @@
     stagingOpen = true
   }
 
-  function closeDrawer() { selectedId = null }
+  function closeDrawer() {
+    selectedId = null
+    deletingRelId = null
+    deletingPerson = false
+  }
 
   function handleNodeClick(id: string) {
     if (id) stagingOpen = false
     selectedId = id || null
+    deletingRelId = null
+    deletingPerson = false
+  }
+
+  async function deleteRelationship(relId: string) {
+    deleteRelLoading = true
+    await fetch(`/api/trees/${data.tree.id}/relationships?id=${relId}`, { method: 'DELETE' })
+    deletingRelId = null
+    deleteRelLoading = false
+    await invalidateAll()
+  }
+
+  async function deletePerson() {
+    if (!selected) return
+    deletePersonLoading = true
+    await fetch(`/api/trees/${data.tree.id}/persons?personId=${selected.id}`, { method: 'DELETE' })
+    deletePersonLoading = false
+    deletingPerson = false
+    selectedId = null
+    await invalidateAll()
   }
 
   function openModal(action: RelAction) {
@@ -282,6 +340,47 @@
               <button class="conn-btn" type="button" onclick={() => openModal('sibling')}>+ Sibling</button>
               <button class="conn-btn" type="button" onclick={() => openModal('partner')}>+ Partner</button>
             </div>
+          </div>
+        {/if}
+
+        {#if canEdit && selectedConnections.length > 0}
+          <div class="existing-connections">
+            <span class="connections-label">Current connections</span>
+            {#each selectedConnections as conn (conn.relId)}
+              <div class="econn-row">
+                {#if deletingRelId === conn.relId}
+                  <div class="econn-confirm">
+                    <span class="econn-confirm-text">Remove this connection?</span>
+                    <button class="econn-cancel" type="button" onclick={() => deletingRelId = null} disabled={deleteRelLoading}>Cancel</button>
+                    <button class="econn-ok" type="button" onclick={() => deleteRelationship(conn.relId)} disabled={deleteRelLoading}>Remove</button>
+                  </div>
+                {:else}
+                  <Avatar
+                    person={{ given: conn.other.first_name, family: conn.other.last_name ?? '', status: conn.other.is_living ? 'living' : 'deceased' }}
+                    size={28}
+                  />
+                  <span class="econn-name">{conn.other.first_name}{conn.other.last_name ? ' ' + conn.other.last_name : ''}</span>
+                  <span class="econn-label">{relLabel(conn.relType, conn.isPersonA)}</span>
+                  <button class="econn-delete" type="button" onclick={() => deletingRelId = conn.relId} aria-label="Remove this connection">
+                    <Icon icon={X} size={12} color="currentColor" />
+                  </button>
+                {/if}
+              </div>
+            {/each}
+          </div>
+        {/if}
+
+        {#if canEdit}
+          <div class="remove-section">
+            {#if deletingPerson}
+              <p class="remove-confirm-text">Remove {selected?.first_name} from your tree? Their connections will be removed. Memories and media stay.</p>
+              <div class="remove-confirm-actions">
+                <button class="remove-cancel" type="button" onclick={() => deletingPerson = false} disabled={deletePersonLoading}>Cancel</button>
+                <button class="remove-ok" type="button" onclick={deletePerson} disabled={deletePersonLoading}>Remove</button>
+              </div>
+            {:else}
+              <button class="remove-btn" type="button" onclick={() => deletingPerson = true}>Remove from tree</button>
+            {/if}
           </div>
         {/if}
       </aside>
@@ -704,4 +803,159 @@
     background: var(--color-bg-surface-2);
     border-color: var(--color-border-strong);
   }
+
+  /* ── Existing connections section ── */
+  .existing-connections {
+    padding: var(--space-6);
+    border-top: var(--border-subtle);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+
+  .econn-row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    min-height: 36px;
+  }
+
+  .econn-name {
+    flex: 1;
+    font-family: var(--font-ui);
+    font-size: var(--font-size-label);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .econn-label {
+    font-family: var(--font-ui);
+    font-size: 11px;
+    color: var(--color-text-secondary);
+    flex-shrink: 0;
+  }
+
+  .econn-delete {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    background: none;
+    border: none;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    color: var(--color-text-tertiary);
+    flex-shrink: 0;
+    transition: background var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
+  }
+
+  .econn-delete:hover {
+    background: var(--color-bg-surface-1);
+    color: var(--color-terra);
+  }
+
+  .econn-confirm {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    width: 100%;
+  }
+
+  .econn-confirm-text {
+    flex: 1;
+    font-family: var(--font-ui);
+    font-size: 11px;
+    color: var(--color-text-secondary);
+  }
+
+  .econn-cancel,
+  .econn-ok {
+    padding: 2px var(--space-2);
+    font-family: var(--font-ui);
+    font-size: 11px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: background var(--dur-fast) var(--ease);
+    flex-shrink: 0;
+  }
+
+  .econn-cancel {
+    background: none;
+    border: var(--border-default);
+    color: var(--color-text-secondary);
+  }
+
+  .econn-cancel:hover { background: var(--color-bg-surface-1); }
+
+  .econn-ok {
+    background: var(--color-bg-surface-1);
+    border: var(--border-default);
+    color: var(--color-terra);
+  }
+
+  .econn-ok:hover { background: var(--color-bg-surface-2); }
+
+  /* ── Remove from tree ── */
+  .remove-section {
+    padding: var(--space-4) var(--space-6);
+    border-top: var(--border-subtle);
+  }
+
+  .remove-btn {
+    background: none;
+    border: none;
+    padding: 0;
+    font-family: var(--font-ui);
+    font-size: var(--font-size-label);
+    color: var(--color-terra);
+    cursor: pointer;
+    opacity: 0.7;
+    transition: opacity var(--dur-fast) var(--ease);
+  }
+
+  .remove-btn:hover { opacity: 1; }
+
+  .remove-confirm-text {
+    font-family: var(--font-body);
+    font-style: italic;
+    font-size: var(--font-size-label);
+    color: var(--color-text-secondary);
+    line-height: var(--line-height-story);
+    margin: 0 0 var(--space-3);
+  }
+
+  .remove-confirm-actions {
+    display: flex;
+    gap: var(--space-2);
+  }
+
+  .remove-cancel,
+  .remove-ok {
+    padding: var(--space-1) var(--space-3);
+    font-family: var(--font-ui);
+    font-size: var(--font-size-label);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: background var(--dur-fast) var(--ease);
+  }
+
+  .remove-cancel {
+    background: none;
+    border: var(--border-default);
+    color: var(--color-text-secondary);
+  }
+
+  .remove-cancel:hover { background: var(--color-bg-surface-1); }
+
+  .remove-ok {
+    background: var(--color-bg-surface-1);
+    border: 1px solid var(--color-terra);
+    color: var(--color-terra);
+  }
+
+  .remove-ok:hover { background: var(--color-bg-surface-2); }
 </style>

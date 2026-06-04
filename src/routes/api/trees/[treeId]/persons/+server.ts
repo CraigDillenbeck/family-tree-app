@@ -71,3 +71,66 @@ export const POST: RequestHandler = async ({ request, params, locals: { supabase
 
   return json(person, { status: 201 })
 }
+
+export const DELETE: RequestHandler = async ({ url, params, locals: { supabase, safeGetSession } }) => {
+  const { user } = await safeGetSession()
+  if (!user) return json({ error: 'Not authenticated.' }, { status: 401 })
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('id')
+    .eq('auth_user_id', user.id)
+    .single()
+  if (!profile) return json({ error: 'Profile not found.' }, { status: 401 })
+
+  const { data: tree } = await supabase
+    .from('trees')
+    .select('owner_id')
+    .eq('id', params.treeId)
+    .single()
+  if (!tree) return json({ error: 'Tree not found.' }, { status: 404 })
+
+  if (tree.owner_id !== profile.id) {
+    const { data: collab } = await supabase
+      .from('tree_collaborators')
+      .select('role')
+      .eq('tree_id', params.treeId)
+      .eq('profile_id', profile.id)
+      .single()
+    if (!collab || collab.role !== 'editor') {
+      return json({ error: 'You do not have permission to edit this tree.' }, { status: 403 })
+    }
+  }
+
+  const personId = url.searchParams.get('personId')
+  if (!personId) return json({ error: 'personId is required.' }, { status: 400 })
+
+  await supabase
+    .from('relationships')
+    .delete()
+    .or(`person_a_id.eq.${personId},person_b_id.eq.${personId}`)
+
+  await supabase.from('memory_persons').delete().eq('person_id', personId)
+  await supabase.from('media_persons').delete().eq('person_id', personId)
+
+  const { error: deleteError } = await supabase
+    .from('persons')
+    .delete()
+    .eq('id', personId)
+    .eq('tree_id', params.treeId)
+
+  if (deleteError) {
+    return json({ error: 'Could not remove this person. Please try again.' }, { status: 500 })
+  }
+
+  await logActivity({
+    supabase,
+    treeId: params.treeId,
+    profileId: profile.id,
+    action: 'deleted',
+    entityType: 'person',
+    entityId: personId,
+  })
+
+  return json({ success: true })
+}
