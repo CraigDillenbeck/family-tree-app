@@ -9,7 +9,7 @@
   import Icon from '$lib/components/ui/Icon.svelte'
   import TreeCanvas from '$lib/components/tree/TreeCanvas.svelte'
   import AddRelationshipModal from '$lib/components/tree/AddRelationshipModal.svelte'
-  import { X, Plus, GitBranch, List, ChevronLeft, ChevronRight, Activity } from 'lucide-svelte'
+  import { X, Plus, GitBranch, List, ChevronLeft, ChevronRight, Activity, Search } from 'lucide-svelte'
 
   const { data }: PageProps = $props()
 
@@ -66,6 +66,28 @@
       case 'step_sibling': return 'Step-sibling'
       default: return type
     }
+  }
+
+  // Search
+  let searchQuery = $state('')
+  let searchOpen  = $state(false)
+  const searchResults = $derived(
+    searchQuery.trim().length < 2
+      ? []
+      : data.persons
+          .filter(p => {
+            const full = `${p.first_name} ${p.last_name ?? ''}`.toLowerCase()
+            return full.includes(searchQuery.toLowerCase().trim())
+          })
+          .slice(0, 8)
+  )
+
+  function selectSearchResult(personId: string) {
+    searchQuery = ''
+    searchOpen  = false
+    listView    = false
+    stagingOpen = false
+    selectedId  = personId
   }
 
   const dur = 280
@@ -152,6 +174,61 @@
         </Badge>
       {/if}
     </div>
+
+    {#if data.persons.length > 0}
+      <div class="toolbar-search">
+        <div
+          class="search-wrap"
+          role="combobox"
+          aria-expanded={searchOpen && (searchResults.length > 0 || searchQuery.trim().length >= 2)}
+          aria-haspopup="listbox"
+          aria-controls="search-listbox"
+        >
+          <Icon icon={Search} size={14} color="var(--color-text-secondary)" />
+          <input
+            class="search-input"
+            type="search"
+            placeholder="Search people…"
+            bind:value={searchQuery}
+            onfocus={() => searchOpen = true}
+            onblur={() => setTimeout(() => { searchOpen = false }, 150)}
+            onkeydown={(e) => {
+              if (e.key === 'Escape') { searchQuery = ''; searchOpen = false }
+            }}
+            aria-label="Search family members"
+            aria-autocomplete="list"
+          />
+        </div>
+        {#if searchOpen && searchResults.length > 0}
+          <ul id="search-listbox" class="search-dropdown" role="listbox" aria-label="Search results">
+            {#each searchResults as p (p.id)}
+              <li role="option" aria-selected={selectedId === p.id}>
+                <button
+                  type="button"
+                  class="search-result"
+                  class:is-selected={selectedId === p.id}
+                  onclick={() => selectSearchResult(p.id)}
+                >
+                  <Avatar
+                    person={{ given: p.first_name, family: p.last_name ?? '', status: p.is_living ? 'living' : 'deceased' }}
+                    size={28}
+                  />
+                  <span class="result-name">{p.first_name}{p.last_name ? ' ' + p.last_name : ''}</span>
+                  <Badge variant={p.is_living ? 'sage' : 'terra'} dot>{p.is_living ? 'Living' : 'Deceased'}</Badge>
+                </button>
+              </li>
+            {/each}
+          </ul>
+        {:else if searchOpen && searchQuery.trim().length >= 2 && searchResults.length === 0}
+          <div class="search-empty" role="status">
+            No one found —
+            <button type="button" class="search-add-link" onclick={() => goto(`/trees/${data.tree.id}/persons/new`)}>
+              Add {searchQuery.trim()}?
+            </button>
+          </div>
+        {/if}
+      </div>
+    {/if}
 
     <div class="toolbar-right">
       {#if data.persons.length > 0}
@@ -958,4 +1035,126 @@
   }
 
   .remove-ok:hover { background: var(--color-bg-surface-2); }
+
+  /* ── Toolbar search ── */
+  .toolbar-search {
+    position: relative;
+    flex: 1;
+    max-width: 260px;
+    min-width: 120px;
+  }
+
+  .search-wrap {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    height: 36px;
+    padding: 0 var(--space-3);
+    background: var(--color-bg-page);
+    border: var(--border-subtle);
+    border-radius: var(--radius-md);
+    transition: border-color var(--dur-fast) var(--ease);
+  }
+
+  .search-wrap:focus-within {
+    border-color: var(--color-border-strong);
+  }
+
+  .search-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    font-family: var(--font-ui);
+    font-size: var(--font-size-label);
+    color: var(--color-text-primary);
+    min-width: 0;
+  }
+
+  .search-input::placeholder {
+    color: var(--color-text-tertiary);
+  }
+
+  /* hide browser search clear button */
+  .search-input::-webkit-search-cancel-button { display: none; }
+
+  .search-dropdown {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    background: var(--color-bg-surface-1);
+    border: var(--border-subtle);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-floating);
+    max-height: 280px;
+    overflow-y: auto;
+    z-index: 50;
+    list-style: none;
+    margin: 0;
+    padding: var(--space-1) 0;
+  }
+
+  .search-result {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    width: 100%;
+    padding: var(--space-2) var(--space-3);
+    background: none;
+    border: none;
+    cursor: pointer;
+    text-align: left;
+    transition: background var(--dur-fast) var(--ease);
+  }
+
+  .search-result:hover,
+  .search-result.is-selected {
+    background: var(--color-bg-surface-2);
+  }
+
+  .result-name {
+    flex: 1;
+    font-family: var(--font-ui);
+    font-size: var(--font-size-label);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .search-empty {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    background: var(--color-bg-surface-1);
+    border: var(--border-subtle);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-floating);
+    padding: var(--space-3) var(--space-4);
+    z-index: 50;
+    font-family: var(--font-body);
+    font-style: italic;
+    font-size: var(--font-size-label);
+    color: var(--color-text-secondary);
+  }
+
+  .search-add-link {
+    background: none;
+    border: none;
+    padding: 0;
+    font-family: var(--font-body);
+    font-style: italic;
+    font-size: var(--font-size-label);
+    color: var(--color-gold);
+    cursor: pointer;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  .search-add-link:hover {
+    color: var(--color-text-primary);
+  }
 </style>
