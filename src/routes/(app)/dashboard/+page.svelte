@@ -19,10 +19,6 @@
   )
 
   const primaryTree = $derived(data.primaryTree)
-  const addPersonHref = $derived(
-    primaryTree ? `/trees/${primaryTree.id}/persons/new` : '/trees/new'
-  )
-
   function activityLabel(action: string, diff: Json | null): string {
     const m = (diff ?? {}) as Record<string, unknown>
     switch (action) {
@@ -88,6 +84,44 @@
 
       <div class="col-main">
 
+        <div class="trees-section">
+          <p class="section-label">Your trees</p>
+          {#if data.trees.length === 0}
+            <div class="trees-grid">
+              <a href="/trees/new" class="tree-card-link">
+                <Card interactive>
+                  <p class="tree-count">0</p>
+                  <p class="tree-meta">family members</p>
+                  <span class="begin-cta">Begin your tree →</span>
+                </Card>
+              </a>
+            </div>
+          {:else}
+            <div class="trees-grid">
+              {#each data.trees as tree (tree.id)}
+                <a href="/trees/{tree.id}" class="tree-card-link">
+                  <Card interactive>
+                    <p class="tree-name">{tree.name}</p>
+                    <p class="tree-count">{tree.personCount}</p>
+                    <p class="tree-meta">{tree.personCount === 1 ? 'family member' : 'family members'}</p>
+                    <span class="begin-cta">{tree.personCount === 0 ? 'Begin your tree →' : 'Open tree →'}</span>
+                  </Card>
+                </a>
+              {/each}
+              <a href="/trees/new" class="tree-card-link new-tree-link" aria-label="Create a new tree">
+                <Card interactive>
+                  <span class="new-tree-plus" aria-hidden="true">+</span>
+                  <span class="new-tree-label">New tree</span>
+                </Card>
+              </a>
+            </div>
+          {/if}
+        </div>
+
+      </div>
+
+      <div class="col-side">
+
         <Card style="padding: 0">
           <div class="card-head">
             <span class="section-label">Recent activity</span>
@@ -135,41 +169,6 @@
               <p class="empty-text">The first memory you add will live here.</p>
             </div>
           {/if}
-        </Card>
-
-      </div>
-
-      <div class="col-side">
-
-        {#if data.trees.length === 0}
-          <a href="/trees/new" class="tree-card-link">
-            <Card interactive>
-              <p class="section-label">Your tree</p>
-              <p class="tree-count">0</p>
-              <p class="tree-meta">family members</p>
-              <span class="begin-cta">Begin your tree →</span>
-            </Card>
-          </a>
-        {:else}
-          {#each data.trees as tree (tree.id)}
-            <a href="/trees/{tree.id}" class="tree-card-link">
-              <Card interactive>
-                <p class="section-label">{tree.name}</p>
-                <p class="tree-count">{tree.personCount}</p>
-                <p class="tree-meta">{tree.personCount === 1 ? 'family member' : 'family members'}</p>
-                <span class="begin-cta">{tree.personCount === 0 ? 'Begin your tree →' : 'Open tree →'}</span>
-              </Card>
-            </a>
-          {/each}
-        {/if}
-
-        <Card>
-          <p class="section-label">Quick add</p>
-          <div class="quick-add">
-            <Button onclick={() => goto(addPersonHref)}>Add a person</Button>
-            <Button variant="secondary" disabled={!primaryTree}>Add a memory</Button>
-            <Button variant="secondary" disabled={!primaryTree}>Upload media</Button>
-          </div>
         </Card>
 
       </div>
@@ -340,8 +339,26 @@
     margin: 0;
   }
 
-  /* ── Tree stat card ── */
-  .tree-card-link { text-decoration: none; }
+  /* ── Trees section ── */
+  .trees-section { display: flex; flex-direction: column; gap: var(--space-4); }
+
+  .trees-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-4);
+  }
+
+  .tree-card-link { text-decoration: none; display: block; }
+
+  .tree-name {
+    font-family: var(--font-ui);
+    font-size: var(--font-size-label);
+    font-weight: var(--font-weight-medium);
+    letter-spacing: var(--letter-spacing-label);
+    text-transform: uppercase;
+    color: var(--color-text-secondary);
+    margin: 0 0 var(--space-2) 0;
+  }
 
   .tree-count {
     font-family: var(--font-ui);
@@ -349,7 +366,7 @@
     font-weight: var(--font-weight-light);
     color: var(--color-text-primary);
     line-height: 1;
-    margin: var(--space-1) 0 0 0;
+    margin: 0;
   }
 
   .tree-meta {
@@ -366,16 +383,35 @@
     color: var(--color-accent);
   }
 
-  /* ── Quick add ── */
-  .quick-add {
+  /* ── New tree card ── */
+  .new-tree-link :global(.card) {
+    border: 1.5px dashed var(--color-border-default);
+    background: transparent;
     display: flex;
     flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 120px;
     gap: var(--space-2);
   }
 
-  .quick-add :global(button),
-  .quick-add :global(a) {
-    width: 100%;
-    justify-content: center;
+  .new-tree-plus {
+    font-family: var(--font-ui);
+    font-size: 28px;
+    font-weight: var(--font-weight-light);
+    color: var(--color-text-hint);
+    line-height: 1;
+  }
+
+  .new-tree-label {
+    font-family: var(--font-ui);
+    font-size: 13px;
+    font-weight: var(--font-weight-medium);
+    color: var(--color-text-hint);
+  }
+
+  .new-tree-link:hover .new-tree-plus,
+  .new-tree-link:hover .new-tree-label {
+    color: var(--color-accent);
   }
 </style>

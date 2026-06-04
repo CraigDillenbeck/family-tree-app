@@ -44,10 +44,12 @@
   </nav>
 
   <div class="right">
-    <button class="search" type="button" onclick={() => onsearch?.()}>
-      <Icon icon={Search} size={14} color="var(--color-text-inverse-muted)" />
-      <span>Search family members…</span>
-    </button>
+    {#if onsearch}
+      <button class="search" type="button" onclick={() => onsearch()}>
+        <Icon icon={Search} size={14} color="var(--color-text-inverse-muted)" />
+        <span>Search family members…</span>
+      </button>
+    {/if}
     {#if avatar}{@render avatar()}{/if}
   </div>
 </header>

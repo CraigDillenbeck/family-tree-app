@@ -26,9 +26,11 @@
   )
 </script>
 
-<TopNav active="dashboard">
+<TopNav links={[]}>
   {#snippet avatar()}
-    <Avatar person={{ given, family }} size={32} />
+    <a href="/account" class="avatar-link">
+      <Avatar person={{ given, family }} size={32} />
+    </a>
     <form method="POST" action="/api/auth/signout" style="display:contents" onsubmit={() => { analyticsReset(); Sentry.setUser(null) }}>
       <button type="submit" class="signout">Sign out</button>
     </form>
@@ -38,6 +40,14 @@
 {@render children()}
 
 <style>
+  .avatar-link {
+    display: inline-flex;
+    align-items: center;
+    text-decoration: none;
+    border-radius: var(--radius-full);
+  }
+  .avatar-link:focus-visible { outline: 2px solid var(--color-text-inverse); outline-offset: 2px; }
+
   .signout {
     background: none;
     border: var(--border-inverse);
