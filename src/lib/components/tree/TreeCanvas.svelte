@@ -73,13 +73,16 @@
   const SPOUSE_TYPES = new Set(['spouse', 'divorced', 'partner'])
   const SIBLING_TYPES = new Set(['sibling', 'half_sibling', 'step_sibling'])
   const PARENT_CHILD_TYPES = new Set(['parent_child', 'adopted_parent_child', 'step_parent_child'])
-  const SPOUSE_GAP = 40
+  const SPOUSE_GAP = 40    // gap between spouse nodes — intentionally tight
+  const SIBLING_GAP = 60   // edge-to-edge gap between siblings (same parent)
+  const FAMILY_GAP = 200   // edge-to-edge gap between cousin groups (different parents)
+  const MIN_NODE_GAP = 20  // absolute floor used in overlap resolution
 
   function buildLayout(ps: CanvasPerson[], rs: CanvasRelationship[]) {
     if (ps.length === 0) return { nodes: [], edges: [] }
 
     const g = new dagre.graphlib.Graph()
-    g.setGraph({ rankdir: 'TB', ranksep: 60, nodesep: 40, marginx: 80, marginy: 80 })
+    g.setGraph({ rankdir: 'TB', ranksep: 80, nodesep: 40, marginx: 80, marginy: 80 })
     g.setDefaultEdgeLabel(() => ({}))
 
     for (const p of ps) {
@@ -158,21 +161,255 @@
       const posB = g.node(jxn.personB)
       if (!posA || !posB) continue
 
-      const avgY = (posA.y + posB.y) / 2
+      // Use the tree-member spouse's Y so in-laws (no parents in tree, assigned rank 0
+      // by dagre) don't pull their partner off their generation row.
+      const aHasParents = childToParents.has(jxn.personA)
+      const bHasParents = childToParents.has(jxn.personB)
+      let targetY: number
+      if (aHasParents && !bHasParents) {
+        targetY = posA.y
+      } else if (bHasParents && !aHasParents) {
+        targetY = posB.y
+      } else {
+        targetY = (posA.y + posB.y) / 2
+      }
       const avgX = (posA.x + posB.x) / 2
       const halfSpan = NODE_W / 2 + SPOUSE_GAP / 2
 
       posA.x = avgX - halfSpan
       posB.x = avgX + halfSpan
-      posA.y = avgY
-      posB.y = avgY
+      posA.y = targetY
+      posB.y = targetY
 
       const jxnPos = g.node(jxn.id)
       if (jxnPos) {
         jxnPos.x = avgX
-        jxnPos.y = avgY
+        jxnPos.y = targetY
       }
     }
+
+    // Phase C: center each couple/parent over its blood children (bottom-up).
+    // Dagre assigns rank 0 to in-laws (no parents in the tree), which skews the
+    // X centroid of the generation above. This pass corrects that by re-centering
+    // each couple/parent over its actual children after couple alignment is done.
+
+    const personToJxnMeta = new Map<string, JunctionMeta>()
+    for (const jxn of junctions) {
+      personToJxnMeta.set(jxn.personA, jxn)
+      personToJxnMeta.set(jxn.personB, jxn)
+    }
+
+    const junctionToChildren = new Map<string, string[]>()
+    const singleParentToChildren = new Map<string, string[]>()
+    for (const [childId, parents] of childToParents) {
+      const jxnId = findJunctionForChild(childId)
+      if (jxnId) {
+        const arr = junctionToChildren.get(jxnId) ?? []
+        arr.push(childId)
+        junctionToChildren.set(jxnId, arr)
+      } else if (parents.length > 0) {
+        const arr = singleParentToChildren.get(parents[0]) ?? []
+        arr.push(childId)
+        singleParentToChildren.set(parents[0], arr)
+      }
+    }
+
+    // childId → the ID of their parent unit (couple junction or single parent person).
+    // Used by Phase D to detect family-group boundaries.
+    const personToParentUnit = new Map<string, string>()
+    for (const [childId, parents] of childToParents) {
+      const jxnId = findJunctionForChild(childId)
+      const parentKey = jxnId ?? parents[0]
+      if (parentKey) personToParentUnit.set(childId, parentKey)
+    }
+
+    // If a child is in a couple, return the couple's junction X — treats child + spouse
+    // as a single visual unit when centering the generation above.
+    function childRepX(childId: string): number {
+      const jxn = personToJxnMeta.get(childId)
+      if (jxn) return g.node(jxn.id)?.x ?? (g.node(childId)?.x ?? 0)
+      return g.node(childId)?.x ?? 0
+    }
+
+    // Process deepest junctions first so lower-level corrections feed up the tree
+    const junctionsByDepth = [...junctions].sort(
+      (a, b) => (g.node(b.id)?.y ?? 0) - (g.node(a.id)?.y ?? 0)
+    )
+    for (const jxn of junctionsByDepth) {
+      const children = junctionToChildren.get(jxn.id) ?? []
+      if (children.length === 0) continue
+      const xs = children.map(childRepX)
+      const targetX = (Math.min(...xs) + Math.max(...xs)) / 2
+      const jxnPos = g.node(jxn.id)
+      if (!jxnPos) continue
+      const delta = targetX - jxnPos.x
+      if (Math.abs(delta) < 1) continue
+      jxnPos.x += delta
+      const posA = g.node(jxn.personA)
+      const posB = g.node(jxn.personB)
+      if (posA) posA.x += delta
+      if (posB) posB.x += delta
+    }
+
+    // Process deepest single-parents first so their corrected positions propagate upward
+    const sortedSingleParents = [...singleParentToChildren.entries()].sort(
+      ([idA], [idB]) => (g.node(idB)?.y ?? 0) - (g.node(idA)?.y ?? 0)
+    )
+    for (const [parentId, children] of sortedSingleParents) {
+      const xs = children.map(childRepX)
+      if (xs.length === 0) continue
+      const targetX = (Math.min(...xs) + Math.max(...xs)) / 2
+      // If the parent is in a couple, shift the entire couple + junction — Phase D
+      // reads the junction X to rebuild couple units, so we must update the junction
+      // here or Phase D will overwrite the centering correction.
+      const jxn = personToJxnMeta.get(parentId)
+      if (jxn) {
+        const jxnPos = g.node(jxn.id)
+        if (!jxnPos) continue
+        const delta = targetX - jxnPos.x
+        if (Math.abs(delta) < 1) continue
+        jxnPos.x += delta
+        const posA = g.node(jxn.personA)
+        const posB = g.node(jxn.personB)
+        if (posA) posA.x += delta
+        if (posB) posB.x += delta
+      } else {
+        const pos = g.node(parentId)
+        if (pos) pos.x = targetX
+      }
+    }
+
+    // Phase D: resolve horizontal overlaps between units in the same generation.
+    // Extracted into resolveOverlaps() so it can run a second time after Phase E —
+    // Phase E may shift interior nodes (both parent and child) into their siblings.
+
+    type LayoutUnit = { x: number; halfW: number; personIds: string[]; jxnId?: string; parentKey: string | null }
+
+    function getParentKey(personIds: string[]): string | null {
+      for (const id of personIds) {
+        const pk = personToParentUnit.get(id)
+        if (pk !== undefined) return pk
+      }
+      return null
+    }
+
+    function resolveOverlaps() {
+      const processedInRow = new Set<string>()
+      const unitRows = new Map<number, LayoutUnit[]>()
+
+      for (const p of ps) {
+        if (!connectedIds.has(p.id) || processedInRow.has(p.id)) continue
+        const pos = g.node(p.id)
+        if (!pos) continue
+        const rowKey = Math.round(pos.y / 10) * 10
+        const row = unitRows.get(rowKey) ?? []
+        unitRows.set(rowKey, row)
+
+        const jxn = personToJxnMeta.get(p.id)
+        if (jxn) {
+          const jxnPos = g.node(jxn.id)
+          if (jxnPos) {
+            row.push({
+              x: jxnPos.x,
+              halfW: NODE_W + SPOUSE_GAP / 2,
+              personIds: [jxn.personA, jxn.personB],
+              jxnId: jxn.id,
+              parentKey: getParentKey([jxn.personA, jxn.personB]),
+            })
+          }
+          processedInRow.add(jxn.personA)
+          processedInRow.add(jxn.personB)
+        } else {
+          row.push({ x: pos.x, halfW: NODE_W / 2, personIds: [p.id], parentKey: personToParentUnit.get(p.id) ?? null })
+          processedInRow.add(p.id)
+        }
+      }
+
+      for (const units of unitRows.values()) {
+        units.sort((a, b) => a.x - b.x)
+
+        const originalCentroid = units.reduce((s, u) => s + u.x, 0) / units.length
+
+        for (let i = 1; i < units.length; i++) {
+          const l = units[i - 1]
+          const r = units[i]
+          const sameFamily = l.parentKey !== null && l.parentKey === r.parentKey
+          const minDist = l.halfW + (sameFamily ? SIBLING_GAP : FAMILY_GAP) + r.halfW
+          if (r.x < l.x + minDist) {
+            r.x = l.x + minDist
+          }
+        }
+
+        const newCentroid = units.reduce((s, u) => s + u.x, 0) / units.length
+        const shift = originalCentroid - newCentroid
+        if (Math.abs(shift) > 0.5) {
+          for (const u of units) u.x += shift
+        }
+
+        for (const unit of units) {
+          if (unit.personIds.length === 2 && unit.jxnId) {
+            const posA = g.node(unit.personIds[0])
+            const posB = g.node(unit.personIds[1])
+            const jxnPos = g.node(unit.jxnId)
+            const half = NODE_W / 2 + SPOUSE_GAP / 2
+            if (posA) posA.x = unit.x - half
+            if (posB) posB.x = unit.x + half
+            if (jxnPos) jxnPos.x = unit.x
+          } else {
+            const pos = g.node(unit.personIds[0])
+            if (pos) pos.x = unit.x
+          }
+        }
+      }
+    }
+
+    resolveOverlaps()
+
+    // Phase E: re-center parents after Phase D's overlap resolution shifted child positions.
+    // Phase C used pre-overlap X values; Phase D may have pushed children right to clear
+    // cousin groups. This pass corrects parent centering using the final child positions.
+
+    for (const jxn of junctionsByDepth) {
+      const children = junctionToChildren.get(jxn.id) ?? []
+      if (children.length === 0) continue
+      const xs = children.map(childRepX)
+      const targetX = (Math.min(...xs) + Math.max(...xs)) / 2
+      const jxnPos = g.node(jxn.id)
+      if (!jxnPos) continue
+      const delta = targetX - jxnPos.x
+      if (Math.abs(delta) < 1) continue
+      jxnPos.x += delta
+      const posA = g.node(jxn.personA)
+      const posB = g.node(jxn.personB)
+      if (posA) posA.x += delta
+      if (posB) posB.x += delta
+    }
+
+    for (const [parentId, children] of sortedSingleParents) {
+      const xs = children.map(childRepX)
+      if (xs.length === 0) continue
+      const targetX = (Math.min(...xs) + Math.max(...xs)) / 2
+      const jxn = personToJxnMeta.get(parentId)
+      if (jxn) {
+        const jxnPos = g.node(jxn.id)
+        if (!jxnPos) continue
+        const delta = targetX - jxnPos.x
+        if (Math.abs(delta) < 1) continue
+        jxnPos.x += delta
+        const posA = g.node(jxn.personA)
+        const posB = g.node(jxn.personB)
+        if (posA) posA.x += delta
+        if (posB) posB.x += delta
+      } else {
+        const pos = g.node(parentId)
+        if (pos) pos.x = targetX
+      }
+    }
+
+    // Phase D' — second overlap pass. Phase E re-centers interior nodes (nodes that are
+    // both a child and a parent) over their children, which can push them into siblings.
+    // A second pass restores correct sibling spacing without another Phase E iteration.
+    resolveOverlaps()
 
     // Phase F: Assemble XYFlow nodes — persons + invisible junction anchors.
     const nodes: Node[] = [
