@@ -44,6 +44,11 @@
     drawerOpen = false
   }
 
+  async function handleMemorySaved() {
+    drawerOpen = false
+    await invalidateAll()
+  }
+
   const tabs = $derived([
     { value: 'about', label: 'About' },
     { value: 'memories', label: 'Memories', count: data.memories.length || undefined },
@@ -253,10 +258,10 @@
                   title: m.title,
                   content: m.excerpt,
                   memoryDate: m.memory_date,
-                  memoryDatePrecision: m.memory_date_precision as 'full' | 'month_year' | 'year' | 'approximate',
+                  memoryDatePrecision: m.memory_date_precision as 'exact' | 'month' | 'year' | 'decade' | 'circa',
                   tags: [],
                 }}
-                onclick={canEdit ? () => openEditDrawer(m) : undefined}
+                onclick={() => goto(`/trees/${data.tree.id}/memories/${m.id}?from=${data.person.id}`)}
               />
             {/each}
           </div>
@@ -330,7 +335,7 @@
     <MemoryEditor
       memory={editingMemory}
       personId={data.person.id}
-      onSuccess={closeDrawer}
+      onSuccess={handleMemorySaved}
       onCancel={closeDrawer}
     />
   {/key}

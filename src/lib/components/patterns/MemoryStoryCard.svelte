@@ -7,7 +7,7 @@
     title: string
     content?: string | null
     memoryDate?: string | null
-    memoryDatePrecision?: 'full' | 'month_year' | 'year' | 'approximate' | null
+    memoryDatePrecision?: 'exact' | 'month' | 'year' | 'decade' | 'circa' | null
     tags?: { id: string; name: string }[]
   }
 
@@ -37,35 +37,32 @@
     if (!date) return ''
     const d = new Date(date + 'T00:00:00')
     switch (precision) {
-      case 'year':
-        return String(d.getFullYear())
-      case 'month_year':
-        return d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
-      case 'approximate':
-        return `c. ${d.getFullYear()}`
-      default:
-        return d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+      case 'year':   return String(d.getFullYear())
+      case 'month':  return d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+      case 'circa':  return `c. ${d.getFullYear()}`
+      case 'decade': return `${Math.floor(d.getFullYear() / 10) * 10}s`
+      default:       return d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
     }
   }
 
   const dateLabel = $derived(formatDate(memory.memoryDate, memory.memoryDatePrecision))
 </script>
 
-<article class="card" class:has-thumbnail={!!thumbnail}>
+<!-- svelte-ignore a11y_click_events_have_key_events -->
+<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
+<!-- svelte-ignore a11y_no_noninteractive_tabindex -->
+<article
+  class="card"
+  class:has-thumbnail={!!thumbnail}
+  class:clickable={!!onclick}
+  onclick={onclick}
+  onkeydown={onclick ? (e) => (e.key === 'Enter' || e.key === ' ') && onclick?.() : undefined}
+  tabindex={onclick ? 0 : undefined}
+  role={onclick ? 'button' : undefined}
+>
   <div class="card-main">
     <div class="card-text">
-      <!-- Title is the navigation target; the card itself is presentational -->
-      <h3 class="title">
-        {#if onclick}
-          <!-- svelte-ignore a11y_click_events_have_key_events -->
-          <!-- svelte-ignore a11y_no_static_element_interactions -->
-          <span class="title-link" onclick={onclick} role="link" tabindex="0"
-            onkeydown={(e) => (e.key === 'Enter' || e.key === ' ') && onclick?.()}
-          >{memory.title}</span>
-        {:else}
-          {memory.title}
-        {/if}
-      </h3>
+      <h3 class="title">{memory.title}</h3>
 
       {#if memory.content}
         <p class="excerpt">{memory.content}</p>
@@ -123,12 +120,16 @@
     cursor: pointer;
   }
 
-  .card:hover {
+  .card.clickable {
+    cursor: pointer;
+  }
+
+  .card.clickable:hover {
     background: var(--color-bg-surface-3);
     border: var(--border-strong);
   }
 
-  .card:active {
+  .card.clickable:active {
     transform: scale(0.998);
     border-color: var(--color-border-active);
   }
@@ -156,13 +157,9 @@
     text-overflow: ellipsis;
   }
 
-  .title-link {
-    cursor: pointer;
-  }
-  .title-link:focus-visible {
-    outline: 2px solid var(--color-ink);
+  .card.clickable:focus-visible {
+    outline: var(--border-focus-ring);
     outline-offset: 2px;
-    border-radius: 2px;
   }
 
   /* Two-line italic Cormorant excerpt — the emotional core of the card */

@@ -72,7 +72,7 @@ type RawRelationship = {
 type RawMemory = {
   id: string
   title: string
-  content: string | null
+  body: string | null
   memory_date: string | null
   memory_date_precision: string
 }
@@ -114,7 +114,7 @@ export const load: PageServerLoad = async ({ locals: { supabase }, params }) => 
     memoryIds.length > 0
       ? supabase
           .from('memories')
-          .select('id, title, content, memory_date, memory_date_precision')
+          .select('id, title, body, memory_date, memory_date_precision')
           .in('id', memoryIds)
           .order('created_at', { ascending: false })
       : Promise.resolve({ data: [] as RawMemory[] }),
@@ -131,8 +131,8 @@ export const load: PageServerLoad = async ({ locals: { supabase }, params }) => 
     (m) => ({
       id: m.id,
       title: m.title,
-      content: m.content,
-      excerpt: m.content ? m.content.slice(0, 160) : null,
+      content: m.body,
+      excerpt: m.body ? m.body.slice(0, 160) : null,
       memory_date: m.memory_date,
       memory_date_precision: m.memory_date_precision ?? 'full',
       tags: []
@@ -228,9 +228,14 @@ export const actions: Actions = {
     }
 
     if (personId) {
-      await supabase
+      const { error: linkErr } = await supabase
         .from('memory_persons')
         .insert({ memory_id: memory.id, person_id: personId })
+
+      if (linkErr) {
+        await supabase.from('memories').delete().eq('id', memory.id)
+        return fail(500, { error: 'Could not link the memory to this person. Please try again.' })
+      }
     }
 
     await logActivity({

@@ -35,16 +35,16 @@
   let title = $state(untrack(() => memory?.title ?? ''))
   let content = $state(untrack(() => memory?.content ?? ''))
   let memoryDate = $state(untrack(() => memory?.memory_date ?? ''))
-  let precision = $state(untrack(() => memory?.memory_date_precision ?? 'full'))
+  let precision = $state(untrack(() => memory?.memory_date_precision ?? 'exact'))
 
   const isEditing = $derived(!!memory)
   const showPrecision = $derived(memoryDate.length > 0)
 
   const precisionOptions: SelectOption[] = [
-    { value: 'full', label: 'Exact date' },
-    { value: 'month_year', label: 'Month and year' },
+    { value: 'exact', label: 'Exact date' },
+    { value: 'month', label: 'Month and year' },
     { value: 'year', label: 'Year only' },
-    { value: 'approximate', label: 'Approximate year' },
+    { value: 'circa', label: 'Approximate year' },
   ]
 </script>
 
