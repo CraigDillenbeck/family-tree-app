@@ -469,9 +469,6 @@
 
         <div class="drawer-actions">
           <Button style="flex:1;justify-content:center" onclick={() => goto(`/trees/${data.tree.id}/persons/${selected.id}`)}>View profile</Button>
-          {#if canEdit}
-            <Button variant="secondary" onclick={() => goto(`/trees/${data.tree.id}/persons/${selected.id}#memories`)}>Add memory</Button>
-          {/if}
         </div>
 
         {#if canEdit}
