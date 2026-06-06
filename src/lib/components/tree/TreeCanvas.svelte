@@ -7,6 +7,7 @@
   import TreeCanvasNode from '$lib/components/tree/TreeCanvasNode.svelte'
   import TreeCanvasEdge from '$lib/components/tree/TreeCanvasEdge.svelte'
   import TreeCanvasJunction from '$lib/components/tree/TreeCanvasJunction.svelte'
+  import CanvasFocusHelper from '$lib/components/tree/CanvasFocusHelper.svelte'
   import type { TreePerson } from '$lib/components/patterns/FamilyTreeNode.svelte'
 
   export type CanvasPerson = {
@@ -30,11 +31,13 @@
     persons,
     relationships,
     selectedId = null,
+    focusId = null,
     onNodeClick,
   }: {
     persons: CanvasPerson[]
     relationships: CanvasRelationship[]
     selectedId?: string | null
+    focusId?: string | null
     onNodeClick?: (personId: string) => void
   } = $props()
 
@@ -459,6 +462,7 @@
       position="bottom-right"
       style="background:var(--color-bg-surface-1);border:var(--border-subtle)"
     />
+    <CanvasFocusHelper {focusId} />
   </SvelteFlow>
 </div>
 

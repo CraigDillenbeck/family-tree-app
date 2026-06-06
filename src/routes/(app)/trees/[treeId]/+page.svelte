@@ -75,6 +75,7 @@
   // Search
   let searchQuery = $state('')
   let searchOpen  = $state(false)
+  let focusId     = $state<string | null>(null)
   const searchResults = $derived(
     searchQuery.trim().length < 2
       ? []
@@ -92,6 +93,7 @@
     listView    = false
     stagingOpen = false
     selectedId  = personId
+    focusId     = personId
   }
 
   const dur = 280
@@ -328,6 +330,7 @@
           persons={data.persons}
           relationships={data.relationships}
           {selectedId}
+          {focusId}
           onNodeClick={handleNodeClick}
         />
       {/if}
