@@ -8,7 +8,7 @@ export const load: PageServerLoad = async ({ params, parent, locals: { supabase 
 
   const { data: person } = await supabase
     .from('persons')
-    .select('id, first_name, last_name, maiden_name, birth_date, death_date, birth_place, occupation, bio, is_living')
+    .select('id, first_name, last_name, maiden_name, birth_date, death_date, birth_place, primary_residence, occupation, bio, is_living')
     .eq('id', params.personId)
     .eq('tree_id', params.treeId)
     .single()
@@ -39,6 +39,7 @@ export const actions: Actions = {
     const birthYear = ((form.get('birthYear') as string) ?? '').trim()
     const birthPlace = ((form.get('birthPlace') as string) ?? '').trim()
     const deathYear = ((form.get('deathYear') as string) ?? '').trim()
+    const primaryResidence = ((form.get('primaryResidence') as string) ?? '').trim()
     const occupation = ((form.get('occupation') as string) ?? '').trim()
     const bio = ((form.get('bio') as string) ?? '').trim()
 
@@ -60,6 +61,7 @@ export const actions: Actions = {
         maiden_name: maidenName || null,
         birth_date: birthYear ? `${birthYear}-01-01` : null,
         birth_place: birthPlace || null,
+        primary_residence: primaryResidence || null,
         death_date: !isLiving && deathYear ? `${deathYear}-01-01` : null,
         occupation: occupation || null,
         bio: bio || null,

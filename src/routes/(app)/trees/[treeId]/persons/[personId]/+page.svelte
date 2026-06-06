@@ -5,18 +5,13 @@
   import Badge from '$lib/components/ui/Badge.svelte'
   import Button from '$lib/components/ui/Button.svelte'
   import Avatar from '$lib/components/ui/Avatar.svelte'
-  import Card from '$lib/components/ui/Card.svelte'
   import Tabs from '$lib/components/ui/Tabs.svelte'
   import Tag from '$lib/components/ui/Tag.svelte'
   import Drawer from '$lib/components/ui/Drawer.svelte'
-  import Modal from '$lib/components/ui/Modal.svelte'
-  import Icon from '$lib/components/ui/Icon.svelte'
-  import { Trash2 } from 'lucide-svelte'
   import MemoryStoryCard from '$lib/components/patterns/MemoryStoryCard.svelte'
   import MemoryEditor from '$lib/components/memory/MemoryEditor.svelte'
   import MediaGrid from '$lib/components/media/MediaGrid.svelte'
   import MediaUploader from '$lib/components/media/MediaUploader.svelte'
-  import AddRelationshipModal from '$lib/components/tree/AddRelationshipModal.svelte'
 
   const { data }: PageProps = $props()
 
@@ -53,7 +48,6 @@
     { value: 'about', label: 'About' },
     { value: 'memories', label: 'Memories', count: data.memories.length || undefined },
     { value: 'media', label: 'Media', count: data.media.length || undefined },
-    { value: 'relationships', label: 'Relationships', count: data.relationships.length || undefined },
   ])
 
   const fullName = $derived(
@@ -79,47 +73,85 @@
 
   const canEdit = $derived(data.userRole === 'owner' || data.userRole === 'editor')
 
-  // Add relationship modal
-  type RelAction = 'parent' | 'child' | 'sibling' | 'partner'
-  let relPickerOpen = $state(false)
-  let addRelAction = $state<RelAction | null>(null)
+  type RelPart = { text: string; href?: string }
+  type RelClause = RelPart[]
 
-  const connectedIds = $derived(new Set(data.relationships.map(r => r.person.id)))
-
-  function openRelPicker() { relPickerOpen = true }
-  function selectRelAction(action: RelAction) {
-    relPickerOpen = false
-    addRelAction = action
-  }
-  async function onRelationshipSuccess() {
-    addRelAction = null
-    await invalidateAll()
+  function personName(p: { first_name: string; last_name: string | null }): string {
+    return [p.first_name, p.last_name].filter(Boolean).join(' ')
   }
 
-  // Relationship deletion
-  let deletingRelId = $state<string | null>(null)
-  let deleteRelError = $state<string | null>(null)
-  let deleteRelSubmitting = $state(false)
+  function nameLink(p: { id: string; first_name: string; last_name: string | null }): RelPart {
+    return { text: personName(p), href: `/trees/${data.tree.id}/persons/${p.id}` }
+  }
 
-  async function confirmDeleteRelationship() {
-    if (!deletingRelId || deleteRelSubmitting) return
-    deleteRelSubmitting = true
-    deleteRelError = null
-    try {
-      const res = await fetch(`/api/trees/${data.tree.id}/relationships?id=${deletingRelId}`, { method: 'DELETE' })
-      if (!res.ok) {
-        const d = await res.json() as { error?: string }
-        deleteRelError = d.error ?? 'Could not remove the connection. Please try again.'
-        return
-      }
-      deletingRelId = null
-      await invalidateAll()
-    } catch {
-      deleteRelError = 'Something went wrong. Please try again.'
-    } finally {
-      deleteRelSubmitting = false
+  const relationshipClauses = $derived.by((): RelClause[] => {
+    const rels = data.relationships
+    if (!rels.length) return []
+
+    const clauses: RelClause[] = []
+
+    const parents = rels.filter(r => r.label === 'Parent')
+    if (parents.length) {
+      const clause: RelPart[] = [{ text: 'Child of ' }]
+      parents.forEach((r, i) => {
+        if (i > 0) clause.push({ text: i === parents.length - 1 ? ' and ' : ', ' })
+        clause.push(nameLink(r.person))
+      })
+      clauses.push(clause)
     }
-  }
+
+    const adoptiveParents = rels.filter(r => r.label === 'Adoptive parent')
+    if (adoptiveParents.length) {
+      const clause: RelPart[] = [{ text: 'Adopted child of ' }]
+      adoptiveParents.forEach((r, i) => {
+        if (i > 0) clause.push({ text: ' and ' })
+        clause.push(nameLink(r.person))
+      })
+      clauses.push(clause)
+    }
+
+    const stepParents = rels.filter(r => r.label === 'Step-parent')
+    if (stepParents.length) {
+      const clause: RelPart[] = [{ text: 'Step-child of ' }]
+      stepParents.forEach((r, i) => {
+        if (i > 0) clause.push({ text: ' and ' })
+        clause.push(nameLink(r.person))
+      })
+      clauses.push(clause)
+    }
+
+    rels.filter(r => r.label === 'Spouse').forEach(r =>
+      clauses.push([{ text: 'Married to ' }, nameLink(r.person)])
+    )
+    rels.filter(r => r.label === 'Former spouse').forEach(r =>
+      clauses.push([{ text: 'Formerly married to ' }, nameLink(r.person)])
+    )
+    rels.filter(r => r.label === 'Partner').forEach(r =>
+      clauses.push([{ text: 'Partner of ' }, nameLink(r.person)])
+    )
+
+    const children = rels.filter(r => ['Child', 'Adopted child', 'Step-child'].includes(r.label))
+    if (children.length) {
+      const clause: RelPart[] = [{ text: 'Parent of ' }]
+      children.forEach((r, i) => {
+        if (i > 0) clause.push({ text: i === children.length - 1 ? ' and ' : ', ' })
+        clause.push(nameLink(r.person))
+      })
+      clauses.push(clause)
+    }
+
+    const siblings = rels.filter(r => ['Sibling', 'Half-sibling', 'Step-sibling'].includes(r.label))
+    if (siblings.length >= 1 && siblings.length <= 2) {
+      const clause: RelPart[] = [{ text: 'Sibling of ' }]
+      siblings.forEach((r, i) => {
+        if (i > 0) clause.push({ text: ' and ' })
+        clause.push(nameLink(r.person))
+      })
+      clauses.push(clause)
+    }
+
+    return clauses
+  })
 </script>
 
 <svelte:head>
@@ -153,7 +185,25 @@
         <Badge variant={data.person.is_living ? 'sage' : 'terra'} dot>
           {data.person.is_living ? 'Living' : 'Deceased'}
         </Badge>
+        {#if data.person.primary_residence}
+          <span class="location">{data.person.primary_residence}</span>
+        {/if}
       </div>
+
+      {#if relationshipClauses.length}
+        <p class="rel-summary">
+          {#each relationshipClauses as clause, ci}
+            {#if ci > 0}<span class="rel-sep"> · </span>{/if}
+            {#each clause as part}
+              {#if part.href}
+                <a href={part.href} class="rel-name-link">{part.text}</a>
+              {:else}
+                {part.text}
+              {/if}
+            {/each}
+          {/each}
+        </p>
+      {/if}
 
       {#if data.person.bio}
         <p class="bio">{data.person.bio}</p>
@@ -163,9 +213,7 @@
 
       <div class="actions">
         {#if canEdit}
-          <Button onclick={openCreateDrawer}>Add a memory</Button>
           <Button variant="secondary" onclick={() => goto(`/trees/${data.tree.id}/persons/${data.person.id}/edit`)}>Edit profile</Button>
-          <Button variant="ghost" onclick={openRelPicker}>Add relationship</Button>
         {/if}
       </div>
     </div>
@@ -187,15 +235,14 @@
       <div class="tab-inner narrow">
         <div class="tab-top">
           <span class="section-label">Newest first</span>
-          <Tag>All memories</Tag>
+          {#if canEdit}
+            <Button onclick={openCreateDrawer}>Add a memory</Button>
+          {/if}
         </div>
 
         {#if data.memories.length === 0}
           <div class="empty-state">
             <p class="empty-text">The first memory you add will live here.</p>
-            {#if canEdit}
-              <Button variant="secondary" onclick={openCreateDrawer}>Add a memory</Button>
-            {/if}
           </div>
         {:else}
           <div class="memory-list">
@@ -269,119 +316,8 @@
       </div>
     {/if}
 
-    {#if activeTab === 'relationships'}
-      <div class="tab-inner narrow">
-        {#if data.relationships.length === 0}
-          <div class="empty-state">
-            <p class="empty-text">Connect this person to others in your tree.</p>
-            {#if canEdit}
-              <Button variant="secondary" onclick={openRelPicker}>Add a connection</Button>
-            {/if}
-          </div>
-        {:else}
-          <div class="rel-list">
-            {#each data.relationships as r (r.id)}
-              {@const relName = [r.person.first_name, r.person.last_name].filter(Boolean).join(' ')}
-              <div class="rel-row">
-                <a class="rel-link" href="/trees/{data.tree.id}/persons/{r.person.id}">
-                  <Avatar
-                    person={{ given: r.person.first_name, family: r.person.last_name ?? '', status: r.person.is_living ? 'living' : 'deceased' }}
-                    size={48}
-                  />
-                  <div class="rel-info">
-                    <p class="rel-name">{relName}</p>
-                    {#if r.dates}<p class="rel-dates">{r.dates}</p>{/if}
-                  </div>
-                  <Badge variant="warm">{r.label}</Badge>
-                </a>
-                {#if canEdit}
-                  <button
-                    class="rel-delete"
-                    type="button"
-                    onclick={() => { deletingRelId = r.id; deleteRelError = null }}
-                    aria-label={`Remove ${r.label} connection to ${relName}`}
-                  >
-                    <Icon icon={Trash2} size={14} color="currentColor" />
-                  </button>
-                {/if}
-              </div>
-            {/each}
-          </div>
-        {/if}
-      </div>
-    {/if}
-
   </div>
 </div>
-
-<!-- ── Delete relationship confirmation ── -->
-<Modal
-  open={deletingRelId !== null}
-  title="Remove connection"
-  variant="confirmation"
-  onclose={() => { deletingRelId = null; deleteRelError = null }}
->
-  {#snippet children()}
-    <p style="font-family:var(--font-body);font-size:var(--font-size-body-story);line-height:var(--line-height-story);color:var(--color-text-primary);margin:0">
-      This will remove the connection from the tree. The two people will remain in your tree — only their link is removed.
-    </p>
-    {#if deleteRelError}
-      <p style="font-family:var(--font-ui);font-size:var(--font-size-label);color:var(--color-terra);margin:var(--space-3) 0 0">{deleteRelError}</p>
-    {/if}
-  {/snippet}
-  {#snippet footer()}
-    <Button variant="ghost" onclick={() => { deletingRelId = null; deleteRelError = null }} disabled={deleteRelSubmitting}>Cancel</Button>
-    <Button variant="destructive" onclick={confirmDeleteRelationship} disabled={deleteRelSubmitting}>
-      {deleteRelSubmitting ? 'Removing…' : 'Remove connection'}
-    </Button>
-  {/snippet}
-</Modal>
-
-<!-- ── Relationship type picker ── -->
-<Modal
-  open={relPickerOpen}
-  title="What kind of connection?"
-  variant="standard"
-  onclose={() => (relPickerOpen = false)}
->
-  {#snippet children()}
-    <div class="rel-picker">
-      <button class="conn-opt" type="button" onclick={() => selectRelAction('parent')}>
-        <span class="conn-opt-title">Parent</span>
-        <span class="conn-opt-desc">Someone who is a parent of {data.person.first_name}</span>
-      </button>
-      <button class="conn-opt" type="button" onclick={() => selectRelAction('child')}>
-        <span class="conn-opt-title">Child</span>
-        <span class="conn-opt-desc">Someone who is a child of {data.person.first_name}</span>
-      </button>
-      <button class="conn-opt" type="button" onclick={() => selectRelAction('sibling')}>
-        <span class="conn-opt-title">Sibling</span>
-        <span class="conn-opt-desc">A brother, sister, or sibling of {data.person.first_name}</span>
-      </button>
-      <button class="conn-opt" type="button" onclick={() => selectRelAction('partner')}>
-        <span class="conn-opt-title">Partner</span>
-        <span class="conn-opt-desc">A spouse or partner of {data.person.first_name}</span>
-      </button>
-    </div>
-  {/snippet}
-  {#snippet footer()}
-    <Button variant="ghost" onclick={() => (relPickerOpen = false)}>Cancel</Button>
-  {/snippet}
-</Modal>
-
-<!-- ── Add relationship modal ── -->
-{#if addRelAction}
-  <AddRelationshipModal
-    open={addRelAction !== null}
-    treeId={data.tree.id}
-    sourcePerson={data.person}
-    action={addRelAction}
-    allPersons={data.allPersons}
-    {connectedIds}
-    onclose={() => (addRelAction = null)}
-    onsuccess={onRelationshipSuccess}
-  />
-{/if}
 
 <!-- ── Memory editor drawer ── -->
 <Drawer
@@ -471,7 +407,43 @@
   }
 
   .status-row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
     margin-top: var(--space-3);
+  }
+
+  .location {
+    font-family: var(--font-ui);
+    font-size: 13px;
+    color: var(--color-text-secondary);
+  }
+
+  .rel-summary {
+    font-family: var(--font-body);
+    font-size: 15px;
+    font-style: italic;
+    color: var(--color-text-secondary);
+    line-height: var(--line-height-story);
+    margin: var(--space-3) 0 0 0;
+    max-width: var(--reading-width);
+  }
+
+  .rel-name-link {
+    color: var(--color-text-primary);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    text-decoration-thickness: 0.5px;
+    text-decoration-color: var(--color-warm-light);
+    transition: color var(--dur-fast) var(--ease), text-decoration-color var(--dur-fast) var(--ease);
+  }
+  .rel-name-link:hover {
+    color: var(--color-gold);
+    text-decoration-color: var(--color-gold);
+  }
+
+  .rel-sep {
+    color: var(--color-text-hint);
   }
 
   .bio {
@@ -592,111 +564,5 @@
   .media-toolbar {
     display: flex;
     justify-content: flex-end;
-  }
-
-  /* ── Relationships ── */
-  .rel-list {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-3);
-  }
-
-  .rel-row {
-    display: flex;
-    align-items: center;
-    gap: var(--space-2);
-    background: var(--color-bg-surface-1);
-    border: var(--border-default);
-    border-radius: var(--radius-lg);
-    transition: border-color var(--dur-fast) var(--ease);
-  }
-  .rel-row:has(.rel-link:hover) { border-color: var(--color-border-strong); }
-
-  .rel-link {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    gap: var(--space-3);
-    padding: var(--space-3) var(--space-4);
-    text-decoration: none;
-    color: inherit;
-    min-width: 0;
-  }
-
-  .rel-delete {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 32px;
-    height: 32px;
-    margin-right: var(--space-2);
-    background: none;
-    border: none;
-    border-radius: var(--radius-sm);
-    cursor: pointer;
-    color: var(--color-text-secondary);
-    flex-shrink: 0;
-    transition: background var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
-  }
-  .rel-delete:hover {
-    background: color-mix(in srgb, var(--color-terra) 10%, transparent);
-    color: var(--color-terra);
-  }
-
-  .rel-info { flex: 1; min-width: 0; }
-
-  .rel-name {
-    font-family: var(--font-ui);
-    font-weight: var(--font-weight-medium);
-    font-size: 14px;
-    color: var(--color-text-primary);
-    margin: 0;
-  }
-
-  .rel-dates {
-    font-family: var(--font-ui);
-    font-size: 12px;
-    color: var(--color-text-secondary);
-    margin: 0;
-  }
-
-  /* ── Relationship type picker ── */
-  .rel-picker {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-2);
-  }
-
-  .conn-opt {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 2px;
-    width: 100%;
-    padding: var(--space-4) var(--space-4);
-    background: var(--color-bg-surface-1);
-    border: var(--border-default);
-    border-radius: var(--radius-sm);
-    cursor: pointer;
-    text-align: left;
-    transition: border-color var(--dur-fast) var(--ease), background var(--dur-fast) var(--ease);
-  }
-
-  .conn-opt:hover {
-    border-color: var(--color-border-strong);
-    background: var(--color-bg-surface-2);
-  }
-
-  .conn-opt-title {
-    font-family: var(--font-ui);
-    font-size: var(--font-size-body-ui);
-    font-weight: var(--font-weight-medium);
-    color: var(--color-text-primary);
-  }
-
-  .conn-opt-desc {
-    font-family: var(--font-ui);
-    font-size: var(--font-size-label);
-    color: var(--color-text-secondary);
   }
 </style>

@@ -10,6 +10,7 @@ export type ProfilePerson = {
   birth_date: string | null
   death_date: string | null
   birth_place: string | null
+  primary_residence: string | null
   bio: string | null
   avatar_url: string | null
   is_living: boolean
@@ -79,14 +80,14 @@ type RawMemory = {
 export const load: PageServerLoad = async ({ locals: { supabase }, params }) => {
   const personRes = await supabase
     .from('persons')
-    .select('id, first_name, last_name, birth_date, death_date, birth_place, bio, avatar_url, is_living')
+    .select('id, first_name, last_name, birth_date, death_date, birth_place, primary_residence, bio, avatar_url, is_living')
     .eq('id', params.personId)
     .eq('tree_id', params.treeId)
     .single()
 
   if (!personRes.data) error(404, 'Person not found')
 
-  const [memPersonRes, mediaPersonRes, relsRes, allPersonsRes] = await Promise.all([
+  const [memPersonRes, mediaPersonRes, relsRes] = await Promise.all([
     supabase
       .from('memory_persons')
       .select('memory_id')
@@ -104,11 +105,6 @@ export const load: PageServerLoad = async ({ locals: { supabase }, params }) => 
       )
       .eq('tree_id', params.treeId)
       .or(`person_a_id.eq.${params.personId},person_b_id.eq.${params.personId}`),
-    supabase
-      .from('persons')
-      .select('id, first_name, last_name, birth_date, death_date, avatar_url, is_living')
-      .eq('tree_id', params.treeId)
-      .order('first_name'),
   ])
 
   const memoryIds = (memPersonRes.data ?? []).map((r) => r.memory_id)
@@ -183,15 +179,11 @@ export const load: PageServerLoad = async ({ locals: { supabase }, params }) => 
     }
   })
 
-  type RawAllPerson = { id: string; first_name: string; last_name: string | null; birth_date: string | null; death_date: string | null; avatar_url: string | null; is_living: boolean }
-  const allPersons: RawAllPerson[] = (allPersonsRes.data ?? []) as RawAllPerson[]
-
   return {
     person: personRes.data as ProfilePerson,
     memories,
     media,
     relationships,
-    allPersons,
   }
 }
 

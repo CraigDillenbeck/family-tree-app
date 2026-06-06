@@ -28,6 +28,7 @@
   let birthYear = $state(yearFromDate(initial.birth_date))
   let birthPlace = $state(initial.birth_place ?? '')
   let deathYear = $state(yearFromDate(initial.death_date))
+  let primaryResidence = $state(initial.primary_residence ?? '')
   let occupation = $state(initial.occupation ?? '')
   let bio = $state(initial.bio ?? '')
 
@@ -184,6 +185,12 @@
             autocomplete="off"
           />
         {/if}
+        <Input
+          label="Location"
+          name="primaryResidence"
+          bind:value={primaryResidence}
+          autocomplete="off"
+        />
       </section>
 
       <!-- Background -->
