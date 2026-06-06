@@ -44,6 +44,7 @@
   let selectedPerson = $state<CanvasPerson | null>(null)
   let submitting = $state(false)
   let errorMsg = $state<string | null>(null)
+  let relationshipSubtype = $state<'parent_child' | 'adopted_parent_child' | 'step_parent_child'>('parent_child')
 
   const actionLabel: Record<Action, string> = {
     parent: 'parent',
@@ -96,9 +97,9 @@
   function buildRelPayload(otherId: string): { person_a_id: string; person_b_id: string; type: string } {
     switch (action) {
       case 'parent':
-        return { person_a_id: otherId, person_b_id: sourcePerson.id, type: 'parent_child' }
+        return { person_a_id: otherId, person_b_id: sourcePerson.id, type: relationshipSubtype }
       case 'child':
-        return { person_a_id: sourcePerson.id, person_b_id: otherId, type: 'parent_child' }
+        return { person_a_id: sourcePerson.id, person_b_id: otherId, type: relationshipSubtype }
       case 'sibling':
         return { person_a_id: sourcePerson.id, person_b_id: otherId, type: 'sibling' }
       case 'partner':
@@ -167,6 +168,7 @@
     query = ''
     selectedPerson = null
     errorMsg = null
+    relationshipSubtype = 'parent_child'
     onclose()
   }
 
@@ -201,6 +203,30 @@
             spellcheck="false"
           />
         </div>
+
+        {#if action === 'parent' || action === 'child'}
+          <div class="subtype-picker" role="group" aria-label="Relationship type">
+            <button
+              class="subtype-btn"
+              class:active={relationshipSubtype === 'parent_child'}
+              type="button"
+              onclick={() => relationshipSubtype = 'parent_child'}
+            >Biological</button>
+            <button
+              class="subtype-btn"
+              class:active={relationshipSubtype === 'adopted_parent_child'}
+              type="button"
+              onclick={() => relationshipSubtype = 'adopted_parent_child'}
+            >Adoptive</button>
+            <button
+              class="subtype-btn"
+              class:active={relationshipSubtype === 'step_parent_child'}
+              type="button"
+              onclick={() => relationshipSubtype = 'step_parent_child'}
+            >Step</button>
+          </div>
+          <p class="subtype-hint">Biological lines trace direct descent on your tree. Step and adoptive relationships are shown with distinct line styles.</p>
+        {/if}
 
         {#if errorMsg}
           <p class="error">{errorMsg}</p>
@@ -428,6 +454,50 @@
     font-style: italic;
     font-size: var(--font-size-body-story);
     color: var(--color-text-secondary);
+    margin: 0;
+  }
+
+  .subtype-picker {
+    display: flex;
+    border: var(--border-default);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+  }
+
+  .subtype-btn {
+    flex: 1;
+    padding: var(--space-2) var(--space-3);
+    background: none;
+    border: none;
+    border-right: var(--border-default);
+    font-family: var(--font-ui);
+    font-size: var(--font-size-label);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    transition: background var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
+  }
+
+  .subtype-btn:last-child {
+    border-right: none;
+  }
+
+  .subtype-btn:hover {
+    background: var(--color-bg-surface-1);
+    color: var(--color-text-primary);
+  }
+
+  .subtype-btn.active {
+    background: var(--color-bg-surface-2);
+    color: var(--color-text-primary);
+  }
+
+  .subtype-hint {
+    font-family: var(--font-body);
+    font-style: italic;
+    font-size: 14px;
+    color: var(--color-text-secondary);
+    line-height: 1.7;
     margin: 0;
   }
 

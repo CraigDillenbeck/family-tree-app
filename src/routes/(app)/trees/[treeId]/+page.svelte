@@ -2,6 +2,7 @@
   import { fade, fly } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
   import { goto, invalidateAll } from '$app/navigation'
+  import { page } from '$app/stores'
   import type { PageProps } from './$types'
   import Badge from '$lib/components/ui/Badge.svelte'
   import Button from '$lib/components/ui/Button.svelte'
@@ -68,6 +69,9 @@
     }
   }
 
+  // Canvas legend
+  let legendOpen = $state(false)
+
   // Search
   let searchQuery = $state('')
   let searchOpen  = $state(false)
@@ -91,6 +95,15 @@
   }
 
   const dur = 280
+
+  // Open person drawer from URL param (e.g. coming from activity log links)
+  $effect(() => {
+    const personParam = $page.url.searchParams.get('person')
+    if (personParam) {
+      selectedId = personParam
+      stagingOpen = false
+    }
+  })
 
   // Auto-open staging tray when a new unconnected person is added; auto-close when all are connected
   let _prevUnconnectedCount = 0
@@ -360,6 +373,56 @@
           {/each}
         </div>
       </aside>
+    {/if}
+
+    <!-- ── Canvas legend ── -->
+    {#if data.persons.length > 0 && !listView}
+      <div class="legend-wrap">
+        <button
+          class="legend-trigger"
+          type="button"
+          onclick={() => legendOpen = !legendOpen}
+          aria-label="Tree legend"
+          aria-expanded={legendOpen}
+        >ⓘ</button>
+        {#if legendOpen}
+          <div class="legend-panel" transition:fade={{ duration: 150, easing: cubicOut }}>
+            <p class="legend-title">Connection types</p>
+            <ul class="legend-list">
+              <li class="legend-item">
+                <svg width="32" height="10" viewBox="0 0 32 10" aria-hidden="true">
+                  <line x1="0" y1="5" x2="32" y2="5" stroke="var(--color-warm-light)" stroke-width="1.5"/>
+                </svg>
+                <span>Parent / Child</span>
+              </li>
+              <li class="legend-item">
+                <svg width="32" height="10" viewBox="0 0 32 10" aria-hidden="true">
+                  <line x1="0" y1="5" x2="32" y2="5" stroke="var(--color-warm-mid)" stroke-width="1" stroke-dasharray="2 5"/>
+                </svg>
+                <span>Adoptive</span>
+              </li>
+              <li class="legend-item">
+                <svg width="32" height="10" viewBox="0 0 32 10" aria-hidden="true">
+                  <line x1="0" y1="5" x2="32" y2="5" stroke="var(--color-warm-mid)" stroke-width="1" stroke-dasharray="4 2"/>
+                </svg>
+                <span>Step</span>
+              </li>
+              <li class="legend-item">
+                <svg width="32" height="10" viewBox="0 0 32 10" aria-hidden="true">
+                  <line x1="0" y1="5" x2="32" y2="5" stroke="var(--color-gold-light)" stroke-width="1.5"/>
+                </svg>
+                <span>Partner / Spouse</span>
+              </li>
+              <li class="legend-item">
+                <svg width="32" height="10" viewBox="0 0 32 10" aria-hidden="true">
+                  <line x1="0" y1="5" x2="32" y2="5" stroke="var(--color-warm-light)" stroke-width="1" stroke-dasharray="4 4"/>
+                </svg>
+                <span>Former spouse</span>
+              </li>
+            </ul>
+          </div>
+        {/if}
+      </div>
     {/if}
 
     <!-- ── Detail drawer ── -->
@@ -1036,6 +1099,83 @@
   }
 
   .remove-ok:hover { background: var(--color-bg-surface-2); }
+
+  /* ── Canvas legend ── */
+  .legend-wrap {
+    position: absolute;
+    bottom: var(--space-8);
+    left: var(--space-6);
+    z-index: 5;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-2);
+  }
+
+  .legend-trigger {
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--color-bg-page);
+    border: var(--border-default);
+    border-radius: var(--radius-full);
+    font-family: var(--font-ui);
+    font-size: 14px;
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    transition: background var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease);
+    order: 2;
+  }
+
+  .legend-trigger:hover {
+    background: var(--color-bg-surface-1);
+    color: var(--color-text-primary);
+    border-color: var(--color-border-strong);
+  }
+
+  .legend-panel {
+    order: 1;
+    background: var(--color-bg-page);
+    border: var(--border-subtle);
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow-floating);
+    padding: var(--space-3) var(--space-4);
+    min-width: 168px;
+  }
+
+  .legend-title {
+    font-family: var(--font-ui);
+    font-size: 11px;
+    font-weight: var(--font-weight-medium);
+    letter-spacing: var(--letter-spacing-label);
+    text-transform: uppercase;
+    color: var(--color-text-secondary);
+    margin: 0 0 var(--space-2);
+  }
+
+  .legend-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+  }
+
+  .legend-item span {
+    font-family: var(--font-ui);
+    font-size: var(--font-size-label);
+    color: var(--color-text-secondary);
+    white-space: nowrap;
+  }
 
   /* ── Toolbar search ── */
   .toolbar-search {
