@@ -475,6 +475,7 @@
     action={modalAction}
     allPersons={data.persons}
     {connectedIds}
+    relationships={data.relationships}
     onclose={closeModal}
     onsuccess={onRelationshipSuccess}
   />

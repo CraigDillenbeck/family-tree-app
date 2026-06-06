@@ -4,6 +4,7 @@
   import Button from '$lib/components/ui/Button.svelte'
   import Icon from '$lib/components/ui/Icon.svelte'
   import { Plus, Search } from 'lucide-svelte'
+  import { goto } from '$app/navigation'
 
   type CanvasPerson = {
     id: string
@@ -24,6 +25,7 @@
     action,
     allPersons,
     connectedIds,
+    relationships = [],
     onclose,
     onsuccess,
   }: {
@@ -33,6 +35,7 @@
     action: Action
     allPersons: CanvasPerson[]
     connectedIds: Set<string>
+    relationships?: { person_a_id: string; person_b_id: string; type: string }[]
     onclose: () => void
     onsuccess: () => void
   } = $props()
@@ -74,6 +77,15 @@
     !candidates.some(p =>
       `${p.first_name}${p.last_name ? ' ' + p.last_name : ''}`.toLowerCase() === query.toLowerCase().trim()
     )
+  )
+
+  const existingPartner = $derived(
+    action === 'partner'
+      ? relationships.find(r =>
+          (r.type === 'spouse' || r.type === 'partner') &&
+          (r.person_a_id === sourcePerson.id || r.person_b_id === sourcePerson.id)
+        )
+      : undefined
   )
 
   function formatBirth(p: CanvasPerson): string | null {
@@ -161,95 +173,112 @@
   function selectPerson(p: CanvasPerson) {
     selectedPerson = selectedPerson?.id === p.id ? null : p
   }
+
+  function goToProfile() {
+    handleClose()
+    goto(`/trees/${treeId}/persons/${sourcePerson.id}`)
+  }
 </script>
 
 <Modal {open} {title} variant="standard" onclose={handleClose}>
   {#snippet children()}
     <div class="modal-body">
-      <div class="search-wrap">
-        <Icon icon={Search} size={16} color="var(--color-text-secondary)" />
-        <input
-          class="search"
-          type="text"
-          placeholder="Search by name or add someone new…"
-          bind:value={query}
-          oninput={() => { selectedPerson = null; errorMsg = null }}
-          autocomplete="off"
-          spellcheck="false"
-        />
-      </div>
+      {#if existingPartner}
+        <div class="partner-notice">
+          <p class="partner-notice-heading">{sourcePerson.first_name} already has a partner in this tree.</p>
+          <p class="partner-notice-body">To update their relationship or record additional history, visit their profile page.</p>
+        </div>
+      {:else}
+        <div class="search-wrap">
+          <Icon icon={Search} size={16} color="var(--color-text-secondary)" />
+          <input
+            class="search"
+            type="text"
+            placeholder="Search by name or add someone new…"
+            bind:value={query}
+            oninput={() => { selectedPerson = null; errorMsg = null }}
+            autocomplete="off"
+            spellcheck="false"
+          />
+        </div>
 
-      {#if errorMsg}
-        <p class="error">{errorMsg}</p>
-      {/if}
+        {#if errorMsg}
+          <p class="error">{errorMsg}</p>
+        {/if}
 
-      <ul class="list" role="listbox" aria-label="People in this tree">
-        {#each candidates as p (p.id)}
-          {@const birth = formatBirth(p)}
-          {@const isSelected = selectedPerson?.id === p.id}
-          {@const isUnconnected = !connectedIds.has(p.id)}
-          <li>
-            <button
-              class="person-row"
-              class:selected={isSelected}
-              role="option"
-              aria-selected={isSelected}
-              type="button"
-              onclick={() => selectPerson(p)}
-            >
-              <Avatar
-                person={{ given: p.first_name, family: p.last_name ?? '', status: p.is_living ? 'living' : 'deceased' }}
-                size={36}
-              />
-              <span class="person-info">
-                <span class="person-name">{p.first_name}{p.last_name ? ' ' + p.last_name : ''}</span>
-                {#if birth}
-                  <span class="person-meta">{birth}</span>
+        <ul class="list" role="listbox" aria-label="People in this tree">
+          {#each candidates as p (p.id)}
+            {@const birth = formatBirth(p)}
+            {@const isSelected = selectedPerson?.id === p.id}
+            {@const isUnconnected = !connectedIds.has(p.id)}
+            <li>
+              <button
+                class="person-row"
+                class:selected={isSelected}
+                role="option"
+                aria-selected={isSelected}
+                type="button"
+                onclick={() => selectPerson(p)}
+              >
+                <Avatar
+                  person={{ given: p.first_name, family: p.last_name ?? '', status: p.is_living ? 'living' : 'deceased' }}
+                  size={36}
+                />
+                <span class="person-info">
+                  <span class="person-name">{p.first_name}{p.last_name ? ' ' + p.last_name : ''}</span>
+                  {#if birth}
+                    <span class="person-meta">{birth}</span>
+                  {/if}
+                </span>
+                {#if isUnconnected}
+                  <span class="unconnected-tag">Not yet connected</span>
                 {/if}
-              </span>
-              {#if isUnconnected}
-                <span class="unconnected-tag">Not yet connected</span>
-              {/if}
-            </button>
-          </li>
-        {/each}
+              </button>
+            </li>
+          {/each}
 
-        {#if showCreateOption}
-          <li>
-            <button
-              class="person-row create-row"
-              type="button"
-              onclick={handleCreateNew}
-              disabled={submitting}
-            >
-              <span class="create-icon">
-                <Icon icon={Plus} size={16} color="var(--color-gold)" />
-              </span>
-              <span class="person-info">
-                <span class="person-name">Create "{query.trim()}" as a new {actionLabel[action]}</span>
-                <span class="person-meta">Add to tree and connect</span>
-              </span>
-            </button>
-          </li>
-        {/if}
+          {#if showCreateOption}
+            <li>
+              <button
+                class="person-row create-row"
+                type="button"
+                onclick={handleCreateNew}
+                disabled={submitting}
+              >
+                <span class="create-icon">
+                  <Icon icon={Plus} size={16} color="var(--color-gold)" />
+                </span>
+                <span class="person-info">
+                  <span class="person-name">Create "{query.trim()}" as a new {actionLabel[action]}</span>
+                  <span class="person-meta">Add to tree and connect</span>
+                </span>
+              </button>
+            </li>
+          {/if}
 
-        {#if candidates.length === 0 && !showCreateOption}
-          <li class="empty-state">
-            <p>No people found. Type a name above to add someone new.</p>
-          </li>
-        {/if}
-      </ul>
+          {#if candidates.length === 0 && !showCreateOption}
+            <li class="empty-state">
+              <p>No people found. Type a name above to add someone new.</p>
+            </li>
+          {/if}
+        </ul>
+      {/if}
     </div>
   {/snippet}
 
   {#snippet footer()}
-    <Button variant="ghost" onclick={handleClose} disabled={submitting}>Cancel</Button>
-    <Button
-      onclick={handleConnectExisting}
-      disabled={!selectedPerson || submitting}
-    >
-      {submitting ? 'Saving…' : `Add ${actionLabel[action]}`}
-    </Button>
+    {#if existingPartner}
+      <Button variant="ghost" onclick={handleClose}>Cancel</Button>
+      <Button onclick={goToProfile}>Go to profile</Button>
+    {:else}
+      <Button variant="ghost" onclick={handleClose} disabled={submitting}>Cancel</Button>
+      <Button
+        onclick={handleConnectExisting}
+        disabled={!selectedPerson || submitting}
+      >
+        {submitting ? 'Saving…' : `Add ${actionLabel[action]}`}
+      </Button>
+    {/if}
   {/snippet}
 </Modal>
 
@@ -400,5 +429,32 @@
     font-size: var(--font-size-body-story);
     color: var(--color-text-secondary);
     margin: 0;
+  }
+
+  .partner-notice {
+    padding: var(--space-6) var(--space-4);
+    background: color-mix(in srgb, var(--color-gold) 8%, var(--color-bg-page));
+    border: 1px solid color-mix(in srgb, var(--color-gold) 30%, transparent);
+    border-radius: var(--radius-sm);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+
+  .partner-notice-heading {
+    font-family: var(--font-ui);
+    font-size: var(--font-size-body);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-text-primary);
+    margin: 0;
+  }
+
+  .partner-notice-body {
+    font-family: var(--font-body);
+    font-style: italic;
+    font-size: var(--font-size-body-story);
+    color: var(--color-text-secondary);
+    margin: 0;
+    line-height: 1.7;
   }
 </style>

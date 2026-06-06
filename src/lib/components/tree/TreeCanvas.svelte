@@ -3,7 +3,6 @@
   import { SvelteFlow, Background, MiniMap } from '@xyflow/svelte'
   import '@xyflow/svelte/dist/style.css'
   import type { Node, Edge, Viewport } from '@xyflow/svelte'
-  import dagre from 'dagre'
   import type { NodeTypes, EdgeTypes } from '@xyflow/svelte'
   import TreeCanvasNode from '$lib/components/tree/TreeCanvasNode.svelte'
   import TreeCanvasEdge from '$lib/components/tree/TreeCanvasEdge.svelte'
@@ -73,47 +72,50 @@
   const SPOUSE_TYPES = new Set(['spouse', 'divorced', 'partner'])
   const SIBLING_TYPES = new Set(['sibling', 'half_sibling', 'step_sibling'])
   const PARENT_CHILD_TYPES = new Set(['parent_child', 'adopted_parent_child', 'step_parent_child'])
-  const SPOUSE_GAP = 40    // gap between spouse nodes — intentionally tight
-  const SIBLING_GAP = 60   // edge-to-edge gap between siblings (same parent)
-  const FAMILY_GAP = 200   // edge-to-edge gap between cousin groups (different parents)
-  const MIN_NODE_GAP = 20  // absolute floor used in overlap resolution
+  const SPOUSE_GAP = 40   // tight horizontal gap between spouses
+  const SIBLING_GAP = 60  // horizontal gap between sibling subtrees (same parent)
+  const FAMILY_GAP = 200  // horizontal gap between unrelated root-level subtrees
+  const RANK_SEP = 190    // vertical center-to-center distance between generations
 
   function buildLayout(ps: CanvasPerson[], rs: CanvasRelationship[]) {
     if (ps.length === 0) return { nodes: [], edges: [] }
 
-    const g = new dagre.graphlib.Graph()
-    g.setGraph({ rankdir: 'TB', ranksep: 80, nodesep: 40, marginx: 80, marginy: 80 })
-    g.setDefaultEdgeLabel(() => ({}))
+    // ── Phase A: Identify connected persons and build couple junctions ──────────
+    // Each couple gets a tiny invisible "junction" node at their midpoint.
+    // All children connect to the junction, producing clean T-branch connectors.
 
-    for (const p of ps) {
-      g.setNode(p.id, { width: NODE_W, height: NODE_H })
-    }
-
-    // Phase A: Create virtual junction nodes for each couple.
-    // The junction sits at the couple midpoint and serves as the single parent
-    // node that all children connect to, producing a clean T-branch layout.
     type JunctionMeta = { id: string; personA: string; personB: string; relType: string }
     const junctions: JunctionMeta[] = []
-    const junctionMap = new Map<string, string>() // sorted 'a_b' key → junctionId
+    const junctionMap = new Map<string, string>()            // sorted 'a_b' → junctionId
+    const personToJxnMeta = new Map<string, JunctionMeta>() // personId → their junction
 
     const connectedIds = new Set<string>()
     for (const r of rs) {
       connectedIds.add(r.person_a_id)
       connectedIds.add(r.person_b_id)
+    }
+
+    for (const r of rs) {
       if (SPOUSE_TYPES.has(r.type)) {
-        const jxnId = '__jxn_' + [r.person_a_id, r.person_b_id].sort().join('_')
-        g.setNode(jxnId, { width: 2, height: 2 })
-        // Zero-minlen keeps junction at same rank as couple; high weight pulls it to midpoint
-        g.setEdge(r.person_a_id, jxnId, { weight: 5, minlen: 0 })
-        g.setEdge(r.person_b_id, jxnId, { weight: 5, minlen: 0 })
         const key = [r.person_a_id, r.person_b_id].sort().join('_')
-        junctionMap.set(key, jxnId)
-        junctions.push({ id: jxnId, personA: r.person_a_id, personB: r.person_b_id, relType: r.type })
+        if (!junctionMap.has(key)) {
+          const jxnId = '__jxn_' + key
+          junctionMap.set(key, jxnId)
+          const meta: JunctionMeta = {
+            id: jxnId,
+            personA: r.person_a_id,
+            personB: r.person_b_id,
+            relType: r.type,
+          }
+          junctions.push(meta)
+          personToJxnMeta.set(r.person_a_id, meta)
+          personToJxnMeta.set(r.person_b_id, meta)
+        }
       }
     }
 
-    // Phase B: Route parent→child edges through junctions where possible.
-    // Build child→parents map first, then for each child find if parents are a couple.
+    // ── Phase B: Build child→parent maps ───────────────────────────────────────
+
     const childToParents = new Map<string, string[]>()
     for (const r of rs) {
       if (PARENT_CHILD_TYPES.has(r.type)) {
@@ -134,73 +136,57 @@
       return null
     }
 
-    // Each child gets exactly one dagre edge (from junction or single parent).
-    // Sibling edges are omitted — siblings co-rank naturally by sharing the same junction parent.
-    const childEdgeAdded = new Set<string>()
-    for (const r of rs) {
-      if (!PARENT_CHILD_TYPES.has(r.type)) continue
-      const childId = r.person_b_id
-      if (childEdgeAdded.has(childId)) continue
-      const jxnId = findJunctionForChild(childId)
-      g.setEdge(jxnId ?? r.person_a_id, childId)
-      childEdgeAdded.add(childId)
+    // ── Phase C: Assign generation depths (Y positions) ────────────────────────
+    // Root persons (no in-tree parents) get generation 0.
+    // Each child's generation = max(parent generations) + 1.
+    // This replaces Dagre's rank assignment and avoids the in-law rank-0 artifact.
+
+    const personGeneration = new Map<string, number>()
+
+    function computeGeneration(personId: string, visiting: Set<string>): number {
+      if (personGeneration.has(personId)) return personGeneration.get(personId)!
+      if (visiting.has(personId)) return 0 // cycle guard — family trees should never cycle
+      visiting.add(personId)
+
+      const parents = (childToParents.get(personId) ?? []).filter(id => connectedIds.has(id))
+      let gen = 0
+      if (parents.length > 0) {
+        gen = Math.max(...parents.map(pid => computeGeneration(pid, new Set(visiting)))) + 1
+      }
+      personGeneration.set(personId, gen)
+      return gen
     }
 
-    // Only lay out connected persons — unconnected persons appear in the roster panel only
     for (const p of ps) {
-      if (!connectedIds.has(p.id)) {
-        g.removeNode(p.id)
-      }
+      if (connectedIds.has(p.id)) computeGeneration(p.id, new Set())
     }
 
-    dagre.layout(g)
-
-    // Post-process: force couples into horizontal pairs, then snap junction to their midpoint.
+    // Align each couple to the same generation row (in-tree spouse's generation wins)
     for (const jxn of junctions) {
-      const posA = g.node(jxn.personA)
-      const posB = g.node(jxn.personB)
-      if (!posA || !posB) continue
-
-      // Use the tree-member spouse's Y so in-laws (no parents in tree, assigned rank 0
-      // by dagre) don't pull their partner off their generation row.
-      const aHasParents = childToParents.has(jxn.personA)
-      const bHasParents = childToParents.has(jxn.personB)
-      let targetY: number
-      if (aHasParents && !bHasParents) {
-        targetY = posA.y
-      } else if (bHasParents && !aHasParents) {
-        targetY = posB.y
-      } else {
-        targetY = (posA.y + posB.y) / 2
-      }
-      const avgX = (posA.x + posB.x) / 2
-      const halfSpan = NODE_W / 2 + SPOUSE_GAP / 2
-
-      posA.x = avgX - halfSpan
-      posB.x = avgX + halfSpan
-      posA.y = targetY
-      posB.y = targetY
-
-      const jxnPos = g.node(jxn.id)
-      if (jxnPos) {
-        jxnPos.x = avgX
-        jxnPos.y = targetY
-      }
+      const gen = Math.max(
+        personGeneration.get(jxn.personA) ?? 0,
+        personGeneration.get(jxn.personB) ?? 0,
+      )
+      personGeneration.set(jxn.personA, gen)
+      personGeneration.set(jxn.personB, gen)
     }
 
-    // Phase C: center each couple/parent over its blood children (bottom-up).
-    // Dagre assigns rank 0 to in-laws (no parents in the tree), which skews the
-    // X centroid of the generation above. This pass corrects that by re-centering
-    // each couple/parent over its actual children after couple alignment is done.
+    // ── Phase D: Build family-unit hierarchy and compute subtree widths ─────────
+    // A "family unit" is a couple junction id or a single person id.
+    // Each unit owns a contiguous horizontal slice of its generation row.
+    // Widths are computed bottom-up so parents can be centered over their subtrees.
 
-    const personToJxnMeta = new Map<string, JunctionMeta>()
-    for (const jxn of junctions) {
-      personToJxnMeta.set(jxn.personA, jxn)
-      personToJxnMeta.set(jxn.personB, jxn)
+    function getUnitId(personId: string): string {
+      return personToJxnMeta.get(personId)?.id ?? personId
     }
 
+    const junctionById = new Map<string, JunctionMeta>()
+    for (const jxn of junctions) junctionById.set(jxn.id, jxn)
+
+    // Build junctionToChildren and singleParentToChildren
     const junctionToChildren = new Map<string, string[]>()
     const singleParentToChildren = new Map<string, string[]>()
+
     for (const [childId, parents] of childToParents) {
       const jxnId = findJunctionForChild(childId)
       if (jxnId) {
@@ -214,229 +200,161 @@
       }
     }
 
-    // childId → the ID of their parent unit (couple junction or single parent person).
-    // Used by Phase D to detect family-group boundaries.
-    const personToParentUnit = new Map<string, string>()
-    for (const [childId, parents] of childToParents) {
-      const jxnId = findJunctionForChild(childId)
-      const parentKey = jxnId ?? parents[0]
-      if (parentKey) personToParentUnit.set(childId, parentKey)
+    // unitChildren: parent unit id → ordered list of child unit ids (deduplicated)
+    const unitChildren = new Map<string, string[]>()
+    for (const jxn of junctions) unitChildren.set(jxn.id, [])
+    for (const p of ps) {
+      if (connectedIds.has(p.id) && !personToJxnMeta.has(p.id)) unitChildren.set(p.id, [])
     }
 
-    // If a child is in a couple, return the couple's junction X — treats child + spouse
-    // as a single visual unit when centering the generation above.
-    function childRepX(childId: string): number {
-      const jxn = personToJxnMeta.get(childId)
-      if (jxn) return g.node(jxn.id)?.x ?? (g.node(childId)?.x ?? 0)
-      return g.node(childId)?.x ?? 0
+    const addedChild = new Set<string>() // prevents duplicate child-unit entries
+
+    function addChildUnit(parentUnitId: string, childPersonId: string) {
+      const childUnitId = getUnitId(childPersonId)
+      const key = `${parentUnitId}→${childUnitId}`
+      if (addedChild.has(key)) return
+      addedChild.add(key)
+      const arr = unitChildren.get(parentUnitId) ?? []
+      arr.push(childUnitId)
+      unitChildren.set(parentUnitId, arr)
     }
 
-    // Process deepest junctions first so lower-level corrections feed up the tree
-    const junctionsByDepth = [...junctions].sort(
-      (a, b) => (g.node(b.id)?.y ?? 0) - (g.node(a.id)?.y ?? 0)
-    )
-    for (const jxn of junctionsByDepth) {
-      const children = junctionToChildren.get(jxn.id) ?? []
-      if (children.length === 0) continue
-      const xs = children.map(childRepX)
-      const targetX = (Math.min(...xs) + Math.max(...xs)) / 2
-      const jxnPos = g.node(jxn.id)
-      if (!jxnPos) continue
-      const delta = targetX - jxnPos.x
-      if (Math.abs(delta) < 1) continue
-      jxnPos.x += delta
-      const posA = g.node(jxn.personA)
-      const posB = g.node(jxn.personB)
-      if (posA) posA.x += delta
-      if (posB) posB.x += delta
+    for (const [jxnId, childPersonIds] of junctionToChildren) {
+      for (const childId of childPersonIds) addChildUnit(jxnId, childId)
+    }
+    for (const [parentId, childPersonIds] of singleParentToChildren) {
+      const parentUnitId = getUnitId(parentId)
+      for (const childId of childPersonIds) addChildUnit(parentUnitId, childId)
     }
 
-    // Process deepest single-parents first so their corrected positions propagate upward
-    const sortedSingleParents = [...singleParentToChildren.entries()].sort(
-      ([idA], [idB]) => (g.node(idB)?.y ?? 0) - (g.node(idA)?.y ?? 0)
-    )
-    for (const [parentId, children] of sortedSingleParents) {
-      const xs = children.map(childRepX)
-      if (xs.length === 0) continue
-      const targetX = (Math.min(...xs) + Math.max(...xs)) / 2
-      // If the parent is in a couple, shift the entire couple + junction — Phase D
-      // reads the junction X to rebuild couple units, so we must update the junction
-      // here or Phase D will overwrite the centering correction.
-      const jxn = personToJxnMeta.get(parentId)
-      if (jxn) {
-        const jxnPos = g.node(jxn.id)
-        if (!jxnPos) continue
-        const delta = targetX - jxnPos.x
-        if (Math.abs(delta) < 1) continue
-        jxnPos.x += delta
-        const posA = g.node(jxn.personA)
-        const posB = g.node(jxn.personB)
-        if (posA) posA.x += delta
-        if (posB) posB.x += delta
+    // Memoized subtree width: minimum horizontal span needed for this unit + all descendants
+    const widthCache = new Map<string, number>()
+
+    function subtreeWidth(unitId: string, visiting = new Set<string>()): number {
+      if (widthCache.has(unitId)) return widthCache.get(unitId)!
+      if (visiting.has(unitId)) return NODE_W // cycle guard
+
+      const v = new Set(visiting)
+      v.add(unitId)
+
+      const isJunction = unitId.startsWith('__jxn_')
+      const ownW = isJunction ? NODE_W * 2 + SPOUSE_GAP : NODE_W
+
+      const children = unitChildren.get(unitId) ?? []
+      if (children.length === 0) {
+        widthCache.set(unitId, ownW)
+        return ownW
+      }
+
+      const childrenW =
+        children.reduce((s, cu) => s + subtreeWidth(cu, v), 0) +
+        (children.length - 1) * SIBLING_GAP
+
+      const w = Math.max(ownW, childrenW)
+      widthCache.set(unitId, w)
+      return w
+    }
+
+    // ── Phase E: Top-down X/Y placement ────────────────────────────────────────
+    // Parents are placed first; children are distributed below them.
+    // Siblings stay grouped by construction — no overlap correction pass needed.
+
+    const personX = new Map<string, number>()
+    const personY = new Map<string, number>()
+    const jxnPos = new Map<string, { x: number; y: number }>()
+
+    function placeUnit(unitId: string, centerX: number, visited: Set<string>) {
+      if (visited.has(unitId)) return
+      visited.add(unitId)
+
+      const isJunction = unitId.startsWith('__jxn_')
+
+      if (isJunction) {
+        const jxn = junctionById.get(unitId)!
+        const gen = Math.max(
+          personGeneration.get(jxn.personA) ?? 0,
+          personGeneration.get(jxn.personB) ?? 0,
+        )
+        const y = gen * RANK_SEP
+        const half = NODE_W / 2 + SPOUSE_GAP / 2
+        personX.set(jxn.personA, centerX - half)
+        personX.set(jxn.personB, centerX + half)
+        personY.set(jxn.personA, y)
+        personY.set(jxn.personB, y)
+        jxnPos.set(unitId, { x: centerX, y })
       } else {
-        const pos = g.node(parentId)
-        if (pos) pos.x = targetX
+        personX.set(unitId, centerX)
+        personY.set(unitId, (personGeneration.get(unitId) ?? 0) * RANK_SEP)
+      }
+
+      const children = unitChildren.get(unitId) ?? []
+      if (children.length === 0) return
+
+      const totalW =
+        children.reduce((s, cu) => s + subtreeWidth(cu), 0) +
+        (children.length - 1) * SIBLING_GAP
+      let x = centerX - totalW / 2
+      for (const cu of children) {
+        const w = subtreeWidth(cu)
+        placeUnit(cu, x + w / 2, visited)
+        x += w + SIBLING_GAP
       }
     }
 
-    // Phase D: resolve horizontal overlaps between units in the same generation.
-    // Extracted into resolveOverlaps() so it can run a second time after Phase E —
-    // Phase E may shift interior nodes (both parent and child) into their siblings.
+    // Root units = units with no parent unit (top of the family tree)
+    const childUnitSet = new Set<string>()
+    for (const children of unitChildren.values()) {
+      for (const cu of children) childUnitSet.add(cu)
+    }
+    const rootUnits = [...unitChildren.keys()].filter(uid => !childUnitSet.has(uid))
+    rootUnits.sort() // alphabetical by id for stable ordering across re-renders
 
-    type LayoutUnit = { x: number; halfW: number; personIds: string[]; jxnId?: string; parentKey: string | null }
-
-    function getParentKey(personIds: string[]): string | null {
-      for (const id of personIds) {
-        const pk = personToParentUnit.get(id)
-        if (pk !== undefined) return pk
-      }
-      return null
+    const totalRootW =
+      rootUnits.reduce((s, ru) => s + subtreeWidth(ru), 0) +
+      Math.max(0, rootUnits.length - 1) * FAMILY_GAP
+    let rx = -totalRootW / 2
+    const placed = new Set<string>()
+    for (const ru of rootUnits) {
+      const w = subtreeWidth(ru)
+      placeUnit(ru, rx + w / 2, placed)
+      rx += w + FAMILY_GAP
     }
 
-    function resolveOverlaps() {
-      const processedInRow = new Set<string>()
-      const unitRows = new Map<number, LayoutUnit[]>()
-
-      for (const p of ps) {
-        if (!connectedIds.has(p.id) || processedInRow.has(p.id)) continue
-        const pos = g.node(p.id)
-        if (!pos) continue
-        const rowKey = Math.round(pos.y / 10) * 10
-        const row = unitRows.get(rowKey) ?? []
-        unitRows.set(rowKey, row)
-
-        const jxn = personToJxnMeta.get(p.id)
-        if (jxn) {
-          const jxnPos = g.node(jxn.id)
-          if (jxnPos) {
-            row.push({
-              x: jxnPos.x,
-              halfW: NODE_W + SPOUSE_GAP / 2,
-              personIds: [jxn.personA, jxn.personB],
-              jxnId: jxn.id,
-              parentKey: getParentKey([jxn.personA, jxn.personB]),
-            })
-          }
-          processedInRow.add(jxn.personA)
-          processedInRow.add(jxn.personB)
-        } else {
-          row.push({ x: pos.x, halfW: NODE_W / 2, personIds: [p.id], parentKey: personToParentUnit.get(p.id) ?? null })
-          processedInRow.add(p.id)
-        }
-      }
-
-      for (const units of unitRows.values()) {
-        units.sort((a, b) => a.x - b.x)
-
-        const originalCentroid = units.reduce((s, u) => s + u.x, 0) / units.length
-
-        for (let i = 1; i < units.length; i++) {
-          const l = units[i - 1]
-          const r = units[i]
-          const sameFamily = l.parentKey !== null && l.parentKey === r.parentKey
-          const minDist = l.halfW + (sameFamily ? SIBLING_GAP : FAMILY_GAP) + r.halfW
-          if (r.x < l.x + minDist) {
-            r.x = l.x + minDist
-          }
-        }
-
-        const newCentroid = units.reduce((s, u) => s + u.x, 0) / units.length
-        const shift = originalCentroid - newCentroid
-        if (Math.abs(shift) > 0.5) {
-          for (const u of units) u.x += shift
-        }
-
-        for (const unit of units) {
-          if (unit.personIds.length === 2 && unit.jxnId) {
-            const posA = g.node(unit.personIds[0])
-            const posB = g.node(unit.personIds[1])
-            const jxnPos = g.node(unit.jxnId)
-            const half = NODE_W / 2 + SPOUSE_GAP / 2
-            if (posA) posA.x = unit.x - half
-            if (posB) posB.x = unit.x + half
-            if (jxnPos) jxnPos.x = unit.x
-          } else {
-            const pos = g.node(unit.personIds[0])
-            if (pos) pos.x = unit.x
-          }
-        }
+    // Defensive fallback: ensure all connected persons have positions
+    for (const p of ps) {
+      if (connectedIds.has(p.id)) {
+        if (!personX.has(p.id)) personX.set(p.id, 0)
+        if (!personY.has(p.id)) personY.set(p.id, (personGeneration.get(p.id) ?? 0) * RANK_SEP)
       }
     }
 
-    resolveOverlaps()
+    // ── Phase F: Assemble XYFlow nodes — persons + invisible junction anchors ───
 
-    // Phase E: re-center parents after Phase D's overlap resolution shifted child positions.
-    // Phase C used pre-overlap X values; Phase D may have pushed children right to clear
-    // cousin groups. This pass corrects parent centering using the final child positions.
-
-    for (const jxn of junctionsByDepth) {
-      const children = junctionToChildren.get(jxn.id) ?? []
-      if (children.length === 0) continue
-      const xs = children.map(childRepX)
-      const targetX = (Math.min(...xs) + Math.max(...xs)) / 2
-      const jxnPos = g.node(jxn.id)
-      if (!jxnPos) continue
-      const delta = targetX - jxnPos.x
-      if (Math.abs(delta) < 1) continue
-      jxnPos.x += delta
-      const posA = g.node(jxn.personA)
-      const posB = g.node(jxn.personB)
-      if (posA) posA.x += delta
-      if (posB) posB.x += delta
-    }
-
-    for (const [parentId, children] of sortedSingleParents) {
-      const xs = children.map(childRepX)
-      if (xs.length === 0) continue
-      const targetX = (Math.min(...xs) + Math.max(...xs)) / 2
-      const jxn = personToJxnMeta.get(parentId)
-      if (jxn) {
-        const jxnPos = g.node(jxn.id)
-        if (!jxnPos) continue
-        const delta = targetX - jxnPos.x
-        if (Math.abs(delta) < 1) continue
-        jxnPos.x += delta
-        const posA = g.node(jxn.personA)
-        const posB = g.node(jxn.personB)
-        if (posA) posA.x += delta
-        if (posB) posB.x += delta
-      } else {
-        const pos = g.node(parentId)
-        if (pos) pos.x = targetX
-      }
-    }
-
-    // Phase D' — second overlap pass. Phase E re-centers interior nodes (nodes that are
-    // both a child and a parent) over their children, which can push them into siblings.
-    // A second pass restores correct sibling spacing without another Phase E iteration.
-    resolveOverlaps()
-
-    // Phase F: Assemble XYFlow nodes — persons + invisible junction anchors.
     const nodes: Node[] = [
       ...ps
         .filter(p => connectedIds.has(p.id))
-        .map(p => {
-          const pos = g.node(p.id)
-          return {
-            id: p.id,
-            type: 'familyNode',
-            position: { x: (pos?.x ?? 0) - NODE_W / 2, y: (pos?.y ?? 0) - NODE_H / 2 },
-            data: { person: toPerson(p) },
-            selected: p.id === selectedId,
-            selectable: true,
-            draggable: false,
-            connectable: false,
-            deletable: false,
-            width: NODE_W,
-            height: NODE_H,
-          }
-        }),
+        .map(p => ({
+          id: p.id,
+          type: 'familyNode',
+          position: {
+            x: (personX.get(p.id) ?? 0) - NODE_W / 2,
+            y: (personY.get(p.id) ?? 0) - NODE_H / 2,
+          },
+          data: { person: toPerson(p) },
+          selected: p.id === selectedId,
+          selectable: true,
+          draggable: false,
+          connectable: false,
+          deletable: false,
+          width: NODE_W,
+          height: NODE_H,
+        })),
       ...junctions.map(jxn => {
-        const pos = g.node(jxn.id)
+        const pos = jxnPos.get(jxn.id) ?? { x: 0, y: 0 }
         return {
           id: jxn.id,
           type: 'junctionNode',
-          position: { x: (pos?.x ?? 0) - 1, y: (pos?.y ?? 0) - 1 },
+          position: { x: pos.x - 1, y: pos.y - 1 },
           data: {},
           selectable: false,
           draggable: false,
@@ -448,11 +366,13 @@
       }),
     ]
 
-    // Phase G: Assemble XYFlow edges.
-    // - Couple edges: person_a ↔ person_b horizontal connector (unchanged)
-    // - Parent→child: one edge per child, sourced from junction (or single parent)
-    // - Sibling edges: omitted
+    // ── Phase G: Assemble XYFlow edges ─────────────────────────────────────────
+    // Couple edges: person_a ↔ person_b horizontal connector
+    // Parent→child: one edge per child, sourced from junction (or single parent)
+    // Sibling edges: omitted (siblings are implicitly co-ranked by sharing a parent unit)
+
     const edges: Edge[] = []
+    const childEdgeAdded = new Set<string>()
 
     for (const r of rs) {
       if (SIBLING_TYPES.has(r.type)) continue
@@ -475,7 +395,8 @@
         const childId = r.person_b_id
         const jxnId = findJunctionForChild(childId)
         const edgeId = jxnId ? `jxn-child-${jxnId}-${childId}` : r.id
-        if (!edges.some(e => e.id === edgeId)) {
+        if (!childEdgeAdded.has(edgeId)) {
+          childEdgeAdded.add(edgeId)
           edges.push({
             id: edgeId,
             source: jxnId ?? r.person_a_id,

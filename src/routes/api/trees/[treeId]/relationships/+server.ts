@@ -84,6 +84,24 @@ export const POST: RequestHandler = async ({ request, params, locals: { supabase
   const { data: dup } = await dupQuery.maybeSingle()
   if (dup) return json({ error: 'This relationship already exists.' }, { status: 409 })
 
+  // Partner conflict: a person can only have one active spouse/partner in the tree
+  if (type === 'spouse' || type === 'partner') {
+    const { data: partnerConflict } = await supabase
+      .from('relationships')
+      .select('id')
+      .eq('tree_id', params.treeId)
+      .eq('is_current', true)
+      .in('type', ['spouse', 'partner'])
+      .or(`person_a_id.eq.${person_a_id},person_b_id.eq.${person_a_id}`)
+      .maybeSingle()
+    if (partnerConflict) {
+      return json(
+        { error: 'This person already has an active partner in this tree. Visit their profile to update or remove the existing relationship first.' },
+        { status: 409 }
+      )
+    }
+  }
+
   const { data: rel, error: insertErr } = await supabase
     .from('relationships')
     .insert({ tree_id: params.treeId, person_a_id, person_b_id, type: relType, is_current: true })

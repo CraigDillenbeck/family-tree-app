@@ -169,9 +169,7 @@
 </g>
 
 <style>
-  /* Hover: increase weight, shift to Warm-Mid */
-  .connector:hover path {
-    stroke-width: 2;
-    stroke: var(--color-warm-mid);
+  .connector {
+    pointer-events: none;
   }
 </style>
