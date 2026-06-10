@@ -468,29 +468,99 @@ npm install sharp
 
 ---
 
-## Launch Checklist
+## Path to Ship
 
-- [ ] All environment variables set in Vercel
-- [ ] Supabase RLS enabled and tested on every table
-- [ ] Lemon Squeezy webhook endpoint verified, signing secret confirmed
+Phases in priority order. Complete each phase before starting the next.
+
+---
+
+### Phase 5 — Payments & Legal ← START HERE
+
+Blocks revenue. Nothing ships without this.
+
+- [ ] **Founder: confirm DBA/LLC setup with attorney** before Lemon Squeezy goes live
+- [ ] `npm install @lemonsqueezy/lemonsqueezy-js`
+- [ ] DB migration — add `plan_id`, `lemon_squeezy_customer_id`, `storage_used_bytes` columns to `profiles`; regenerate types
+- [ ] Hosted checkout flow — upgrade CTA on account page opens Lemon Squeezy hosted checkout, passing user email + Supabase user ID as custom data
+- [ ] Webhook handler `/api/webhooks/lemonsqueezy` with HMAC-SHA256 signature check:
+  - `subscription_created` → update profile plan + storage limit, send welcome email
+  - `subscription_updated` → handle upgrade/downgrade
+  - `subscription_cancelled` → downgrade to remembrance at period end, send confirmation email
+  - `subscription_expired` → enforce remembrance limits, notify user
+  - `subscription_payment_failed` → send payment failed email, 7-day grace period before downgrade
+- [ ] PostHog `plan_upgrade` event wired in webhook handler
+- [ ] Privacy Policy page `/privacy` (required by Lemon Squeezy)
+- [ ] Terms of Service page `/terms` (required by Lemon Squeezy)
+
+---
+
+### Phase 6 — Email (Resend)
+
+No user email exists today. Auth reset email is Supabase default (unbranded).
+
+- [ ] `npm install resend`
+- [ ] `src/lib/server/email.ts` — shared send helper wrapping Resend client
+- [ ] Welcome email — triggered on `subscription_created` (and/or signup)
+- [ ] Payment confirmation email — triggered on `subscription_created`
+- [ ] Payment failed email — triggered on `subscription_payment_failed` (note 7-day grace period)
+- [ ] Subscription cancelled email — triggered on `subscription_cancelled` (warm, note data retention)
+- [ ] Storage warning email — triggered when user crosses 80% quota (call `isNearStorageLimit()` after uploads)
+- [ ] Branded password reset email — override Supabase default via custom SMTP or Resend template
+
+---
+
+### Phase 7 — Remaining UI Gaps
+
+Stub pages and missing features users will hit on day one.
+
+- [ ] **Person memories list** — `/persons/[personId]/memories` tab is `<h1>Memories</h1>`; build query + MemoryStoryCard list + empty state + create button
+- [ ] **Tree settings page** — `/trees/[treeId]/settings` is `<h1>Page</h1>`; build: rename tree, edit description, delete tree (with confirmation)
+- [ ] **GDPR cookie consent banner** — required for EU users; simple accept/decline, persisted in localStorage
+- [ ] **Tree canvas accessible list-view** — toolbar toggle showing a sortable table of all persons (WCAG requirement noted in spec)
+
+---
+
+### Phase 8 — Collaborator Invitations
+
+Can ship without this and add in v1.1, but it's a core differentiator.
+
+- [ ] Invite form on collaborators page — email input + role selector (viewer/editor)
+- [ ] `POST /api/trees/[treeId]/collaborators` — validate plan limit, insert `tree_collaborators` row with `accepted_at = null`, send invitation email via Resend
+- [ ] Accept-invite route `/invite/[token]` — validates token, sets `accepted_at`, redirects to tree
+- [ ] Collaborator management UI — list current collaborators, remove button, change role
+
+---
+
+### Phase 9 — Deploy & Harden
+
+Do this last, once all features are complete and tested locally.
+
+- [ ] Vercel deployment — connect repo, configure build settings (`@sveltejs/adapter-vercel`)
+- [ ] All environment variables set in Vercel (see env var list above)
 - [ ] Supabase Storage CORS configured for production domain
-- [ ] Sentry source maps uploading correctly (config done — requires SENTRY_AUTH_TOKEN in Vercel)
-- [ ] PostHog events firing on key actions (signup ✓, tree_created ✓, memory added ✓, plan upgrade — pending Lemon Squeezy)
-- [ ] All Resend email templates tested end to end
-- [ ] robots.txt — /admin disallowed, noindex header on admin routes
-- [ ] Privacy policy and Terms of service pages live (required by Lemon Squeezy)
-- [ ] Cookie consent banner (GDPR — required for EU users)
-- [ ] GDPR data deletion flow — user can delete account + all data from account settings
-- [ ] Storage quota enforcement tested at each plan limit
+- [ ] robots.txt — `/admin` disallowed; `X-Robots-Tag: noindex` header on all `/admin` routes
+- [ ] RLS policies tested on every table (missing data = check RLS first)
 - [ ] Plan gating tested on all three tiers in staging
-- [ ] Google OAuth tested in production environment
-- [ ] Password reset flow tested end to end
+- [ ] Storage quota enforcement tested at each plan limit
+- [ ] Google OAuth tested in production environment (callback URL must be registered)
+- [ ] Password reset flow tested end to end in production
 - [ ] Mobile responsive verified at 390px viewport
 - [ ] Reduced motion tested — all animations have 0ms fallback
-- [ ] Keyboard navigation tested on all four core screens
-- [ ] Tree canvas list-view alternative tested with keyboard only
-- [ ] Lighthouse score 90+ on landing page and dashboard
-- [ ] Founder confirms DBA/LLC setup with attorney before Lemon Squeezy goes live
+- [ ] Keyboard navigation tested on landing, dashboard, tree canvas, person profile
+- [ ] Sentry source maps verified (requires `SENTRY_AUTH_TOKEN` in Vercel)
+- [ ] Lighthouse 90+ on landing page and dashboard
+
+---
+
+### Phase 10 — Admin Dashboard (post-launch)
+
+Founder can use Supabase dashboard directly until this is built.
+
+- [ ] Password-protected `/admin` route (env var `ADMIN_PASSWORD`)
+- [ ] Growth metrics — signups over time, active trees, memories created
+- [ ] Revenue panel — Lemon Squeezy API, MRR, plan breakdown
+- [ ] Storage panel — total used by tier, users at >80%
+- [ ] Error monitoring link to Sentry, system health indicators
 
 ---
 
@@ -523,46 +593,22 @@ npm install sharp
 **Phase 3 — Product patterns: ✓ COMPLETE**
 - P01 FamilyTreeNode, P02 RelationshipConnector, P03 PersonSummaryCard, P04 PersonProfileHeader, P05 MemoryStoryCard, P11 ProfileTimeline
 
-**Phase 4 — Screens (in progress):**
-- [x] S1 — Login + Signup + forgot-password + reset-password ✓
-- [x] S2 — Dashboard: surface + Supabase data layer ✓
-- [x] S3 — Tree canvas: surface + data layer ✓ + @xyflow/svelte + dagre integrated ✓
-- [x] S4 — Person profile: surface + data layer ✓
-- [x] API mutation endpoints — persons, relationships, memories, media, collaborators wired
-- [x] Route stubs — trees/new, persons/new, person/edit, activity, collaborators, settings, account
-- [x] Onboarding flow — 3-step Welcome → Begin with yourself → First leaf ✓
-- [x] @xyflow/svelte + dagre — interactive tree canvas ✓
-- [x] forgot-password + reset-password auth routes ✓
-- [x] plans.ts — plan limit enforcement utility ✓
-- [x] Memory editor ✓
-- [x] Media upload flow — MediaUploader, MediaGrid, /media page, API endpoint, plan gating ✓
-- [x] activity.ts — logActivity() writes to activity_log table ✓
-- [x] Landing page — all sections, pricing ✓
-- [x] PostHog — installed, initialized, user identification, key events (user_signed_up, tree_created) ✓
-- [x] Sentry — installed, initialized, source maps config, session replays, user context ✓
-- [x] persons/new — Add Person form (name, status, dates, occupation, bio), server action, activity log ✓
-- [x] persons/[id]/edit — Edit Person form (pre-populated), update + delete actions, danger zone ✓
-- [x] Button href bug fix — Button is always <button>; all nav buttons now use goto() ✓
-- [x] Relationships — full add/remove flow ✓
-  - Canvas drawer: click node → Add parent / child / sibling / partner buttons
-  - AddRelationshipModal: live search-or-create (find existing person or type a new name to create + connect in one step)
-  - People roster: collapsible left panel, all persons listed, gold dot on unconnected members
-  - Unconnected persons excluded from dagre layout (canvas stays clean; roster is the staging area)
-  - POST + DELETE /api/trees/[treeId]/relationships — auth, permission, type validation, dupe check, activity log
-  - POST /api/trees/[treeId]/persons — quick person creation from modal (name only; full details filled on profile)
-  - Person profile: delete button on each relationship row with confirmation modal
-  - Fixed: relLabel() now covers all 9 DB enum types; column name bug (relationship_type → type); RelationshipConnector, TreeCanvasEdge, TreeCanvas dagre checks all corrected
-- [x] trees/new — create a second tree from dashboard ✓
-- [x] Activity log screen — timeline view, grouped by day, relative timestamps ✓
-- [x] Activity log redesigned — category cards with entity deep links ✓
-- [x] Account / settings page — profile edit, plan & storage display, security, GDPR delete ✓
-- [x] Tree canvas search — moves canvas + focuses node on match ✓
-- [x] Tree canvas rendering — zoom variants, relationship line fixes, spouse horizontal layout ✓
-- [x] Memory detail page — /trees/[treeId]/memories/[memoryId]/ full-page view + edit drawer ✓
-- [x] Client-side image compression before upload ✓
-- [x] Landing page inline auth — hero sign-in/sign-up widget + Google OAuth, all CTAs scroll to it ✓
-- [x] Pricing revised — Remembrance free plan: no media uploads, no storage ✓
-- [ ] Collaborator invitations
-- [ ] Admin dashboard
-- [ ] Lemon Squeezy — install, integration, webhook handler
-- [ ] Vercel deployment
+**Phase 4 — Screens: ✓ COMPLETE**
+
+All core screens built and wired to Supabase. Key highlights:
+- S1 Auth: login, signup, forgot-password, reset-password ✓
+- S2 Dashboard: tree cards, create tree, activity summary ✓
+- S3 Tree canvas: @xyflow/svelte + dagre, person nodes, relationship edges, search, roster panel, add/remove relationships ✓
+- S4 Person profile: bio, relationships, media gallery, memory detail; add/edit/delete person ✓
+- Onboarding: 3-step Welcome → Begin with yourself → First leaf ✓
+- Landing page: all sections, inline auth widget, pricing ✓
+- Account: profile edit, plan & storage display, security, GDPR delete ✓
+- Activity log: category cards with deep links ✓
+- Media: upload (with client-side compression), gallery, delete, plan gating ✓
+- Memory: create, full-page detail view, edit drawer ✓
+- PostHog + Sentry: installed, initialized, key events firing ✓
+
+**Remaining stubs (built in Phase 7):**
+- `persons/[id]/memories` — tab exists, currently `<h1>Memories</h1>`
+- `trees/[treeId]/settings` — route exists, currently `<h1>Page</h1>`
+- `trees/[treeId]/collaborators` — route exists, invite flow built in Phase 8
