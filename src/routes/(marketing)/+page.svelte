@@ -19,6 +19,11 @@
     errorVisible = false
   }
 
+  function scrollToAuth(tab: 'signup' | 'login') {
+    switchTab(tab)
+    document.getElementById('auth')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  }
+
   let billing = $state<'monthly' | 'annual'>('monthly')
 
   const plans = [
@@ -102,8 +107,8 @@
 <header class="nav">
   <a href="/" class="wordmark" aria-label="Prosapiam home">PROSAPIAM</a>
   <div class="nav-right">
-    <a href="/login" class="nav-ghost">Sign in</a>
-    <a href="/signup" class="nav-cta">Create account</a>
+    <button class="nav-ghost" onclick={() => scrollToAuth('login')}>Sign in</button>
+    <button class="nav-cta" onclick={() => scrollToAuth('signup')}>Create account</button>
   </div>
 </header>
 
@@ -129,7 +134,7 @@
     </div>
 
     <div class="hero-right">
-      <div class="auth-panel">
+      <div id="auth" class="auth-panel">
         <div class="auth-panel-head">
           <span class="auth-wordmark">PROSAPIAM</span>
           <p class="auth-tagline">A place for the people who made you.</p>
@@ -480,9 +485,9 @@
             <p class="plan-annual-note">Billed ${plan.annualPrice.toFixed(2)} annually</p>
           {/if}
 
-          <a href={plan.ctaHref} class:plan-cta-primary={plan.ctaPrimary} class:plan-cta-secondary={!plan.ctaPrimary} class="plan-cta">
+          <button class="plan-cta" class:plan-cta-primary={plan.ctaPrimary} class:plan-cta-secondary={!plan.ctaPrimary} onclick={() => scrollToAuth('signup')}>
             {plan.ctaLabel}
-          </a>
+          </button>
 
           <hr class="plan-divider"/>
 
@@ -523,7 +528,7 @@
       <p class="section-eyebrow">A memory, kept</p>
       <h2 class="section-h2 section-h2--left">She deserved more than a photograph in a drawer.</h2>
       <p class="human-body">PROSAPIAM gives every person in your family the space they deserve — a living record of who they were, told in their own stories, photographs, and memories.</p>
-      <a href="/signup" class="ghost-cta">See how profiles work →</a>
+      <button class="ghost-cta" onclick={() => scrollToAuth('signup')}>See how profiles work →</button>
     </div>
 
     <div class="human-right">
@@ -585,8 +590,8 @@
     <h2 class="final-h2">Your family's story is waiting.</h2>
     <p class="final-sub">Gather your family's stories. Preserve the people behind your name. Celebrate the lives that made you — and make sure they're never forgotten.</p>
     <div class="final-buttons">
-      <a href="/signup" class="btn-parchment">Create your account</a>
-      <a href="/login" class="btn-ghost-light">Sign in</a>
+      <button class="btn-parchment" onclick={() => scrollToAuth('signup')}>Create your account</button>
+      <button class="btn-ghost-light" onclick={() => scrollToAuth('login')}>Sign in</button>
     </div>
     <p class="final-note">No subscription required to begin. Your family's stories are yours, always.</p>
   </div>
@@ -659,6 +664,10 @@
     text-underline-offset: 3px;
     text-decoration-thickness: 0.5px;
     transition: opacity 150ms;
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
   }
   .nav-ghost:hover { opacity: 0.7; }
 
@@ -676,6 +685,8 @@
     border-radius: 4px;
     text-decoration: none;
     transition: opacity 150ms;
+    border: none;
+    cursor: pointer;
   }
   .nav-cta:hover { opacity: 0.88; }
 
@@ -1248,6 +1259,7 @@
     margin-top: 16px;
     transition: opacity 150ms, background 150ms;
     box-sizing: border-box;
+    cursor: pointer;
   }
 
   .plan-cta-primary {
@@ -1364,6 +1376,10 @@
     text-decoration-thickness: 0.5px;
     margin-top: 32px;
     transition: opacity 150ms;
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
   }
   .ghost-cta:hover { opacity: 0.7; }
 
@@ -1549,6 +1565,8 @@
     border-radius: 4px;
     text-decoration: none;
     transition: opacity 150ms;
+    border: none;
+    cursor: pointer;
   }
   .btn-parchment:hover { opacity: 0.88; }
 
