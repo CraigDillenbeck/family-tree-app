@@ -20,12 +20,12 @@ export interface PlanLimits {
 
 export const PLANS: Record<PlanId, PlanLimits> = {
   remembrance: {
-    storageBytes: 500 * 1024 * 1024,
+    storageBytes: 0,
     maxTrees: 1,
     maxCollaborators: 0,
-    allowedMediaKinds: ['image'],
-    maxFileSizeBytes: 2 * 1024 * 1024,
-    storageLabel: '500 MB',
+    allowedMediaKinds: [],
+    maxFileSizeBytes: 0,
+    storageLabel: 'No media storage',
     displayName: 'Remembrance',
     priceLabel: 'Free',
   },
@@ -37,7 +37,7 @@ export const PLANS: Record<PlanId, PlanLimits> = {
     maxFileSizeBytes: -1,
     storageLabel: '50 GB',
     displayName: 'Heritage',
-    priceLabel: '$6/mo',
+    priceLabel: '$7.99/mo',
   },
   legacy: {
     storageBytes: -1,
@@ -47,7 +47,7 @@ export const PLANS: Record<PlanId, PlanLimits> = {
     maxFileSizeBytes: -1,
     storageLabel: 'Unlimited',
     displayName: 'Legacy',
-    priceLabel: '$12/mo',
+    priceLabel: '$14.99/mo',
   },
 }
 
@@ -100,20 +100,11 @@ export function checkFileAllowed(
   }
 
   if (!plan.allowedMediaKinds.includes(kind)) {
-    const kindLabel = kind === 'audio' ? 'audio files' : 'video files'
+    const kindLabel = kind === 'audio' ? 'audio files' : kind === 'video' ? 'video files' : 'photo uploads'
+    const nextPlan = kind === 'video' ? 'Legacy' : 'Heritage'
     return {
       allowed: false,
-      message: `${kindLabel.charAt(0).toUpperCase() + kindLabel.slice(1)} are available on the ${
-        kind === 'audio' ? 'Heritage' : 'Legacy'
-      } plan. Upgrade to upload ${kindLabel}.`,
-    }
-  }
-
-  if (plan.maxFileSizeBytes !== -1 && fileSizeBytes > plan.maxFileSizeBytes) {
-    const limitMb = Math.round(plan.maxFileSizeBytes / (1024 * 1024))
-    return {
-      allowed: false,
-      message: `Images on the Remembrance plan can be up to ${limitMb} MB. Upgrade to Heritage to remove that limit.`,
+      message: `${kindLabel.charAt(0).toUpperCase() + kindLabel.slice(1)} are available on the ${nextPlan} plan. Upgrade to share photos and voices alongside your family's written stories.`,
     }
   }
 

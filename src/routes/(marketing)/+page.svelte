@@ -32,13 +32,13 @@
       ctaPrimary: false,
       ctaLabel: 'Begin for free',
       ctaHref: '/signup',
-      storage: '500 MB storage',
-      storageNote: 'Plenty of room for your first family stories',
+      storage: 'Written stories, kept forever',
+      storageNote: 'No limits on people, memories, or biographies',
       features: [
         'Unlimited family members',
         'Unlimited written memories and stories',
+        'Rich text biographies and life stories for every person',
         'Family tree canvas',
-        'Profile thumbnails for each family member',
         'One family tree',
         'Community support',
       ],
@@ -47,7 +47,7 @@
     {
       key: 'heritage',
       name: 'Heritage',
-      description: 'For families ready to preserve their full story — photographs, voices, and all.',
+      description: 'For families ready to bring their story to life — with photographs, voices, and more.',
       price: '$7.99',
       period: '/month',
       annualPrice: 76.70,
@@ -376,7 +376,7 @@
 <section class="features">
   <div class="section-inner">
     <p class="section-eyebrow">Why PROSAPIAM</p>
-    <h2 class="section-h2 section-h2--left">Everything your family deserves.</h2>
+    <h2 class="section-h2">Everything your family deserves.</h2>
 
     <div class="features-grid">
       <div class="feature-col">
