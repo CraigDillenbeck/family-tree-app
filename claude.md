@@ -148,10 +148,10 @@ src/
 │   ├── components/
 │   │   ├── ui/                     — 24 core UI atoms (all complete)
 │   │   ├── patterns/               — 6 product patterns P01–P05, P11 (all complete)
-│   │   ├── tree/                   — empty (TreeCanvas, PersonNode to build)
+│   │   ├── tree/                   — TreeCanvas, TreeCanvasNode, TreeCanvasEdge, TreeCanvasJunction, AddRelationshipModal, CanvasFocusHelper ✓
 │   │   ├── person/                 — empty (PersonCard, ProfileHeader to build)
 │   │   ├── media/                  — MediaGrid.svelte ✓, MediaUploader.svelte ✓
-│   │   ├── memory/                 — empty (MemoryCard, MemoryEditor to build)
+│   │   ├── memory/                 — MemoryEditor.svelte ✓
 │   │   └── activity/               — empty (ActivityFeed, ActivityItem to build)
 │   └── utils/
 │       ├── dates.ts
@@ -161,7 +161,7 @@ src/
 │       ├── motion.ts               — prefersReducedMotion() helper
 │       └── plans.ts                — plan limit enforcement (checkFileAllowed, checkStorageAllowed) ✓
 ├── routes/
-│   ├── +layout.svelte              — Root shell, PostHog init (TODO), Sentry init (TODO)
+│   ├── +layout.svelte              — Root shell, PostHog ✓, Sentry ✓
 │   ├── (marketing)/+page.svelte    — Landing page ✓
 │   ├── (auth)/                     — login ✓, signup ✓, forgot-password ✓, reset-password ✓
 │   ├── (onboarding)/onboarding/    — full-screen 3-step flow, no TopNav, auth-gated ✓
@@ -170,14 +170,16 @@ src/
 │   │   ├── account/                — profile, plan/storage, security, GDPR delete ✓
 │   │   └── trees/
 │   │       ├── new/                — create tree form ✓
-│   │       └── [treeId]/           — S3: surface + data layer ✓ (@xyflow/svelte TODO)
-│   │           ├── activity/       — timeline feed, grouped by day ✓
+│   │       └── [treeId]/           — S3: surface + data layer ✓ + @xyflow/svelte + dagre ✓
+│   │           ├── activity/       — timeline feed, category cards with deep links ✓
+│   │           ├── memories/
+│   │           │   └── [memoryId]/ — full-page memory detail + edit drawer ✓
 │   │           ├── collaborators/  — stub
 │   │           ├── settings/       — stub
 │   │           └── persons/
-│   │               ├── new/        — stub form for adding a person
+│   │               ├── new/        — Add Person form ✓
 │   │               └── [personId]/ — S4: surface + Supabase data layer ✓
-│   │                   ├── edit/   — stub
+│   │                   ├── edit/   — Edit Person form + delete ✓
 │   │                   ├── media/  — full media gallery + upload + delete ✓
 │   │                   └── memories/ — stub
 │   └── api/
@@ -279,7 +281,7 @@ Three tiers. Plan gating always enforced **server-side** — never trust client-
 
 | Plan | Storage | Trees | Collaborators | Media |
 | --- | --- | --- | --- | --- |
-| Remembrance (free) | 500MB | 1 | 0 | Images only (2MB max) |
+| Remembrance (free) | No storage | 1 | 0 | No media uploads |
 | Heritage ($7.99/mo · $76.70/yr) | 50GB | 3 | 10 | Images + audio |
 | Legacy ($14.99/mo · $143.90/yr) | Unlimited* | ∞ | ∞ | Images + audio + video |
 
@@ -473,7 +475,7 @@ npm install sharp
 - [ ] Lemon Squeezy webhook endpoint verified, signing secret confirmed
 - [ ] Supabase Storage CORS configured for production domain
 - [ ] Sentry source maps uploading correctly (config done — requires SENTRY_AUTH_TOKEN in Vercel)
-- [ ] PostHog events firing on key actions (signup ✓, tree_created ✓, plan upgrade — pending Lemon Squeezy, memory added — pending memory editor)
+- [ ] PostHog events firing on key actions (signup ✓, tree_created ✓, memory added ✓, plan upgrade — pending Lemon Squeezy)
 - [ ] All Resend email templates tested end to end
 - [ ] robots.txt — /admin disallowed, noindex header on admin routes
 - [ ] Privacy policy and Terms of service pages live (required by Lemon Squeezy)
@@ -552,7 +554,14 @@ npm install sharp
   - Fixed: relLabel() now covers all 9 DB enum types; column name bug (relationship_type → type); RelationshipConnector, TreeCanvasEdge, TreeCanvas dagre checks all corrected
 - [x] trees/new — create a second tree from dashboard ✓
 - [x] Activity log screen — timeline view, grouped by day, relative timestamps ✓
+- [x] Activity log redesigned — category cards with entity deep links ✓
 - [x] Account / settings page — profile edit, plan & storage display, security, GDPR delete ✓
+- [x] Tree canvas search — moves canvas + focuses node on match ✓
+- [x] Tree canvas rendering — zoom variants, relationship line fixes, spouse horizontal layout ✓
+- [x] Memory detail page — /trees/[treeId]/memories/[memoryId]/ full-page view + edit drawer ✓
+- [x] Client-side image compression before upload ✓
+- [x] Landing page inline auth — hero sign-in/sign-up widget + Google OAuth, all CTAs scroll to it ✓
+- [x] Pricing revised — Remembrance free plan: no media uploads, no storage ✓
 - [ ] Collaborator invitations
 - [ ] Admin dashboard
 - [ ] Lemon Squeezy — install, integration, webhook handler
