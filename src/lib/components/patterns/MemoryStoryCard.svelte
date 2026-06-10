@@ -1,5 +1,4 @@
 <script lang="ts">
-  import Avatar from '$lib/components/ui/Avatar.svelte'
   import Tag from '$lib/components/ui/Tag.svelte'
 
   export type MemoryData = {
@@ -15,16 +14,15 @@
     memory,
     thumbnail,
     authorName,
-    authorAvatarUrl,
-    showAuthor = false,
+    addedAt,
     onclick,
   }: {
     memory: MemoryData
     /** Optional 80×80 thumbnail URL */
     thumbnail?: string | null
     authorName?: string | null
-    authorAvatarUrl?: string | null
-    showAuthor?: boolean
+    /** ISO date string for when the memory was added to the app */
+    addedAt?: string | null
     onclick?: () => void
   } = $props()
 
@@ -46,6 +44,16 @@
   }
 
   const dateLabel = $derived(formatDate(memory.memoryDate, memory.memoryDatePrecision))
+
+  const addedLabel = $derived(
+    addedAt
+      ? new Date(addedAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+      : null
+  )
+
+  const creditLine = $derived(
+    [authorName ? `by ${authorName}` : null, addedLabel].filter(Boolean).join(' · ')
+  )
 </script>
 
 <!-- svelte-ignore a11y_click_events_have_key_events -->
@@ -63,6 +71,9 @@
   <div class="card-main">
     <div class="card-text">
       <h3 class="title">{memory.title}</h3>
+      {#if creditLine}
+        <p class="credit">{creditLine}</p>
+      {/if}
 
       {#if memory.content}
         <p class="excerpt">{memory.content}</p>
@@ -96,15 +107,6 @@
     {/if}
   </div>
 
-  {#if showAuthor && authorName}
-    <div class="author-row">
-      <Avatar
-        person={{ given: authorName, avatarUrl: authorAvatarUrl }}
-        size={16}
-      />
-      <span class="author-label">Added by {authorName}</span>
-    </div>
-  {/if}
 </article>
 
 <style>
@@ -147,14 +149,20 @@
 
   .title {
     margin: 0;
-    font-family: var(--font-ui);
-    font-size: 16px;
-    font-weight: var(--font-weight-medium);
-    line-height: var(--line-height-heading);
+    font-family: var(--font-display);
+    font-size: 20px;
+    font-weight: var(--font-weight-light);
+    line-height: var(--line-height-tight);
     color: var(--color-ink);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+  }
+
+  .credit {
+    margin: var(--space-1) 0 0;
+    font-family: var(--font-ui);
+    font-size: var(--font-size-meta);
+    font-weight: var(--font-weight-regular);
+    color: var(--color-text-secondary);
+    line-height: var(--line-height-ui);
   }
 
   .card.clickable:focus-visible {
@@ -172,8 +180,8 @@
     line-height: 1.7;
     color: var(--color-ink-soft);
     display: -webkit-box;
-    -webkit-line-clamp: 2;
-    line-clamp: 2;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
     -webkit-box-orient: vertical;
     overflow: hidden;
   }
@@ -211,22 +219,6 @@
     object-fit: cover;
     border-radius: var(--radius-sm);
     display: block;
-  }
-
-  /* ── Author row ── */
-  .author-row {
-    display: flex;
-    align-items: center;
-    gap: var(--space-2);
-    margin-top: var(--space-4);
-    padding-top: var(--space-4);
-    border-top: var(--border-subtle);
-  }
-
-  .author-label {
-    font-family: var(--font-ui);
-    font-size: var(--font-size-meta);
-    color: var(--color-warm-mid);
   }
 
   /* ── Mobile: thumbnail stacks to top ── */

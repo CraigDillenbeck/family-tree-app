@@ -24,6 +24,7 @@
   let title = $state('')
   let caption = $state('')
   let uploading = $state(false)
+  let compressing = $state(false)
   let progress = $state(0)
   let errorMessage: string | null = $state(null)
   let imagePreviewUrl: string | null = $state(null)
@@ -68,10 +69,55 @@
     if (fileInputEl) fileInputEl.value = ''
   }
 
+  async function compressImage(file: File): Promise<File> {
+    const SKIP_TYPES = ['image/gif', 'image/heic', 'image/heif']
+    if (SKIP_TYPES.includes(file.type)) return file
+
+    const MAX_SIDE = 2048
+    const QUALITY = 0.85
+
+    return new Promise((resolve) => {
+      const img = new Image()
+      const objectUrl = URL.createObjectURL(file)
+      img.onload = () => {
+        URL.revokeObjectURL(objectUrl)
+        let { width, height } = img
+        if (width >= height && width > MAX_SIDE) {
+          height = Math.round((height * MAX_SIDE) / width)
+          width = MAX_SIDE
+        } else if (height > width && height > MAX_SIDE) {
+          width = Math.round((width * MAX_SIDE) / height)
+          height = MAX_SIDE
+        }
+        const canvas = document.createElement('canvas')
+        canvas.width = width
+        canvas.height = height
+        const ctx = canvas.getContext('2d')!
+        ctx.drawImage(img, 0, 0, width, height)
+        canvas.toBlob((blob) => {
+          if (!blob || blob.size >= file.size) { resolve(file); return }
+          const outName = file.name.replace(/\.[^.]+$/, '.webp')
+          resolve(new File([blob], outName, { type: 'image/webp' }))
+        }, 'image/webp', QUALITY)
+      }
+      img.onerror = () => { URL.revokeObjectURL(objectUrl); resolve(file) }
+      img.src = objectUrl
+    })
+  }
+
   async function upload() {
     if (!selectedFile || uploading) return
     uploading = true
     errorMessage = null
+    progress = 5
+
+    let fileToUpload = selectedFile
+    if (selectedFile.type.startsWith('image/')) {
+      compressing = true
+      fileToUpload = await compressImage(selectedFile)
+      compressing = false
+    }
+
     progress = 10
 
     try {
@@ -81,9 +127,9 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           action: 'request',
-          mimeType: selectedFile.type,
-          fileSizeBytes: selectedFile.size,
-          filename: selectedFile.name,
+          mimeType: fileToUpload.type,
+          fileSizeBytes: fileToUpload.size,
+          filename: fileToUpload.name,
         }),
       })
 
@@ -103,8 +149,8 @@
       // Step 2: Upload directly to Supabase Storage
       const { error: uploadErr } = await supabase.storage
         .from('tree-media')
-        .uploadToSignedUrl(storagePath, token, selectedFile, {
-          contentType: selectedFile.type,
+        .uploadToSignedUrl(storagePath, token, fileToUpload, {
+          contentType: fileToUpload.type,
         })
 
       if (uploadErr) {
@@ -121,8 +167,8 @@
           action: 'confirm',
           mediaId,
           storagePath,
-          mimeType: selectedFile.type,
-          fileSizeBytes: selectedFile.size,
+          mimeType: fileToUpload.type,
+          fileSizeBytes: fileToUpload.size,
           title: title.trim() || null,
           caption: caption.trim() || null,
           personIds: personId ? [personId] : [],
@@ -142,6 +188,7 @@
       errorMessage = 'Something went wrong. Please try again.'
     } finally {
       uploading = false
+      compressing = false
     }
   }
 
@@ -238,7 +285,7 @@
 
       <div class="form-actions">
         <Button onclick={upload} disabled={uploading}>
-          {uploading ? 'Uploading…' : 'Upload'}
+          {compressing ? 'Preparing…' : uploading ? 'Uploading…' : 'Upload'}
         </Button>
         <Button variant="ghost" onclick={clearSelection} disabled={uploading}>
           Choose a different file

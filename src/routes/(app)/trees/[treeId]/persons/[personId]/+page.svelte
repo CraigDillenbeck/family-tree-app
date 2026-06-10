@@ -6,7 +6,6 @@
   import Button from '$lib/components/ui/Button.svelte'
   import Avatar from '$lib/components/ui/Avatar.svelte'
   import Tabs from '$lib/components/ui/Tabs.svelte'
-  import Tag from '$lib/components/ui/Tag.svelte'
   import Drawer from '$lib/components/ui/Drawer.svelte'
   import MemoryStoryCard from '$lib/components/patterns/MemoryStoryCard.svelte'
   import MemoryEditor from '$lib/components/memory/MemoryEditor.svelte'
@@ -50,7 +49,6 @@
   }
 
   const tabs = $derived([
-    { value: 'about', label: 'About' },
     { value: 'memories', label: 'Memories', count: data.memories.length || undefined },
     { value: 'media', label: 'Media', count: data.media.length || undefined },
   ])
@@ -59,21 +57,27 @@
     [data.person.first_name, data.person.last_name].filter(Boolean).join(' ') || 'Unknown person'
   )
 
+  function formatDate(iso: string | null): string | null {
+    if (!iso) return null
+    const d = new Date(iso + 'T00:00:00')
+    return d.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+  }
+
   function yearOf(iso: string | null): string | null {
     if (!iso) return null
     return new Date(iso + 'T00:00:00').getFullYear().toString()
   }
 
-  const birthYear = $derived(yearOf(data.person.birth_date))
-  const deathYear = $derived(yearOf(data.person.death_date))
+  const birthLabel = $derived(
+    data.person.birth_date ? `b. ${formatDate(data.person.birth_date)}` : null
+  )
+  const deathLabel = $derived(
+    data.person.death_date ? `d. ${formatDate(data.person.death_date)}` : null
+  )
   const dateRange = $derived(
     data.person.is_living
-      ? birthYear ? `b. ${birthYear}` : null
-      : [birthYear, deathYear].filter(Boolean).join('–') || null
-  )
-
-  const hasDetails = $derived(
-    !!(data.person.bio || data.person.birth_date || data.person.birth_place)
+      ? birthLabel
+      : [birthLabel, deathLabel].filter(Boolean).join(' · ') || null
   )
 
   const canEdit = $derived(data.userRole === 'owner' || data.userRole === 'editor')
@@ -172,6 +176,18 @@
 
   <!-- ── Profile header ── -->
   <header class="header">
+    {#if canEdit}
+      <button
+        class="edit-btn"
+        aria-label="Edit profile"
+        onclick={() => goto(`/trees/${data.tree.id}/persons/${data.person.id}/edit`)}
+      >
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+          <path d="M11.013 1.427a1.75 1.75 0 0 1 2.474 0l1.086 1.086a1.75 1.75 0 0 1 0 2.474l-8.61 8.61c-.21.21-.47.364-.756.445l-3.251.93a.75.75 0 0 1-.927-.928l.929-3.25c.081-.286.235-.547.445-.758l8.61-8.61ZM12.25 2.487a.25.25 0 0 0-.354 0L10.811 3.57l1.618 1.618 1.086-1.086a.25.25 0 0 0 0-.354Zm-2.128 2.19L8.504 6.295l1.619 1.619 1.618-1.618ZM7.443 7.356 3.786 11.01a.25.25 0 0 0-.064.108l-.645 2.258 2.258-.645a.25.25 0 0 0 .108-.064l3.657-3.657Z" fill="currentColor"/>
+        </svg>
+      </button>
+    {/if}
+
     <Avatar
       person={{ given: data.person.first_name, family: data.person.last_name ?? '', status: data.person.is_living ? 'living' : 'deceased' }}
       size={128}
@@ -179,10 +195,13 @@
 
     <div class="header-info">
       <h1 class="name">{fullName}</h1>
+      {#if data.person.maiden_name}
+        <p class="maiden-name">née {data.person.maiden_name}</p>
+      {/if}
 
-      {#if dateRange || data.person.birth_place}
+      {#if dateRange || data.person.birth_place || data.person.occupation}
         <p class="meta">
-          {[dateRange, data.person.birth_place].filter(Boolean).join(' · ')}
+          {[dateRange, data.person.birth_place, data.person.occupation].filter(Boolean).join(' · ')}
         </p>
       {/if}
 
@@ -215,12 +234,6 @@
       {:else}
         <p class="bio empty-bio">This person's story is waiting to be told.</p>
       {/if}
-
-      <div class="actions">
-        {#if canEdit}
-          <Button variant="secondary" onclick={() => goto(`/trees/${data.tree.id}/persons/${data.person.id}/edit`)}>Edit profile</Button>
-        {/if}
-      </div>
     </div>
   </header>
 
@@ -237,7 +250,7 @@
   <div class="tab-body">
 
     {#if activeTab === 'memories'}
-      <div class="tab-inner narrow">
+      <div class="tab-inner">
         <div class="tab-top">
           <span class="section-label">Newest first</span>
           {#if canEdit}
@@ -261,40 +274,12 @@
                   memoryDatePrecision: m.memory_date_precision as 'exact' | 'month' | 'year' | 'decade' | 'circa',
                   tags: [],
                 }}
+                authorName={m.author_name}
+                addedAt={m.created_at}
                 onclick={() => goto(`/trees/${data.tree.id}/memories/${m.id}?from=${data.person.id}`)}
               />
             {/each}
           </div>
-        {/if}
-      </div>
-    {/if}
-
-    {#if activeTab === 'about'}
-      <div class="tab-inner narrow">
-        {#if !hasDetails}
-          <div class="empty-state">
-            <p class="empty-text">Edit this person's profile to add their details.</p>
-            {#if canEdit}<Button variant="secondary" onclick={() => goto(`/trees/${data.tree.id}/persons/${data.person.id}/edit`)}>Edit profile</Button>{/if}
-          </div>
-        {:else}
-          <dl class="facts">
-            <dt class="fact-label">Given name</dt>
-            <dd class="fact-value">{data.person.first_name}</dd>
-            {#if data.person.last_name}
-              <dt class="fact-label">Family name</dt>
-              <dd class="fact-value">{data.person.last_name}</dd>
-            {/if}
-            {#if data.person.birth_date}
-              <dt class="fact-label">Born</dt>
-              <dd class="fact-value">{data.person.birth_date}</dd>
-            {/if}
-            {#if data.person.birth_place}
-              <dt class="fact-label">Birthplace</dt>
-              <dd class="fact-value">{data.person.birth_place}</dd>
-            {/if}
-            <dt class="fact-label">Status</dt>
-            <dd class="fact-value">{data.person.is_living ? 'Living' : 'Deceased'}</dd>
-          </dl>
         {/if}
       </div>
     {/if}
@@ -381,12 +366,38 @@
 
   /* ── Header ── */
   .header {
+    position: relative;
     display: flex;
     gap: var(--space-12);
     align-items: flex-start;
     max-width: var(--grid-max-width);
     margin: 0 auto;
     padding: var(--space-12) var(--space-20) var(--space-8);
+  }
+
+  .edit-btn {
+    position: absolute;
+    top: var(--space-12);
+    right: var(--space-20);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: none;
+    background: transparent;
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    transition: color var(--dur-fast) var(--ease), background var(--dur-fast) var(--ease);
+  }
+  .edit-btn:hover {
+    color: var(--color-text-primary);
+    background: var(--color-warm-light);
+  }
+  .edit-btn:focus-visible {
+    outline: 2px solid var(--color-gold);
+    outline-offset: 2px;
   }
 
   .header-info {
@@ -401,6 +412,15 @@
     color: var(--color-text-primary);
     margin: 0;
     line-height: var(--line-height-tight);
+  }
+
+  .maiden-name {
+    font-family: var(--font-body);
+    font-size: 15px;
+    font-style: italic;
+    color: var(--color-text-secondary);
+    margin: var(--space-1) 0 0 0;
+    line-height: var(--line-height-story);
   }
 
   .meta {
@@ -465,12 +485,6 @@
     color: var(--color-text-hint);
   }
 
-  .actions {
-    display: flex;
-    gap: var(--space-2);
-    margin-top: var(--space-6);
-  }
-
   /* ── Tabs bar ── */
   .tabs-bar {
     max-width: var(--grid-max-width);
@@ -489,12 +503,6 @@
     display: flex;
     flex-direction: column;
     gap: var(--space-6);
-  }
-
-  .tab-inner.narrow {
-    max-width: var(--reading-width);
-    margin: 0 auto;
-    width: 100%;
   }
 
   .tab-top {
@@ -534,35 +542,16 @@
 
   /* ── Memories ── */
   .memory-list {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-6);
-  }
-
-  /* ── About ── */
-  .facts {
     display: grid;
-    grid-template-columns: 140px 1fr;
-    row-gap: var(--space-4);
-    column-gap: var(--space-6);
-    margin: 0;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-6);
+    align-items: start;
   }
-
-  .fact-label {
-    font-family: var(--font-ui);
-    font-size: var(--font-size-label);
-    font-weight: var(--font-weight-medium);
-    letter-spacing: var(--letter-spacing-label);
-    text-transform: uppercase;
-    color: var(--color-text-secondary);
-    padding-top: 2px;
+  @media (max-width: 860px) {
+    .memory-list { grid-template-columns: repeat(2, 1fr); }
   }
-
-  .fact-value {
-    font-family: var(--font-ui);
-    font-size: var(--font-size-body-ui);
-    color: var(--color-text-primary);
-    margin: 0;
+  @media (max-width: 540px) {
+    .memory-list { grid-template-columns: 1fr; }
   }
 
   /* ── Media ── */

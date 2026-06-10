@@ -7,10 +7,12 @@ export type ProfilePerson = {
   id: string
   first_name: string
   last_name: string | null
+  maiden_name: string | null
   birth_date: string | null
   death_date: string | null
   birth_place: string | null
   primary_residence: string | null
+  occupation: string | null
   bio: string | null
   avatar_url: string | null
   is_living: boolean
@@ -23,6 +25,8 @@ export type ProfileMemory = {
   excerpt: string | null
   memory_date: string | null
   memory_date_precision: string
+  created_at: string | null
+  author_name: string | null
   tags: string[]
 }
 
@@ -75,12 +79,14 @@ type RawMemory = {
   body: string | null
   memory_date: string | null
   memory_date_precision: string
+  created_at: string
+  profiles: { display_name: string } | null
 }
 
 export const load: PageServerLoad = async ({ locals: { supabase }, params }) => {
   const personRes = await supabase
     .from('persons')
-    .select('id, first_name, last_name, birth_date, death_date, birth_place, primary_residence, bio, avatar_url, is_living')
+    .select('id, first_name, last_name, maiden_name, birth_date, death_date, birth_place, primary_residence, occupation, bio, avatar_url, is_living')
     .eq('id', params.personId)
     .eq('tree_id', params.treeId)
     .single()
@@ -114,7 +120,7 @@ export const load: PageServerLoad = async ({ locals: { supabase }, params }) => 
     memoryIds.length > 0
       ? supabase
           .from('memories')
-          .select('id, title, body, memory_date, memory_date_precision')
+          .select('id, title, body, memory_date, memory_date_precision, created_at, profiles!memories_created_by_fkey(display_name)')
           .in('id', memoryIds)
           .order('created_at', { ascending: false })
       : Promise.resolve({ data: [] as RawMemory[] }),
@@ -132,9 +138,11 @@ export const load: PageServerLoad = async ({ locals: { supabase }, params }) => 
       id: m.id,
       title: m.title,
       content: m.body,
-      excerpt: m.body ? m.body.slice(0, 160) : null,
+      excerpt: m.body ? (m.body.length > 150 ? m.body.slice(0, 150) + '…' : m.body) : null,
       memory_date: m.memory_date,
       memory_date_precision: m.memory_date_precision ?? 'full',
+      created_at: m.created_at,
+      author_name: m.profiles?.display_name ?? null,
       tags: []
     })
   )

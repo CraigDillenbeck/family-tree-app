@@ -125,7 +125,7 @@
     <div class="hero-left">
       <h1 class="hero-h1">Preserve, protect and remember your family's legacy.</h1>
       <p class="hero-sub">Gather your family's stories. Preserve the people behind your name. Celebrate the lives that made you — and make sure they're never forgotten.</p>
-      <p class="hero-trust">Trusted by families in 40 countries · Every memory, beautifully kept.</p>
+      <p class="hero-trust">Every memory, beautifully kept.</p>
     </div>
 
     <div class="hero-right">
