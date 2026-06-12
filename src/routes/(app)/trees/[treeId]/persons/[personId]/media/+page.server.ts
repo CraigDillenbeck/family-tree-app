@@ -12,15 +12,23 @@ export const load: PageServerLoad = async ({ locals: { supabase }, params }) => 
 
   if (!person) error(404, 'Person not found')
 
-  const { data: junctions } = await supabase
-    .from('media_persons')
-    .select('media_id')
-    .eq('person_id', params.personId)
+  const [{ data: junctions }, { data: personsRows }] = await Promise.all([
+    supabase
+      .from('media_persons')
+      .select('media_id')
+      .eq('person_id', params.personId),
+    supabase
+      .from('persons')
+      .select('id, first_name, last_name, avatar_url')
+      .eq('tree_id', params.treeId)
+      .order('first_name', { ascending: true }),
+  ])
 
+  const persons = personsRows ?? []
   const mediaIds = (junctions ?? []).map((j) => j.media_id)
 
   if (mediaIds.length === 0) {
-    return { person, media: [] }
+    return { person, persons, media: [] }
   }
 
   const { data: rows } = await supabase
@@ -36,5 +44,5 @@ export const load: PageServerLoad = async ({ locals: { supabase }, params }) => 
     signedUrl: urlMap.get(m.storage_path) ?? null,
   }))
 
-  return { person, media }
+  return { person, persons, media }
 }

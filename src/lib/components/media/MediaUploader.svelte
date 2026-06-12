@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { untrack } from 'svelte'
   import { supabase } from '$lib/supabase/client'
   import Button from '$lib/components/ui/Button.svelte'
 
@@ -11,14 +12,22 @@
     signedUrl: string | null
   }
 
+  type Person = {
+    id: string
+    first_name: string
+    last_name: string | null
+    avatar_url: string | null
+  }
+
   interface Props {
     treeId: string
     personId?: string
+    persons?: Person[]
     onUploaded?: (media: UploadedMedia) => void
     onCancel?: () => void
   }
 
-  let { treeId, personId, onUploaded, onCancel }: Props = $props()
+  let { treeId, personId, persons = [], onUploaded, onCancel }: Props = $props()
 
   let selectedFile: File | null = $state(null)
   let title = $state('')
@@ -30,6 +39,8 @@
   let imagePreviewUrl: string | null = $state(null)
   let isDragging = $state(false)
   let fileInputEl: HTMLInputElement | undefined = $state()
+  let cameraInputEl: HTMLInputElement | undefined = $state()
+  let selectedPersonIds = $state<Set<string>>(untrack(() => new Set(personId ? [personId] : [])))
 
   $effect(() => {
     if (!selectedFile?.type.startsWith('image/')) {
@@ -66,7 +77,19 @@
     caption = ''
     errorMessage = null
     progress = 0
+    selectedPersonIds = new Set(personId ? [personId] : [])
     if (fileInputEl) fileInputEl.value = ''
+    if (cameraInputEl) cameraInputEl.value = ''
+  }
+
+  function togglePerson(id: string) {
+    const next = new Set(selectedPersonIds)
+    if (next.has(id)) {
+      next.delete(id)
+    } else {
+      next.add(id)
+    }
+    selectedPersonIds = next
   }
 
   async function compressImage(file: File): Promise<File> {
@@ -121,7 +144,6 @@
     progress = 10
 
     try {
-      // Step 1: Get signed upload URL from server (validates plan limits)
       const requestRes = await fetch(`/api/trees/${treeId}/media`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -146,7 +168,6 @@
       }
       progress = 25
 
-      // Step 2: Upload directly to Supabase Storage
       const { error: uploadErr } = await supabase.storage
         .from('tree-media')
         .uploadToSignedUrl(storagePath, token, fileToUpload, {
@@ -159,7 +180,6 @@
       }
       progress = 75
 
-      // Step 3: Create DB record
       const confirmRes = await fetch(`/api/trees/${treeId}/media`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -171,7 +191,7 @@
           fileSizeBytes: fileToUpload.size,
           title: title.trim() || null,
           caption: caption.trim() || null,
-          personIds: personId ? [personId] : [],
+          personIds: Array.from(selectedPersonIds),
         }),
       })
 
@@ -204,7 +224,30 @@
 <div class="uploader">
 
   {#if !selectedFile}
-    <!-- Drop zone -->
+
+    <!-- Camera capture — direct camera access on mobile -->
+    <button
+      class="btn-camera"
+      type="button"
+      onclick={() => cameraInputEl?.click()}
+    >
+      Take Photo
+    </button>
+
+    <input
+      bind:this={cameraInputEl}
+      type="file"
+      accept="image/*"
+      capture="environment"
+      class="file-input"
+      onchange={(e) => handleFiles((e.currentTarget as HTMLInputElement).files)}
+      aria-hidden="true"
+      tabindex="-1"
+    />
+
+    <div class="or-divider" aria-hidden="true"><span>or</span></div>
+
+    <!-- Drop zone (desktop) -->
     <div
       class="drop-zone"
       class:dragging={isDragging}
@@ -217,11 +260,20 @@
       ondragleave={() => (isDragging = false)}
       ondrop={handleDrop}
     >
-      <span class="drop-icon" aria-hidden="true">⬆</span>
+      <span class="drop-icon" aria-hidden="true">&#11014;</span>
       <p class="drop-primary">Drop a file here</p>
       <p class="drop-secondary">or <span class="drop-link">browse to choose</span></p>
       <p class="drop-hint">Photos, audio recordings, videos</p>
     </div>
+
+    <!-- Choose from library (mobile only) -->
+    <button
+      class="btn-browse-mobile"
+      type="button"
+      onclick={() => fileInputEl?.click()}
+    >
+      Choose from Library
+    </button>
 
     <input
       bind:this={fileInputEl}
@@ -230,6 +282,7 @@
       class="file-input"
       onchange={(e) => handleFiles((e.currentTarget as HTMLInputElement).files)}
       aria-hidden="true"
+      tabindex="-1"
     />
 
   {:else}
@@ -271,6 +324,28 @@
             disabled={uploading}
           ></textarea>
         </label>
+
+        {#if persons.length > 0}
+          <div class="tagger">
+            <span class="field-label">Who's in this?</span>
+            <div class="person-chips" role="group" aria-label="Tag people in this media">
+              {#each persons as person (person.id)}
+                {@const isSelected = selectedPersonIds.has(person.id)}
+                {@const fullName = [person.first_name, person.last_name].filter(Boolean).join(' ')}
+                <button
+                  type="button"
+                  class="person-chip"
+                  class:selected={isSelected}
+                  onclick={() => togglePerson(person.id)}
+                  disabled={uploading}
+                  aria-pressed={isSelected}
+                >
+                  {fullName}
+                </button>
+              {/each}
+            </div>
+          </div>
+        {/if}
       </div>
 
       {#if uploading}
@@ -305,6 +380,50 @@
     display: flex;
     flex-direction: column;
     gap: var(--space-4);
+  }
+
+  /* ── Camera button ── */
+  .btn-camera {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-height: 44px;
+    padding: var(--space-3) var(--space-6);
+    font-family: var(--font-ui);
+    font-size: 15px;
+    font-weight: var(--font-weight-medium);
+    color: var(--color-text-primary);
+    background: var(--color-bg-surface-1);
+    border: 1.5px solid var(--color-border-default);
+    border-radius: var(--radius-lg);
+    cursor: pointer;
+    transition: border-color var(--dur-fast) var(--ease),
+                background var(--dur-fast) var(--ease);
+  }
+  .btn-camera:hover {
+    border-color: var(--color-gold);
+    background: color-mix(in srgb, var(--color-gold) 4%, transparent);
+  }
+
+  /* ── Or divider ── */
+  .or-divider {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+  }
+  .or-divider::before,
+  .or-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--color-border-default);
+    opacity: 0.5;
+  }
+  .or-divider span {
+    font-family: var(--font-ui);
+    font-size: 12px;
+    color: var(--color-text-hint);
   }
 
   /* ── Drop zone ── */
@@ -358,6 +477,30 @@
     font-size: 12px;
     color: var(--color-text-hint);
     margin: var(--space-2) 0 0;
+  }
+
+  /* ── Choose from library (mobile only) ── */
+  .btn-browse-mobile {
+    display: none;
+    width: 100%;
+    min-height: 44px;
+    padding: var(--space-3) var(--space-6);
+    font-family: var(--font-ui);
+    font-size: 14px;
+    font-weight: var(--font-weight-medium);
+    color: var(--color-text-secondary);
+    background: transparent;
+    border: 1.5px solid var(--color-border-default);
+    border-radius: var(--radius-lg);
+    cursor: pointer;
+    transition: border-color var(--dur-fast) var(--ease),
+                color var(--dur-fast) var(--ease);
+    align-items: center;
+    justify-content: center;
+  }
+  .btn-browse-mobile:hover {
+    border-color: var(--color-gold);
+    color: var(--color-text-primary);
   }
 
   .file-input {
@@ -468,6 +611,48 @@
     opacity: 0.6;
   }
 
+  /* ── Person tagger ── */
+  .tagger {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+
+  .person-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+  }
+
+  .person-chip {
+    font-family: var(--font-ui);
+    font-size: 13px;
+    font-weight: var(--font-weight-medium);
+    padding: var(--space-1) var(--space-3);
+    border-radius: 99px;
+    border: 1.5px solid var(--color-border-default);
+    background: var(--color-bg-surface-1);
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    line-height: 1.5;
+    transition: border-color var(--dur-fast) var(--ease),
+                background var(--dur-fast) var(--ease),
+                color var(--dur-fast) var(--ease);
+  }
+  .person-chip:hover:not(:disabled) {
+    border-color: var(--color-gold);
+    color: var(--color-text-primary);
+  }
+  .person-chip.selected {
+    border-color: var(--color-gold);
+    background: color-mix(in srgb, var(--color-gold) 10%, var(--color-bg-surface-1));
+    color: var(--color-text-primary);
+  }
+  .person-chip:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
   /* ── Progress ── */
   .progress-bar {
     height: 3px;
@@ -498,5 +683,29 @@
     gap: var(--space-2);
     flex-wrap: wrap;
     align-items: center;
+  }
+
+  /* ── Mobile ── */
+  @media (max-width: 600px) {
+    .btn-camera {
+      min-height: 56px;
+      font-size: 16px;
+      border-color: var(--color-gold);
+      background: color-mix(in srgb, var(--color-gold) 6%, var(--color-bg-surface-1));
+    }
+    .drop-zone {
+      display: none;
+    }
+    .btn-browse-mobile {
+      display: flex;
+    }
+    .person-chips {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+    }
+    .person-chip {
+      text-align: center;
+      padding: var(--space-2) var(--space-3);
+    }
   }
 </style>

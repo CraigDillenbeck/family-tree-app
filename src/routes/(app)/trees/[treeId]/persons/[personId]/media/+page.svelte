@@ -69,6 +69,7 @@
   <MediaUploader
     treeId={data.tree.id}
     personId={data.person.id}
+    persons={data.persons}
     onUploaded={handleUploaded}
     onCancel={() => (uploaderOpen = false)}
   />
