@@ -369,10 +369,28 @@
       </svg>
     </div>
 
-    <div class="chip-row">
-      {#each ['Family Tree Canvas', 'Person Profiles', 'Memory Archive'] as chip}
-        <span class="chip">{chip}</span>
-      {/each}
+    <div class="feature-pills">
+      <span class="feature-pill">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+          <circle cx="7" cy="7" r="6.5" stroke="#8C7355" stroke-width="1"/>
+          <polyline points="4,7 6.2,9.2 10,5" stroke="#8C7355" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+        </svg>
+        Family Tree Canvas
+      </span>
+      <span class="feature-pill">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+          <circle cx="7" cy="7" r="6.5" stroke="#8C7355" stroke-width="1"/>
+          <polyline points="4,7 6.2,9.2 10,5" stroke="#8C7355" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+        </svg>
+        Person Profiles
+      </span>
+      <span class="feature-pill">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+          <circle cx="7" cy="7" r="6.5" stroke="#8C7355" stroke-width="1"/>
+          <polyline points="4,7 6.2,9.2 10,5" stroke="#8C7355" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+        </svg>
+        Memory Archive
+      </span>
     </div>
   </div>
 </section>
@@ -1020,24 +1038,21 @@
     overflow: hidden;
   }
 
-  .chip-row {
+  .feature-pills {
     display: flex;
     flex-wrap: wrap;
     gap: 12px;
     justify-content: center;
-    margin-top: 32px;
+    margin-top: 28px;
   }
 
-  .chip {
+  .feature-pill {
     display: inline-flex;
     align-items: center;
-    height: 32px;
-    padding: 0 16px;
-    background: var(--color-surface-1);
-    border: 0.5px solid var(--color-border);
-    border-radius: 10px;
+    gap: 6px;
     font-family: var(--font-ui);
     font-size: 12px;
+    font-weight: var(--font-weight-medium);
     letter-spacing: 0.02em;
     color: var(--color-warm-mid);
   }
