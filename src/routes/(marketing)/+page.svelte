@@ -380,7 +380,7 @@
 <!-- ── Section 03: Features ── -->
 <section class="features">
   <div class="section-inner">
-    <p class="section-eyebrow">Why PROSAPIA</p>
+    <p class="section-eyebrow">Why <span class="brand-name">PROSAPIA</span></p>
     <h2 class="section-h2">Everything your family deserves.</h2>
 
     <div class="features-grid">
@@ -527,7 +527,7 @@
     <div class="human-left">
       <p class="section-eyebrow">A memory, kept</p>
       <h2 class="section-h2 section-h2--left">She deserved more than a photograph in a drawer.</h2>
-      <p class="human-body">PROSAPIA gives every person in your family the space they deserve — a living record of who they were, told in their own stories, photographs, and memories.</p>
+      <p class="human-body"><span class="brand-name">PROSAPIA</span> gives every person in your family the space they deserve — a living record of who they were, told in their own stories, photographs, and memories.</p>
       <button class="ghost-cta" onclick={() => scrollToAuth('signup')}>See how profiles work →</button>
     </div>
 
@@ -643,7 +643,8 @@
     font-family: var(--font-ui);
     font-weight: var(--font-weight-medium);
     font-size: 16px;
-    letter-spacing: 0.06em;
+    letter-spacing: 0.6em;
+    text-transform: uppercase;
     color: var(--color-ink);
     text-decoration: none;
   }
@@ -816,7 +817,8 @@
     font-family: var(--font-ui);
     font-weight: var(--font-weight-medium);
     font-size: 18px;
-    letter-spacing: 0.06em;
+    letter-spacing: 0.6em;
+    text-transform: uppercase;
     color: var(--color-ink);
     display: block;
   }
@@ -1620,7 +1622,8 @@
     font-family: var(--font-ui);
     font-weight: var(--font-weight-medium);
     font-size: 14px;
-    letter-spacing: 0.06em;
+    letter-spacing: 0.6em;
+    text-transform: uppercase;
     color: var(--color-parchment);
     display: block;
   }

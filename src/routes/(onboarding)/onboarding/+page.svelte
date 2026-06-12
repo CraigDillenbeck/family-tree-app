@@ -301,7 +301,8 @@
     font-family: var(--font-ui);
     font-weight: var(--font-weight-light);
     font-size: 16px;
-    letter-spacing: 0.06em;
+    letter-spacing: 0.6em;
+    text-transform: uppercase;
     color: var(--color-text-primary);
   }
 

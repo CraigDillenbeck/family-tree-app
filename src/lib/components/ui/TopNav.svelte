@@ -26,9 +26,7 @@
 </script>
 
 <header class="nav">
-  <a href="/dashboard" class="wordmark" aria-label="Prosapia">
-    <img src="/logo-wordmark.svg" alt="Prosapia" height="20" />
-  </a>
+  <a href="/dashboard" class="wordmark" aria-label="Prosapia">PROSAPIA</a>
 
   <nav class="links">
     {#each links as l (l.id)}
@@ -70,8 +68,13 @@
     display: inline-flex;
     align-items: center;
     text-decoration: none;
+    font-family: var(--font-ui);
+    font-weight: var(--font-weight-semibold);
+    font-size: 13px;
+    letter-spacing: 0.6em;
+    text-transform: uppercase;
+    color: var(--color-text-inverse);
   }
-  .wordmark img { display: block; }
 
   .links { display: flex; gap: var(--space-6); }
   .link {
