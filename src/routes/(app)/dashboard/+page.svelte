@@ -3,6 +3,10 @@
   import type { Json } from '$lib/supabase/types'
   import Card from '$lib/components/ui/Card.svelte'
   import Button from '$lib/components/ui/Button.svelte'
+  import Dropdown from '$lib/components/ui/Dropdown.svelte'
+  import type { DropdownItem } from '$lib/components/ui/Dropdown.svelte'
+  import Icon from '$lib/components/ui/Icon.svelte'
+  import { MoreHorizontal, Settings } from 'lucide-svelte'
   import { goto } from '$app/navigation'
 
   let { data }: { data: PageData } = $props()
@@ -59,6 +63,16 @@
     if (!content) return ''
     return content.length > 140 ? content.slice(0, 137) + '…' : content
   }
+
+  function cardMenuItems(tree: { id: string }): DropdownItem[] {
+    return [
+      {
+        label: 'Settings',
+        icon: Settings,
+        onclick: () => goto(`/trees/${tree.id}/settings`),
+      },
+    ]
+  }
 </script>
 
 <svelte:head>
@@ -99,14 +113,32 @@
           {:else}
             <div class="trees-grid">
               {#each data.trees as tree (tree.id)}
-                <a href="/trees/{tree.id}" class="tree-card-link">
-                  <Card interactive>
-                    <p class="tree-name">{tree.name}</p>
-                    <p class="tree-count">{tree.personCount}</p>
-                    <p class="tree-meta">{tree.personCount === 1 ? 'family member' : 'family members'}</p>
-                    <span class="begin-cta">{tree.personCount === 0 ? 'Begin your tree →' : 'Open tree →'}</span>
-                  </Card>
-                </a>
+                <div class="tree-card-outer">
+                  <a href="/trees/{tree.id}" class="tree-card-link">
+                    <Card interactive>
+                      <p class="tree-name">{tree.name}</p>
+                      <p class="tree-count">{tree.personCount}</p>
+                      <p class="tree-meta">{tree.personCount === 1 ? 'family member' : 'family members'}</p>
+                      <span class="begin-cta">{tree.personCount === 0 ? 'Begin your tree →' : 'Open tree →'}</span>
+                    </Card>
+                  </a>
+                  <div class="tree-card-menu">
+                    <Dropdown items={cardMenuItems(tree)} align="right">
+                      {#snippet trigger({ open, toggle })}
+                        <button
+                          class="tree-menu-btn"
+                          type="button"
+                          onclick={toggle}
+                          aria-haspopup="menu"
+                          aria-expanded={open}
+                          aria-label="Options for {tree.name}"
+                        >
+                          <Icon icon={MoreHorizontal} size={16} color="currentColor" />
+                        </button>
+                      {/snippet}
+                    </Dropdown>
+                  </div>
+                </div>
               {/each}
               <a href="/trees/new" class="tree-card-link new-tree-link" aria-label="Create a new tree">
                 <Card interactive>
@@ -348,7 +380,44 @@
     gap: var(--space-4);
   }
 
+  .tree-card-outer {
+    position: relative;
+  }
+
   .tree-card-link { text-decoration: none; display: block; }
+
+  .tree-card-menu {
+    position: absolute;
+    top: var(--space-2);
+    right: var(--space-2);
+    z-index: 1;
+  }
+
+  .tree-menu-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    background: var(--color-bg-page);
+    border: var(--border-default);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    color: var(--color-text-secondary);
+    opacity: 0;
+    transition: opacity var(--dur-fast) var(--ease), background var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
+  }
+
+  .tree-card-outer:hover .tree-menu-btn,
+  .tree-menu-btn:focus-visible,
+  .tree-menu-btn[aria-expanded='true'] {
+    opacity: 1;
+  }
+
+  .tree-menu-btn:hover {
+    background: var(--color-bg-surface-1);
+    color: var(--color-text-primary);
+  }
 
   .tree-name {
     font-family: var(--font-ui);

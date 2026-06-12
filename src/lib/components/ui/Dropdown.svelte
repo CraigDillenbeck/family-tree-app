@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { Component, Snippet } from 'svelte'
+  import type { Snippet } from 'svelte'
   import { fade } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
   import { prefersReducedMotion } from '$lib/utils/motion'
@@ -7,7 +7,8 @@
 
   export type DropdownItem = {
     label: string
-    icon?: Component
+    // lucide-svelte uses SvelteComponentTyped (Svelte 4 compat); `any` bridges the gap
+    icon?: any
     onclick: () => void
     destructive?: boolean
     /** render a divider above this item */

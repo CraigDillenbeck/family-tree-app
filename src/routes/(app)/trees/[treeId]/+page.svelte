@@ -10,7 +10,9 @@
   import Icon from '$lib/components/ui/Icon.svelte'
   import TreeCanvas from '$lib/components/tree/TreeCanvas.svelte'
   import AddRelationshipModal from '$lib/components/tree/AddRelationshipModal.svelte'
-  import { X, Plus, GitBranch, List, ChevronLeft, ChevronRight, Activity, Search } from 'lucide-svelte'
+  import { X, Plus, GitBranch, List, ChevronLeft, ChevronRight, Activity, Search, Settings, Users } from 'lucide-svelte'
+  import Dropdown from '$lib/components/ui/Dropdown.svelte'
+  import type { DropdownItem } from '$lib/components/ui/Dropdown.svelte'
 
   const { data }: PageProps = $props()
 
@@ -165,6 +167,19 @@
     await invalidateAll()
   }
 
+  const treeMenuItems: DropdownItem[] = [
+    {
+      label: 'Settings',
+      icon: Settings,
+      onclick: () => goto(`/trees/${data.tree.id}/settings`),
+    },
+    {
+      label: 'Collaborators',
+      icon: Users,
+      onclick: () => goto(`/trees/${data.tree.id}/collaborators`),
+    },
+  ]
+
   function formatDate(iso: string | null): string | null {
     if (!iso) return null
     const d = new Date(iso + 'T00:00:00')
@@ -267,6 +282,22 @@
         >
           <Icon icon={Activity} size={16} color="currentColor" />
         </a>
+        <Dropdown items={treeMenuItems} align="right">
+          {#snippet trigger({ open, toggle })}
+            <button
+              class="view-toggle"
+              class:active={open}
+              type="button"
+              onclick={toggle}
+              aria-haspopup="menu"
+              aria-expanded={open}
+              aria-label="Tree settings"
+              title="Tree settings"
+            >
+              <Icon icon={Settings} size={16} color="currentColor" />
+            </button>
+          {/snippet}
+        </Dropdown>
       {/if}
       {#if canEdit}
         <Button variant="secondary" size="sm" onclick={() => goto(`/trees/${data.tree.id}/persons/new`)}>
