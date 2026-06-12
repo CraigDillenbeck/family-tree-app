@@ -72,6 +72,7 @@ Never: `export let`, `$:`, `on:click`. Always: `$props()`, `$derived()`, `onclic
 | **Cormorant Garamond** | `--font-body` | Narrative text, biographies, memory excerpts, story content, taglines | Navigation, buttons, labels, metadata |
 
 **Non-negotiable typography rules:**
+- Young Serif permitted contexts (exhaustive): hero headline, marketing closing CTA, dashboard greeting `h1`, person profile name, memory full-page headline. Everything else — including all form page titles, settings, activity, account, and sub-page headers — uses `--font-ui`. When in doubt: if the heading tells you *what page you're on* rather than *who someone is*, it's `--font-ui`.
 - Cormorant Garamond minimum **14px** — never smaller; line-height minimum **1.7**
 - No Cormorant Garamond **bold** — ever
 - No Cormorant Garamond **ALL CAPS** — ever
