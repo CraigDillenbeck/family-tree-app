@@ -31,3 +31,11 @@ export function identify(userId: string, traits?: Record<string, unknown>): void
 export function analyticsReset(): void {
   _posthog?.reset()
 }
+
+export function analyticsOptIn(): void {
+  _posthog?.opt_in_capturing()
+}
+
+export function analyticsOptOut(): void {
+  _posthog?.opt_out_capturing()
+}
