@@ -296,13 +296,6 @@
 .mn-link:hover { opacity: 0.70; }
 .mn-link:active { opacity: 0.55; }
 
-/* Brand name — apply wherever PROSAPIA appears as inline text */
-.brand-name {
-  font-family: var(--font-ui);
-  letter-spacing: 0.6em;
-  text-transform: uppercase;
-}
-
 /* Reduced motion */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {

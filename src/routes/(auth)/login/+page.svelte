@@ -75,7 +75,7 @@
     </div>
 
     <p class="switch">
-      New to <span class="brand-name">Prosapia</span>? <a href="/signup">Create an account</a>
+      New to Prosapia? <a href="/signup">Create an account</a>
     </p>
 
   </div>
