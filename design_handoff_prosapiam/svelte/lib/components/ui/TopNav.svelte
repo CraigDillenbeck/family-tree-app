@@ -12,7 +12,7 @@
       { id: 'tree', label: 'Tree' },
       { id: 'memories', label: 'Memories' }
     ],
-    wordmark = 'prosapiam',
+    wordmark = 'prosapia',
     onnav,
     onsearch,
     avatar

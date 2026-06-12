@@ -63,7 +63,7 @@
 </script>
 
 <svelte:head>
-  <title>Welcome — Prosapiam</title>
+  <title>Welcome — Prosapia</title>
 </svelte:head>
 
 <div class="shell">
@@ -85,7 +85,7 @@
         Back
       </button>
     {/if}
-    <span class="wordmark">PROSAPIAM</span>
+    <span class="wordmark">PROSAPIA</span>
   </div>
 
   <!-- Step 1 — Welcome -->

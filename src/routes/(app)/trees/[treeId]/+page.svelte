@@ -173,7 +173,7 @@
 </script>
 
 <svelte:head>
-  <title>{data.tree.name} — Prosapiam</title>
+  <title>{data.tree.name} — Prosapia</title>
 </svelte:head>
 
 <div class="view">

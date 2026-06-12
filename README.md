@@ -1,4 +1,4 @@
-# Prosapiam
+# Prosapia
 
 A consumer web app for building beautiful family trees and preserving family memories.
 

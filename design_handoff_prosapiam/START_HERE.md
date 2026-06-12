@@ -1,6 +1,6 @@
-# Prosapiam — Design Handoff for Claude Code
+# Prosapia — Design Handoff for Claude Code
 
-**Read this first.** This bundle hands the **Prosapiam design system** to the existing
+**Read this first.** This bundle hands the **Prosapia design system** to the existing
 **SvelteKit + Supabase** codebase (`CraigDillenbeck/family-tree-app`).
 It is written to be dropped into that repo and consumed by Claude Code.
 
@@ -20,15 +20,15 @@ It is written to be dropped into that repo and consumed by Claude Code.
 
 ---
 
-## 1. Product name: **Prosapiam** (canonical)
+## 1. Product name: **Prosapia** (canonical)
 
-The product is named **Prosapiam**. The repo still carries the old name **MyNamesake** in several
+The product is named **Prosapia**. The repo still carries the old name **MyNamesake** in several
 places — treat those as stale and rename them as you touch each file:
 
 - `package.json` → `"name"` field (`mynamesake` → `prosapiam`)
 - `src/routes/(app)/dashboard/+page.svelte` → `<title>` and the `.wordmark` text
-- any `<svelte:head><title>… — MyNamesake</title>` across routes → `— Prosapiam`
-- the repo's own `claude.md` headline/prose ("MyNamesake" → "Prosapiam")
+- any `<svelte:head><title>… — MyNamesake</title>` across routes → `— Prosapia`
+- the repo's own `claude.md` headline/prose ("MyNamesake" → "Prosapia")
 
 Use the wordmark/mark SVGs in `assets/` for the brand lockup, not a text string or emoji.
 
@@ -65,7 +65,7 @@ Both families ship here: **Plus Jakarta Sans** (UI) and **Cormorant Garamond** (
 The scaffolded `src/routes/(app)/dashboard/+page.svelte` is placeholder styling that **violates the
 system** and must be redone. Use it as a worked example of the translation:
 
-| Scaffold (wrong) | Prosapiam (correct) | Token |
+| Scaffold (wrong) | Prosapia (correct) | Token |
 |---|---|---|
 | `background: linear-gradient(135deg,#fdf6ec…)` | flat Parchment, **no gradients in product UI** | `--color-bg-page` |
 | `🌳` emoji logo | typographic wordmark / brand mark SVG | `assets/logo-*.svg` |
@@ -153,8 +153,8 @@ fonts/                            ← Plus Jakarta Sans + Cormorant Garamond .tt
 spec/
   DesignSpec.txt                  ← full design spec, grep-friendly plain text
   ComponentBrief.txt              ← 20 components + 12 product patterns, build-level detail
-  Prosapiam_DesignSpec_v1.1.docx  ← original docs
-  Prosapiam_ComponentBrief.docx
+  Prosapia_DesignSpec_v1.1.docx  ← original docs
+  Prosapia_ComponentBrief.docx
 ```
 
 **For Claude Code:** `spec/ComponentBrief.txt` has per-component build specs (states, spacing,

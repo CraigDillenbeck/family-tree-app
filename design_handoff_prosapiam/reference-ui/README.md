@@ -1,6 +1,6 @@
-# Prosapiam — App UI Kit
+# Prosapia — App UI Kit
 
-Hi-fi recreation of the four core surfaces of Prosapiam, built against `Prosapiam_DesignSpec_v1.1` and `Prosapiam_ComponentBrief`.
+Hi-fi recreation of the four core surfaces of Prosapia, built against `Prosapia_DesignSpec_v1.1` and `Prosapia_ComponentBrief`.
 
 ## Surfaces
 

@@ -26,7 +26,7 @@
 </script>
 
 <svelte:head>
-  <title>Create a new family tree — Prosapiam</title>
+  <title>Create a new family tree — Prosapia</title>
 </svelte:head>
 
 <div class="page">

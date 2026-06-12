@@ -1,15 +1,15 @@
-# Prosapiam — Design System
+# Prosapia — Design System
 
 A warm, story-first family tree app for preserving the people, memories, photos, and histories that make a family feel alive.
 
-This system codifies Prosapiam's emotional intent — *archival warmth, editorial restraint, the dignity of the people being recorded* — into design tokens, component specs, and reference implementations.
+This system codifies Prosapia's emotional intent — *archival warmth, editorial restraint, the dignity of the people being recorded* — into design tokens, component specs, and reference implementations.
 
 ---
 
 ## Sources
 
-- **Spec:** `uploads/Prosapiam_DesignSpec_v1.1.docx` — design tokens, interactive states, accessibility guardrails, Figma file structure (extracted to `uploads/_DesignSpec.txt` for grep)
-- **Brief:** `uploads/Prosapiam_ComponentBrief.docx` — 20 core UI components + 12 product patterns (extracted to `uploads/_ComponentBrief.txt`)
+- **Spec:** `uploads/Prosapia_DesignSpec_v1.1.docx` — design tokens, interactive states, accessibility guardrails, Figma file structure (extracted to `uploads/_DesignSpec.txt` for grep)
+- **Brief:** `uploads/Prosapia_ComponentBrief.docx` — 20 core UI components + 12 product patterns (extracted to `uploads/_ComponentBrief.txt`)
 - **Repo:** `github.com/CraigDillenbeck/family-tree-app` — placeholder only at time of capture (no code committed beyond a one-line README). The system below is built from the two spec documents.
 
 The spec is the source of truth. If anything in this folder disagrees with the spec, the spec wins.
@@ -171,13 +171,13 @@ fonts/                       — placeholder (web fonts are loaded from Google F
 assets/                      — logo SVGs, brand glyph
 preview/                     — design-system cards (rendered in the Design System tab)
 ui_kits/
-  app/                       — Prosapiam app UI kit (4 surfaces)
+  app/                       — Prosapia app UI kit (4 surfaces)
     README.md
     index.html               — interactive click-thru of the four surfaces
     *.jsx                    — modular React components (Avatar, Button, Card, TreeNode, …)
 uploads/
-  Prosapiam_DesignSpec_v1.1.docx
-  Prosapiam_ComponentBrief.docx
+  Prosapia_DesignSpec_v1.1.docx
+  Prosapia_ComponentBrief.docx
   _DesignSpec.txt            — extracted text for grep
   _ComponentBrief.txt        — extracted text for grep
 ```

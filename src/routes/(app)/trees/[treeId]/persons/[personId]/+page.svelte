@@ -164,7 +164,7 @@
 </script>
 
 <svelte:head>
-  <title>{fullName} — Prosapiam</title>
+  <title>{fullName} — Prosapia</title>
 </svelte:head>
 
 <div class="profile">

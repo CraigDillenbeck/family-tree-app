@@ -1,4 +1,4 @@
-# `svelte/` — Pre-built Prosapiam code for the SvelteKit app
+# `svelte/` — Pre-built Prosapia code for the SvelteKit app
 
 This folder is **real, ready-to-ship Svelte 5 code** (not the React reference in `../reference-ui/`).
 It mirrors the repo's `src/lib/` layout so you can copy it straight in.

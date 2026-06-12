@@ -40,7 +40,7 @@
 </script>
 
 <svelte:head>
-  <title>Account — Prosapiam</title>
+  <title>Account — Prosapia</title>
 </svelte:head>
 
 <div class="page">

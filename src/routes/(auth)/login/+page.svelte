@@ -10,7 +10,7 @@
 </script>
 
 <svelte:head>
-  <title>Sign in — Prosapiam</title>
+  <title>Sign in — Prosapia</title>
 </svelte:head>
 
 <div class="page">
@@ -18,7 +18,7 @@
 
     <div class="brand">
       <img src="/logo-mark.svg" width="40" height="40" alt="" aria-hidden="true" />
-      <div class="wordmark">prosapiam</div>
+      <div class="wordmark">prosapia</div>
       <p class="tagline">The people who made you, kept.</p>
     </div>
 
@@ -75,7 +75,7 @@
     </div>
 
     <p class="switch">
-      New to Prosapiam? <a href="/signup">Create an account</a>
+      New to Prosapia? <a href="/signup">Create an account</a>
     </p>
 
   </div>

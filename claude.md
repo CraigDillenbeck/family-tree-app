@@ -1,4 +1,4 @@
-# Prosapiam — Claude Code Project Memory
+# Prosapia — Claude Code Project Memory
 
 > Single source of truth for architecture, design system, conventions, and build status.
 > Keep it updated as the project evolves.
@@ -7,7 +7,7 @@
 
 ## What This App Is
 
-Prosapiam is a consumer web app for building beautiful family trees and preserving family memories. Users can:
+Prosapia is a consumer web app for building beautiful family trees and preserving family memories. Users can:
 
 - Build a visual, interactive family tree
 - Click any person to open their full profile page
@@ -436,7 +436,7 @@ LEMONSQUEEZY_API_KEY=         # server only
 LEMONSQUEEZY_STORE_ID=        # server only
 LEMONSQUEEZY_WEBHOOK_SECRET=  # server only
 RESEND_API_KEY=               # server only
-RESEND_FROM_EMAIL=hello@prosapiam.com
+RESEND_FROM_EMAIL=hello@prosapia.me
 PUBLIC_POSTHOG_KEY=
 PUBLIC_POSTHOG_HOST=https://app.posthog.com
 PUBLIC_SENTRY_DSN=
@@ -514,7 +514,7 @@ No user email exists today. Auth reset email is Supabase default (unbranded).
 
 - [x] **Person memories list** — `/persons/[personId]/memories` — full server load, memory query via `memory_persons` junction, create/edit/delete form actions, MemoryStoryCard grid, Add a memory drawer, empty state
 - [x] **Tree settings page** — `/trees/[treeId]/settings` — rename/description form with toast feedback, danger zone delete with type-to-confirm modal (uses `supabaseAdmin` to cascade all child records)
-- [x] **GDPR cookie consent banner** — `CookieBanner.svelte` in root layout; localStorage key `prosapiam_cookies_accepted`; wired to `analyticsOptIn()` / `analyticsOptOut()`
+- [x] **GDPR cookie consent banner** — `CookieBanner.svelte` in root layout; localStorage key `prosapia_cookies_accepted`; wired to `analyticsOptIn()` / `analyticsOptOut()`
 - [x] **Tree canvas accessible list-view** — toolbar List toggle already implemented; renders accessible `role="list"` panel of all persons with Avatar, name, dates, and status badge
 
 ---

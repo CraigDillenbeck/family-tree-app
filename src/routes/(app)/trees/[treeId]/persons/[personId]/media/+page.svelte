@@ -27,7 +27,7 @@
 </script>
 
 <svelte:head>
-  <title>{personName} — Media — Prosapiam</title>
+  <title>{personName} — Media — Prosapia</title>
 </svelte:head>
 
 <div class="page">

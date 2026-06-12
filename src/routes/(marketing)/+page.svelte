@@ -99,13 +99,13 @@
 </script>
 
 <svelte:head>
-  <title>Prosapiam — Your family's story, beautifully told</title>
+  <title>Prosapia — Your family's story, beautifully told</title>
   <meta name="description" content="Build a visual family tree, preserve memories, and share your heritage with the people who matter most." />
 </svelte:head>
 
 <!-- ── Global Nav ── -->
 <header class="nav">
-  <a href="/" class="wordmark" aria-label="Prosapiam home">PROSAPIAM</a>
+  <a href="/" class="wordmark" aria-label="Prosapia home">PROSAPIA</a>
   <div class="nav-right">
     <button class="nav-ghost" onclick={() => scrollToAuth('login')}>Sign in</button>
     <button class="nav-cta" onclick={() => scrollToAuth('signup')}>Create account</button>
@@ -136,7 +136,7 @@
     <div class="hero-right">
       <div id="auth" class="auth-panel">
         <div class="auth-panel-head">
-          <span class="auth-wordmark">PROSAPIAM</span>
+          <span class="auth-wordmark">PROSAPIA</span>
           <p class="auth-tagline">A place for the people who made you.</p>
         </div>
         <hr class="auth-divider" />
@@ -380,7 +380,7 @@
 <!-- ── Section 03: Features ── -->
 <section class="features">
   <div class="section-inner">
-    <p class="section-eyebrow">Why PROSAPIAM</p>
+    <p class="section-eyebrow">Why PROSAPIA</p>
     <h2 class="section-h2">Everything your family deserves.</h2>
 
     <div class="features-grid">
@@ -527,7 +527,7 @@
     <div class="human-left">
       <p class="section-eyebrow">A memory, kept</p>
       <h2 class="section-h2 section-h2--left">She deserved more than a photograph in a drawer.</h2>
-      <p class="human-body">PROSAPIAM gives every person in your family the space they deserve — a living record of who they were, told in their own stories, photographs, and memories.</p>
+      <p class="human-body">PROSAPIA gives every person in your family the space they deserve — a living record of who they were, told in their own stories, photographs, and memories.</p>
       <button class="ghost-cta" onclick={() => scrollToAuth('signup')}>See how profiles work →</button>
     </div>
 
@@ -601,7 +601,7 @@
 <footer class="footer">
   <div class="footer-inner">
     <div class="footer-left">
-      <span class="footer-wordmark">PROSAPIAM</span>
+      <span class="footer-wordmark">PROSAPIA</span>
       <p class="footer-tagline">For the people who made you.</p>
     </div>
     <nav class="footer-links" aria-label="Footer navigation">
@@ -611,7 +611,7 @@
       <a href="/contact" class="footer-link">Contact</a>
     </nav>
     <div class="footer-right">
-      <p class="footer-copy">© 2026 PROSAPIAM. All rights reserved.</p>
+      <p class="footer-copy">© 2026 PROSAPIA. All rights reserved.</p>
       <p class="footer-copy-sub">Made with care for families everywhere.</p>
     </div>
   </div>

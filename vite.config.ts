@@ -7,8 +7,8 @@ const sentryPlugins =
     ? [
         sentrySvelteKit({
           sourceMapsUploadOptions: {
-            org: process.env.SENTRY_ORG ?? 'prosapiam',
-            project: process.env.SENTRY_PROJECT ?? 'prosapiam',
+            org: process.env.SENTRY_ORG ?? 'prosapia',
+            project: process.env.SENTRY_PROJECT ?? 'prosapia',
           },
         }),
       ]

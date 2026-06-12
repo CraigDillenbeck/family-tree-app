@@ -1,6 +1,6 @@
 ---
-name: prosapiam-design
-description: Use this skill to generate well-branded interfaces and assets for Prosapiam — a warm, story-first family tree app — for production or throwaway prototypes/mocks/etc. Contains essential design guidelines, colors, type, fonts, assets, and UI kit components for prototyping.
+name: prosapia-design
+description: Use this skill to generate well-branded interfaces and assets for Prosapia — a warm, story-first family tree app — for production or throwaway prototypes/mocks/etc. Contains essential design guidelines, colors, type, fonts, assets, and UI kit components for prototyping.
 user-invocable: true
 ---
 

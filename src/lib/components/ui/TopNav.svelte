@@ -26,8 +26,8 @@
 </script>
 
 <header class="nav">
-  <a href="/dashboard" class="wordmark" aria-label="Prosapiam">
-    <img src="/logo-wordmark.svg" alt="Prosapiam" height="20" />
+  <a href="/dashboard" class="wordmark" aria-label="Prosapia">
+    <img src="/logo-wordmark.svg" alt="Prosapia" height="20" />
   </a>
 
   <nav class="links">

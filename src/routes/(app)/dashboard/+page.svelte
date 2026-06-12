@@ -62,7 +62,7 @@
 </script>
 
 <svelte:head>
-  <title>Dashboard — Prosapiam</title>
+  <title>Dashboard — Prosapia</title>
 </svelte:head>
 
 <div class="page">

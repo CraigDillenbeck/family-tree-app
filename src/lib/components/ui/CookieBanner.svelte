@@ -6,7 +6,7 @@
   import { analyticsOptIn, analyticsOptOut } from '$lib/utils/analytics'
   import Button from './Button.svelte'
 
-  const STORAGE_KEY = 'prosapiam_cookies_accepted'
+  const STORAGE_KEY = 'prosapia_cookies_accepted'
 
   let visible = $state(false)
 

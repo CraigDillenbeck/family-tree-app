@@ -1,6 +1,6 @@
-# Prosapiam — Design Reference (canonical screens)
+# Prosapia — Design Reference (canonical screens)
 
-These are the **authoritative visual references** for the Prosapiam app. When building or
+These are the **authoritative visual references** for the Prosapia app. When building or
 restyling any screen, open the matching file here and match it exactly — layout, spacing,
 hierarchy, type, color, and copy. The design system in `../design-system/` (tokens, spec)
 provides the *rules*; these files are the *target*. If they ever disagree, the spec wins on

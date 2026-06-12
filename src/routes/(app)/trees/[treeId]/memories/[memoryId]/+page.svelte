@@ -46,7 +46,7 @@
 </script>
 
 <svelte:head>
-  <title>{data.memory.title} — Prosapiam</title>
+  <title>{data.memory.title} — Prosapia</title>
 </svelte:head>
 
 <div class="page">
