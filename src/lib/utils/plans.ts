@@ -5,7 +5,7 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Database } from '$lib/supabase/types'
 
 export type PlanId = 'remembrance' | 'heritage' | 'legacy'
-export type MediaKind = 'image' | 'audio' | 'video'
+export type MediaKind = 'image' | 'audio' | 'video' | 'document'
 
 export interface PlanLimits {
   storageBytes: number        // -1 = unlimited
@@ -33,8 +33,8 @@ export const PLANS: Record<PlanId, PlanLimits> = {
     storageBytes: 50 * 1024 * 1024 * 1024,
     maxTrees: 3,
     maxCollaborators: 10,
-    allowedMediaKinds: ['image', 'audio'],
-    maxFileSizeBytes: -1,
+    allowedMediaKinds: ['image', 'audio', 'document'],
+    maxFileSizeBytes: 50 * 1024 * 1024, // 50 MB per file
     storageLabel: '50 GB',
     displayName: 'Heritage',
     priceLabel: '$7.99/mo',
@@ -43,7 +43,7 @@ export const PLANS: Record<PlanId, PlanLimits> = {
     storageBytes: -1,
     maxTrees: -1,
     maxCollaborators: -1,
-    allowedMediaKinds: ['image', 'audio', 'video'],
+    allowedMediaKinds: ['image', 'audio', 'video', 'document'],
     maxFileSizeBytes: -1,
     storageLabel: 'Unlimited',
     displayName: 'Legacy',
@@ -68,6 +68,9 @@ const MIME_KINDS: Record<string, MediaKind> = {
   'video/quicktime': 'video',
   'video/webm': 'video',
   'video/mpeg': 'video',
+  'application/pdf': 'document',
+  'application/msword': 'document',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'document',
 }
 
 export type CheckResult = { allowed: true } | { allowed: false; message: string }
@@ -100,11 +103,23 @@ export function checkFileAllowed(
   }
 
   if (!plan.allowedMediaKinds.includes(kind)) {
-    const kindLabel = kind === 'audio' ? 'audio files' : kind === 'video' ? 'video files' : 'photo uploads'
+    const kindLabel =
+      kind === 'audio' ? 'audio files' :
+      kind === 'video' ? 'video files' :
+      kind === 'document' ? 'document uploads' :
+      'photo uploads'
     const nextPlan = kind === 'video' ? 'Legacy' : 'Heritage'
     return {
       allowed: false,
-      message: `${kindLabel.charAt(0).toUpperCase() + kindLabel.slice(1)} are available on the ${nextPlan} plan. Upgrade to share photos and voices alongside your family's written stories.`,
+      message: `${kindLabel.charAt(0).toUpperCase() + kindLabel.slice(1)} are available on the ${nextPlan} plan. Upgrade to preserve records and documents alongside your family's stories.`,
+    }
+  }
+
+  if (plan.maxFileSizeBytes !== -1 && fileSizeBytes > plan.maxFileSizeBytes) {
+    const limitMB = Math.round(plan.maxFileSizeBytes / (1024 * 1024))
+    return {
+      allowed: false,
+      message: `That file is too large. Files on the ${plan.displayName} plan must be under ${limitMB} MB each.`,
     }
   }
 

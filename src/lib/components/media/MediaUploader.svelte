@@ -212,7 +212,7 @@
     }
   }
 
-  const fileAccept = 'image/jpeg,image/png,image/webp,image/gif,image/heic,audio/mpeg,audio/mp4,audio/ogg,audio/wav,audio/aac,video/mp4,video/quicktime,video/webm'
+  const fileAccept = 'image/jpeg,image/png,image/webp,image/gif,image/heic,audio/mpeg,audio/mp4,audio/ogg,audio/wav,audio/aac,video/mp4,video/quicktime,video/webm,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document'
 
   function formatBytes(bytes: number): string {
     if (bytes < 1024) return `${bytes} B`
@@ -263,7 +263,7 @@
       <span class="drop-icon" aria-hidden="true">&#11014;</span>
       <p class="drop-primary">Drop a file here</p>
       <p class="drop-secondary">or <span class="drop-link">browse to choose</span></p>
-      <p class="drop-hint">Photos, audio recordings, videos</p>
+      <p class="drop-hint">Photos, audio recordings, videos, PDFs, Word documents</p>
     </div>
 
     <!-- Choose from library (mobile only) -->
