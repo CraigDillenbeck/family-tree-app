@@ -187,8 +187,8 @@
   }
 
   .page-title {
-    font-family: var(--font-display);
-    font-weight: var(--font-weight-light);
+    font-family: var(--font-ui);
+    font-weight: var(--font-weight-medium);
     font-size: var(--font-size-display-l);
     letter-spacing: -0.01em;
     color: var(--color-text-primary);

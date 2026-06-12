@@ -353,7 +353,7 @@
   }
 
   .title {
-    font-family: var(--font-display);
+    font-family: var(--font-ui);
     font-size: 36px;
     font-weight: var(--font-weight-regular);
     color: var(--color-text-primary);

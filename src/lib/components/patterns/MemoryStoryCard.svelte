@@ -149,9 +149,9 @@
 
   .title {
     margin: 0;
-    font-family: var(--font-display);
+    font-family: var(--font-body);
     font-size: 20px;
-    font-weight: var(--font-weight-light);
+    font-weight: var(--font-weight-regular);
     line-height: var(--line-height-tight);
     color: var(--color-ink);
   }
