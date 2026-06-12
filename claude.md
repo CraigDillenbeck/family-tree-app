@@ -509,14 +509,12 @@ No user email exists today. Auth reset email is Supabase default (unbranded).
 
 ---
 
-### Phase 7 — Remaining UI Gaps
+### Phase 7 — Remaining UI Gaps ✓ COMPLETE
 
-Stub pages and missing features users will hit on day one.
-
-- [ ] **Person memories list** — `/persons/[personId]/memories` tab is `<h1>Memories</h1>`; build query + MemoryStoryCard list + empty state + create button
-- [ ] **Tree settings page** — `/trees/[treeId]/settings` is `<h1>Page</h1>`; build: rename tree, edit description, delete tree (with confirmation)
-- [ ] **GDPR cookie consent banner** — required for EU users; simple accept/decline, persisted in localStorage
-- [ ] **Tree canvas accessible list-view** — toolbar toggle showing a sortable table of all persons (WCAG requirement noted in spec)
+- [x] **Person memories list** — `/persons/[personId]/memories` — full server load, memory query via `memory_persons` junction, create/edit/delete form actions, MemoryStoryCard grid, Add a memory drawer, empty state
+- [x] **Tree settings page** — `/trees/[treeId]/settings` — rename/description form with toast feedback, danger zone delete with type-to-confirm modal (uses `supabaseAdmin` to cascade all child records)
+- [x] **GDPR cookie consent banner** — `CookieBanner.svelte` in root layout; localStorage key `prosapiam_cookies_accepted`; wired to `analyticsOptIn()` / `analyticsOptOut()`
+- [x] **Tree canvas accessible list-view** — toolbar List toggle already implemented; renders accessible `role="list"` panel of all persons with Avatar, name, dates, and status badge
 
 ---
 
@@ -608,7 +606,11 @@ All core screens built and wired to Supabase. Key highlights:
 - Memory: create, full-page detail view, edit drawer ✓
 - PostHog + Sentry: installed, initialized, key events firing ✓
 
-**Remaining stubs (built in Phase 7):**
-- `persons/[id]/memories` — tab exists, currently `<h1>Memories</h1>`
-- `trees/[treeId]/settings` — route exists, currently `<h1>Page</h1>`
+**Phase 7 — Remaining UI Gaps: ✓ COMPLETE**
+- Person memories list: query + MemoryStoryCard grid + create/edit/delete drawer ✓
+- Tree settings: rename/description form + type-to-confirm delete ✓
+- GDPR cookie consent banner: localStorage-persisted, PostHog opt-in/out wired ✓
+- Tree canvas accessible list-view: List toggle + `role="list"` panel ✓
+
+**Still a stub (built in Phase 8):**
 - `trees/[treeId]/collaborators` — route exists, invite flow built in Phase 8
