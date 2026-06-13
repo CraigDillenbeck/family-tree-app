@@ -490,8 +490,8 @@ Blocks revenue. Nothing ships without this.
   - `subscription_expired` → enforce remembrance limits, notify user
   - `subscription_payment_failed` → send payment failed email, 7-day grace period before downgrade
 - [ ] PostHog `plan_upgrade` event wired in webhook handler
-- [ ] Privacy Policy page `/privacy` (required by Lemon Squeezy)
-- [ ] Terms of Service page `/terms` (required by Lemon Squeezy)
+- [x] Privacy Policy page `/privacy` (required by Lemon Squeezy) — draft complete, attorney review needed; fill in [YOUR NAME / COMPANY NAME] and [STATE] placeholders before go-live
+- [x] Terms of Service page `/terms` (required by Lemon Squeezy) — draft complete, attorney review needed; fill in [STATE] placeholder before go-live
 
 ---
 
