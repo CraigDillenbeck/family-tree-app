@@ -1,15 +1,28 @@
 import { createServerClient } from '@supabase/ssr'
-import { type Handle } from '@sveltejs/kit'
+import { redirect, type Handle } from '@sveltejs/kit'
 import { sequence } from '@sveltejs/kit/hooks'
 import { PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY, PUBLIC_SENTRY_DSN } from '$env/static/public'
+import { BETA_PASSWORD } from '$env/static/private'
 import * as Sentry from '@sentry/sveltekit'
 import { handleErrorWithSentry, sentryHandle } from '@sentry/sveltekit'
+import { COOKIE_NAME, isBetaGatedPath, verifyBetaCookie } from '$lib/server/beta'
 
 if (PUBLIC_SENTRY_DSN) {
   Sentry.init({
     dsn: PUBLIC_SENTRY_DSN,
     tracesSampleRate: 1.0,
   })
+}
+
+const betaGate: Handle = async ({ event, resolve }) => {
+  const { pathname, search } = event.url
+
+  if (isBetaGatedPath(pathname) && !verifyBetaCookie(event.cookies.get(COOKIE_NAME), BETA_PASSWORD)) {
+    const redirectTo = encodeURIComponent(pathname + search)
+    redirect(303, `/beta-access?redirectTo=${redirectTo}`)
+  }
+
+  return resolve(event)
 }
 
 const supabase: Handle = async ({ event, resolve }) => {
@@ -43,5 +56,5 @@ const supabase: Handle = async ({ event, resolve }) => {
   })
 }
 
-export const handle = sequence(sentryHandle(), supabase)
+export const handle = sequence(sentryHandle(), betaGate, supabase)
 export const handleError = handleErrorWithSentry()

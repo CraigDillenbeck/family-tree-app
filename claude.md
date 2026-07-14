@@ -442,6 +442,7 @@ PUBLIC_POSTHOG_HOST=https://app.posthog.com
 PUBLIC_SENTRY_DSN=
 SENTRY_AUTH_TOKEN=            # server only
 ADMIN_PASSWORD=               # server only
+BETA_PASSWORD=                # server only — shared password gating all auth + app routes during private beta
 PUBLIC_APP_URL=
 ```
 
@@ -536,6 +537,7 @@ Do this last, once all features are complete and tested locally.
 
 - [ ] Vercel deployment — connect repo, configure build settings (`@sveltejs/adapter-vercel`)
 - [ ] All environment variables set in Vercel (see env var list above)
+- [ ] Set a real `BETA_PASSWORD` (replace the local placeholder) before sharing the invite link with test users
 - [ ] Supabase Storage CORS configured for production domain
 - [ ] robots.txt — `/admin` disallowed; `X-Robots-Tag: noindex` header on all `/admin` routes
 - [ ] RLS policies tested on every table (missing data = check RLS first)
@@ -615,3 +617,10 @@ All core screens built and wired to Supabase. Key highlights:
 
 **Still a stub (built in Phase 8):**
 - `trees/[treeId]/collaborators` — route exists, invite flow built in Phase 8
+
+**Private-beta password gate + waitlist: ✓ COMPLETE**
+- `src/hooks.server.ts` gates all routes except `/`, `/contact`, `/terms`, `/privacy`, `/beta-access`, `/api/*` behind a signed `prosapia_beta` cookie (`src/lib/server/beta.ts`) ✓
+- `/beta-access` — standalone password entry page, sets the cookie and redirects testers into the real, unmodified `(auth)` signup/login flow ✓
+- Landing page hero: founder note callout + email waitlist form (replaces the old inline signup/login panel — that logic now lives only in `(auth)/login` and `(auth)/signup`) ✓
+- `waitlist_subscribers` table (new) + `contact_submissions` table (retroactively migrated — was previously dashboard-only) ✓
+- **Before inviting real testers:** set a real `BETA_PASSWORD` in `.env.local`/Vercel (a placeholder is currently in `.env.local`), apply both new migrations, and regenerate `src/lib/supabase/types.ts` to drop the temporary `as any` casts in `contact/+page.server.ts` and the landing page's `waitlist` action
