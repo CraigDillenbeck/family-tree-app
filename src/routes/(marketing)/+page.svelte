@@ -117,9 +117,9 @@
       <div class="founder-note" role="note">
         <p class="founder-note-label">A note from the founder</p>
         <p class="founder-note-body">
-          Hi — I'm building Prosapia solo, and right now it's in a small private test with a
+          Hi — I'm Craig, and I'm building Prosapia. Right now it's in a small private test with a
           handful of families. If you've got an invite code, welcome in. If not, I'd love to
-          have you on the list for when it opens up.
+          have you on the list for when it opens up. Thank you for your interest.
         </p>
       </div>
 
@@ -558,6 +558,7 @@
     <div class="footer-left">
       <span class="footer-wordmark">PROSAPIA</span>
       <p class="footer-tagline">For the people who made you.</p>
+      <p class="footer-etymology">Prosapia (Latin) — lineage; family stock.</p>
     </div>
     <nav class="footer-links" aria-label="Footer navigation">
       <a href="/about" class="footer-link">About</a>
@@ -1576,6 +1577,15 @@
     color: var(--color-warm-light);
     line-height: 1.55;
     margin: 10px 0 0;
+  }
+
+  .footer-etymology {
+    font-family: var(--font-body);
+    font-size: 14px;
+    line-height: 1.7;
+    color: var(--color-text-inverse-muted);
+    opacity: 0.8;
+    margin: 8px 0 0;
   }
 
   .footer-links {
