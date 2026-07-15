@@ -537,7 +537,7 @@ Do this last, once all features are complete and tested locally.
 
 - [ ] Vercel deployment — connect repo, configure build settings (`@sveltejs/adapter-vercel`)
 - [ ] All environment variables set in Vercel (see env var list above)
-- [ ] Set a real `BETA_PASSWORD` (replace the local placeholder) before sharing the invite link with test users
+- [ ] Set `BETA_PASSWORD` in Vercel env vars (real value already generated in local `.env.local`; Vercel needs the same value set separately — `.env.local` is not deployed) before sharing the invite link with test users
 - [ ] Supabase Storage CORS configured for production domain
 - [ ] robots.txt — `/admin` disallowed; `X-Robots-Tag: noindex` header on all `/admin` routes
 - [ ] RLS policies tested on every table (missing data = check RLS first)
