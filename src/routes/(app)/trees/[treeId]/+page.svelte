@@ -3,6 +3,7 @@
   import { cubicOut } from 'svelte/easing'
   import { goto, invalidateAll } from '$app/navigation'
   import { page } from '$app/stores'
+  import { browser } from '$app/environment'
   import type { PageProps } from './$types'
   import Badge from '$lib/components/ui/Badge.svelte'
   import Button from '$lib/components/ui/Button.svelte'
@@ -41,6 +42,36 @@
   )
   const unconnectedCount = $derived(data.persons.filter(p => !connectedIds.has(p.id)).length)
   const unconnectedPersons = $derived(data.persons.filter(p => !connectedIds.has(p.id)))
+
+  // First-time explainer for the staging area — shown until dismissed once per tree, and
+  // only while nothing in the tree has been connected yet
+  const stagingHintKey = $derived(`prosapia_seen_staging_hint_${data.tree.id}`)
+  let stagingHintSeen = $state(true)
+  $effect(() => {
+    if (!browser) return
+    localStorage.removeItem('prosapia_seen_staging_hint') // legacy flat key, pre-per-tree scoping
+    stagingHintSeen = localStorage.getItem(stagingHintKey) === '1'
+  })
+  function dismissStagingHint() {
+    stagingHintSeen = true
+    if (browser) localStorage.setItem(stagingHintKey, '1')
+  }
+  const showStagingHint = $derived(!stagingHintSeen && connectedIds.size === 0 && unconnectedCount > 0)
+
+  // First-time explainer for the pull-tab — shown once per tree, the first time the user
+  // manually closes the tray while people are still waiting to connect
+  const pullTabHintKey = $derived(`prosapia_seen_pulltab_hint_${data.tree.id}`)
+  let pullTabHintSeen = $state(true)
+  $effect(() => {
+    if (!browser) return
+    pullTabHintSeen = localStorage.getItem(pullTabHintKey) === '1'
+  })
+  let showPullTabHint = $state(false)
+  function dismissPullTabHint() {
+    showPullTabHint = false
+    pullTabHintSeen = true
+    if (browser) localStorage.setItem(pullTabHintKey, '1')
+  }
 
   const selectedConnections = $derived(
     selected
@@ -121,6 +152,19 @@
   function openStaging() {
     selectedId = null
     stagingOpen = true
+    if (showPullTabHint) dismissPullTabHint()
+  }
+
+  function closeStaging() {
+    stagingOpen = false
+    if (unconnectedCount > 0 && !pullTabHintSeen) showPullTabHint = true
+  }
+
+  // Open a person's quick view from the staging tray — tray stays open beside it
+  function selectFromStaging(id: string) {
+    selectedId = id
+    deletingRelId = null
+    deletingPerson = false
   }
 
   function closeDrawer() {
@@ -379,6 +423,12 @@
         <Icon icon={ChevronLeft} size={14} color="currentColor" />
         <span class="tab-count">{unconnectedCount}</span>
       </button>
+      {#if showPullTabHint}
+        <div class="pulltab-hint" transition:fade={{ duration: dur, easing: cubicOut }}>
+          <p class="pulltab-hint-body">Click this tab anytime to reopen your staging area.</p>
+          <button class="pulltab-hint-dismiss" type="button" onclick={dismissPullTabHint}>Got it</button>
+        </div>
+      {/if}
     {/if}
 
     <!-- ── Staging tray (right panel — unconnected persons) ── -->
@@ -389,21 +439,33 @@
       >
         <div class="staging-head">
           <span class="panel-label">Waiting to connect</span>
-          <button class="close" type="button" onclick={() => stagingOpen = false} aria-label="Close staging area">
+          <button class="close" type="button" onclick={closeStaging} aria-label="Close staging area">
             <Icon icon={ChevronRight} size={16} color="var(--color-text-secondary)" />
           </button>
         </div>
-        <p class="staging-intro">Add a connection from their profile to place them on your tree.</p>
+        {#if showStagingHint}
+          <div class="staging-hint" transition:fade={{ duration: dur, easing: cubicOut }}>
+            <p class="staging-hint-title">Your staging area</p>
+            <p class="staging-hint-body">New people wait here until you connect them to someone else in the tree. Click someone to open their quick view and add a parent, child, sibling, or partner to place them on the canvas.</p>
+            <button class="staging-hint-dismiss" type="button" onclick={dismissStagingHint}>Got it</button>
+          </div>
+        {/if}
+        <p class="staging-intro">Click someone to add a connection and place them on your tree.</p>
         <div class="staging-body">
           {#each unconnectedPersons as p (p.id)}
-            <a class="staging-row" href="/trees/{data.tree.id}/persons/{p.id}">
+            <button
+              type="button"
+              class="staging-row"
+              class:is-selected={selectedId === p.id}
+              onclick={() => selectFromStaging(p.id)}
+            >
               <Avatar
                 person={{ given: p.first_name, family: p.last_name ?? '', status: p.is_living ? 'living' : 'deceased' }}
                 size={32}
               />
               <span class="staging-name">{p.first_name}{p.last_name ? ' ' + p.last_name : ''}</span>
               <span class="unconnected-dot" title="Not yet on the tree" aria-label="Not yet on the tree"></span>
-            </a>
+            </button>
           {/each}
         </div>
       </aside>
@@ -465,6 +527,7 @@
       {@const deathYear = formatDate(selected.death_date)}
       <aside
         class="drawer"
+        class:beside-tray={stagingOpen}
         transition:fly={{ x: 380, duration: dur, easing: cubicOut }}
       >
         <div class="drawer-head">
@@ -631,6 +694,7 @@
 
   .canvas.has-drawer { right: 380px; }
   .canvas.has-staging { right: 220px; }
+  .canvas.has-drawer.has-staging { right: 600px; }
 
   /* ── Staging pull-tab ── */
   .staging-pull-tab {
@@ -668,6 +732,50 @@
     line-height: 1;
   }
 
+  /* ── Pull-tab first-time hint ── */
+  .pulltab-hint {
+    position: absolute;
+    right: 40px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-2);
+    width: 180px;
+    padding: var(--space-3);
+    background: var(--color-bg-page);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-floating);
+    z-index: 6;
+  }
+
+  .pulltab-hint-body {
+    font-family: var(--font-body);
+    font-style: italic;
+    font-size: var(--font-size-body-ui);
+    color: var(--color-text-secondary);
+    line-height: var(--line-height-story);
+    margin: 0;
+  }
+
+  .pulltab-hint-dismiss {
+    padding: var(--space-1) var(--space-3);
+    background: var(--color-bg-surface-1);
+    border: var(--border-default);
+    border-radius: var(--radius-sm);
+    font-family: var(--font-ui);
+    font-size: var(--font-size-label);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-text-primary);
+    cursor: pointer;
+    transition: background var(--dur-fast) var(--ease);
+  }
+
+  .pulltab-hint-dismiss:hover {
+    background: var(--color-bg-surface-2);
+  }
+
   /* ── Staging tray (right panel) ── */
   .staging-tray {
     position: absolute;
@@ -675,7 +783,7 @@
     right: 0;
     bottom: 0;
     width: 220px;
-    background: var(--color-bg-page);
+    background: var(--color-bg-surface-1);
     border-left: var(--border-default);
     display: flex;
     flex-direction: column;
@@ -702,6 +810,53 @@
     border-bottom: var(--border-subtle);
   }
 
+  /* ── Staging area first-time hint ── */
+  .staging-hint {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    padding: var(--space-4);
+    margin: var(--space-3) var(--space-4) 0;
+    background: var(--color-bg-page);
+    border: var(--border-subtle);
+    border-radius: var(--radius-md);
+  }
+
+  .staging-hint-title {
+    font-family: var(--font-ui);
+    font-weight: var(--font-weight-medium);
+    font-size: var(--font-size-label);
+    color: var(--color-text-primary);
+    margin: 0;
+  }
+
+  .staging-hint-body {
+    font-family: var(--font-body);
+    font-style: italic;
+    font-size: var(--font-size-body-ui);
+    color: var(--color-text-secondary);
+    line-height: var(--line-height-story);
+    margin: 0;
+  }
+
+  .staging-hint-dismiss {
+    align-self: flex-start;
+    padding: var(--space-1) var(--space-3);
+    background: var(--color-bg-surface-1);
+    border: var(--border-default);
+    border-radius: var(--radius-sm);
+    font-family: var(--font-ui);
+    font-size: var(--font-size-label);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-text-primary);
+    cursor: pointer;
+    transition: background var(--dur-fast) var(--ease);
+  }
+
+  .staging-hint-dismiss:hover {
+    background: var(--color-bg-surface-2);
+  }
+
   .staging-body {
     flex: 1;
     overflow-y: auto;
@@ -711,15 +866,22 @@
   .staging-row {
     display: flex;
     align-items: center;
+    width: 100%;
     gap: var(--space-2);
     padding: var(--space-3) var(--space-4);
+    background: none;
+    border: none;
+    text-align: left;
     text-decoration: none;
     color: inherit;
+    cursor: pointer;
+    font: inherit;
     transition: background var(--dur-fast) var(--ease);
   }
 
-  .staging-row:hover {
-    background: var(--color-bg-surface-1);
+  .staging-row:hover,
+  .staging-row.is-selected {
+    background: var(--color-bg-surface-2);
   }
 
   .staging-name {
@@ -875,6 +1037,12 @@
     flex-direction: column;
     overflow-y: auto;
     z-index: 10;
+    transition: right var(--dur-base) var(--ease);
+  }
+
+  /* Docked beside the staging tray instead of underneath it, so both stay visible */
+  .drawer.beside-tray {
+    right: 220px;
   }
 
   .drawer-head {
