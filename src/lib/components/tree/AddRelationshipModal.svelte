@@ -16,7 +16,7 @@
     is_living: boolean
   }
 
-  type Action = 'parent' | 'child' | 'sibling' | 'partner'
+  type Action = 'parent' | 'child' | 'sibling' | 'spouse'
 
   let {
     open,
@@ -50,7 +50,7 @@
     parent: 'parent',
     child: 'child',
     sibling: 'sibling',
-    partner: 'partner',
+    spouse: 'spouse',
   }
 
   const title = $derived(
@@ -80,10 +80,10 @@
     )
   )
 
-  const existingPartner = $derived(
-    action === 'partner'
+  const existingSpouse = $derived(
+    action === 'spouse'
       ? relationships.find(r =>
-          (r.type === 'spouse' || r.type === 'partner') &&
+          r.type === 'spouse' &&
           (r.person_a_id === sourcePerson.id || r.person_b_id === sourcePerson.id)
         )
       : undefined
@@ -102,7 +102,7 @@
         return { person_a_id: sourcePerson.id, person_b_id: otherId, type: relationshipSubtype }
       case 'sibling':
         return { person_a_id: sourcePerson.id, person_b_id: otherId, type: 'sibling' }
-      case 'partner':
+      case 'spouse':
         return { person_a_id: sourcePerson.id, person_b_id: otherId, type: 'spouse' }
     }
   }
@@ -185,10 +185,10 @@
 <Modal {open} {title} variant="standard" onclose={handleClose}>
   {#snippet children()}
     <div class="modal-body">
-      {#if existingPartner}
-        <div class="partner-notice">
-          <p class="partner-notice-heading">{sourcePerson.first_name} already has a partner in this tree.</p>
-          <p class="partner-notice-body">To update their relationship or record additional history, visit their profile page.</p>
+      {#if existingSpouse}
+        <div class="spouse-notice">
+          <p class="spouse-notice-heading">{sourcePerson.first_name} already has a spouse in this tree.</p>
+          <p class="spouse-notice-body">To update their relationship or record additional history, visit their profile page.</p>
         </div>
       {:else}
         <div class="search-wrap">
@@ -293,7 +293,7 @@
   {/snippet}
 
   {#snippet footer()}
-    {#if existingPartner}
+    {#if existingSpouse}
       <Button variant="ghost" onclick={handleClose}>Cancel</Button>
       <Button onclick={goToProfile}>Go to profile</Button>
     {:else}
@@ -501,7 +501,7 @@
     margin: 0;
   }
 
-  .partner-notice {
+  .spouse-notice {
     padding: var(--space-6) var(--space-4);
     background: color-mix(in srgb, var(--color-gold) 8%, var(--color-bg-page));
     border: 1px solid color-mix(in srgb, var(--color-gold) 30%, transparent);
@@ -511,7 +511,7 @@
     gap: var(--space-2);
   }
 
-  .partner-notice-heading {
+  .spouse-notice-heading {
     font-family: var(--font-ui);
     font-size: var(--font-size-body);
     font-weight: var(--font-weight-medium);
@@ -519,7 +519,7 @@
     margin: 0;
   }
 
-  .partner-notice-body {
+  .spouse-notice-body {
     font-family: var(--font-body);
     font-style: italic;
     font-size: var(--font-size-body-story);

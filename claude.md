@@ -218,13 +218,13 @@ relationships     — id, tree_id (→ trees.id), person_a_id (→ persons.id),
                     person_b_id (→ persons.id), type (relationship_type enum), is_current,
                     start_date (nullable), end_date (nullable), created_at
                   -- relationship_type enum:
-                  --   spouse | divorced | partner           ← symmetric pairs
+                  --   spouse | divorced                     ← symmetric pairs (legally binding marriage only — no 'partner'/dating type)
                   --   parent_child                          ← person_a IS THE PARENT of person_b
                   --   adopted_parent_child                  ← person_a IS THE ADOPTIVE PARENT
                   --   step_parent_child                     ← person_a IS THE STEP-PARENT
                   --   sibling | half_sibling | step_sibling ← symmetric pairs
                   -- NEVER store child/grandchild — those are derived by reversing parent_child
-                  -- is_current=false = historical (divorced, ended partnership); hidden in
+                  -- is_current=false = historical (divorced, ended marriage); hidden in
                   -- canvas by default, visible on profile
 
 memories          — id, tree_id (→ trees.id), created_by (→ profiles.id),
@@ -622,5 +622,5 @@ All core screens built and wired to Supabase. Key highlights:
 - `src/hooks.server.ts` gates all routes except `/`, `/contact`, `/terms`, `/privacy`, `/beta-access`, `/api/*` behind a signed `prosapia_beta` cookie (`src/lib/server/beta.ts`) ✓
 - `/beta-access` — standalone password entry page, sets the cookie and redirects testers into the real, unmodified `(auth)` signup/login flow ✓
 - Landing page hero: founder note callout + email waitlist form (replaces the old inline signup/login panel — that logic now lives only in `(auth)/login` and `(auth)/signup`) ✓
-- `waitlist_subscribers` table (new) + `contact_submissions` table (retroactively migrated — was previously dashboard-only) ✓
-- **Before inviting real testers:** set a real `BETA_PASSWORD` in `.env.local`/Vercel (a placeholder is currently in `.env.local`), apply both new migrations, and regenerate `src/lib/supabase/types.ts` to drop the temporary `as any` casts in `contact/+page.server.ts` and the landing page's `waitlist` action
+- `waitlist_subscribers` table + `contact_submissions` table — created live 2026-07-15 (migrations existed but were never applied; `types.ts` regenerated, `as any` casts removed from `contact/+page.server.ts` and the landing page's `waitlist` action) ✓
+- **Before inviting real testers:** set a real `BETA_PASSWORD` in `.env.local`/Vercel (a placeholder is currently in `.env.local`)

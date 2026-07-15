@@ -4,10 +4,10 @@ import { logActivity } from '$lib/utils/activity'
 
 const VALID_TYPES = [
   'parent_child', 'adopted_parent_child', 'step_parent_child',
-  'spouse', 'divorced', 'partner',
+  'spouse', 'divorced',
   'sibling', 'half_sibling', 'step_sibling',
 ]
-const SYMMETRIC_TYPES = ['spouse', 'divorced', 'partner', 'sibling', 'half_sibling', 'step_sibling']
+const SYMMETRIC_TYPES = ['spouse', 'divorced', 'sibling', 'half_sibling', 'step_sibling']
 
 export const POST: RequestHandler = async ({ request, params, locals: { supabase, safeGetSession } }) => {
   const { user } = await safeGetSession()
@@ -53,7 +53,7 @@ export const POST: RequestHandler = async ({ request, params, locals: { supabase
     return json({ error: `Invalid relationship type: ${type}` }, { status: 400 })
   }
 
-  type RelType = 'parent_child' | 'adopted_parent_child' | 'step_parent_child' | 'spouse' | 'divorced' | 'partner' | 'sibling' | 'half_sibling' | 'step_sibling'
+  type RelType = 'parent_child' | 'adopted_parent_child' | 'step_parent_child' | 'spouse' | 'divorced' | 'sibling' | 'half_sibling' | 'step_sibling'
   const relType = type as RelType
 
   // Both persons must exist in this tree
@@ -84,19 +84,19 @@ export const POST: RequestHandler = async ({ request, params, locals: { supabase
   const { data: dup } = await dupQuery.maybeSingle()
   if (dup) return json({ error: 'This relationship already exists.' }, { status: 409 })
 
-  // Partner conflict: a person can only have one active spouse/partner in the tree
-  if (type === 'spouse' || type === 'partner') {
-    const { data: partnerConflict } = await supabase
+  // Spouse conflict: a person can only have one active spouse in the tree
+  if (type === 'spouse') {
+    const { data: spouseConflict } = await supabase
       .from('relationships')
       .select('id')
       .eq('tree_id', params.treeId)
       .eq('is_current', true)
-      .in('type', ['spouse', 'partner'])
+      .eq('type', 'spouse')
       .or(`person_a_id.eq.${person_a_id},person_b_id.eq.${person_a_id}`)
       .maybeSingle()
-    if (partnerConflict) {
+    if (spouseConflict) {
       return json(
-        { error: 'This person already has an active partner in this tree. Visit their profile to update or remove the existing relationship first.' },
+        { error: 'This person already has an active spouse in this tree. Visit their profile to update or remove the existing relationship first.' },
         { status: 409 }
       )
     }

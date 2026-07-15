@@ -135,9 +135,6 @@
     rels.filter(r => r.label === 'Former spouse').forEach(r =>
       clauses.push([{ text: 'Formerly married to ' }, nameLink(r.person)])
     )
-    rels.filter(r => r.label === 'Partner').forEach(r =>
-      clauses.push([{ text: 'Partner of ' }, nameLink(r.person)])
-    )
 
     const children = rels.filter(r => ['Child', 'Adopted child', 'Step-child'].includes(r.label))
     if (children.length) {

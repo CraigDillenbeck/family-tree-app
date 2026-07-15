@@ -9,7 +9,6 @@
     | 'step_parent_child'
     | 'spouse'
     | 'divorced'
-    | 'partner'
     | 'sibling'
     | 'half_sibling'
     | 'step_sibling'

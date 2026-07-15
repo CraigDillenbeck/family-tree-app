@@ -72,7 +72,7 @@
     }
   }
 
-  const SPOUSE_TYPES = new Set(['spouse', 'divorced', 'partner'])
+  const SPOUSE_TYPES = new Set(['spouse', 'divorced'])
   const SIBLING_TYPES = new Set(['sibling', 'half_sibling', 'step_sibling'])
   const PARENT_CHILD_TYPES = new Set(['parent_child', 'adopted_parent_child', 'step_parent_child'])
   const SPOUSE_GAP = 40   // tight horizontal gap between spouses

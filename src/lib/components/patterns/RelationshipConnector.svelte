@@ -19,7 +19,6 @@
     | 'step_parent_child'
     | 'spouse'
     | 'divorced'
-    | 'partner'
     | 'sibling'
     | 'half_sibling'
     | 'step_sibling'
@@ -49,12 +48,12 @@
   const midX = $derived((sourceX + targetX) / 2)
   const midY = $derived((sourceY + targetY) / 2)
 
-  // Couple types (spouse, partner, divorced) sit side-by-side at the same Y level.
+  // Couple types (spouse, divorced) sit side-by-side at the same Y level.
   // XYFlow routes their edge bottom→top, so sourceY and targetY are on opposite sides
   // of the node center. Drawing the full orthogonal path creates phantom stubs above/below
   // the tiles. Instead, draw a clean horizontal line at midY (= true node center).
   // For all other types use the standard orthogonal T-shape.
-  const isCoupleType = $derived(type === 'spouse' || type === 'partner' || type === 'divorced')
+  const isCoupleType = $derived(type === 'spouse' || type === 'divorced')
 
   const d = $derived(
     isCoupleType
@@ -93,11 +92,6 @@
       stroke: 'var(--color-warm-light)',
       strokeWidth: 1,
       strokeDasharray: '4 4',
-    },
-    partner: {
-      stroke: 'var(--color-gold-light)',
-      strokeWidth: 1,
-      strokeDasharray: '6 3',
     },
     sibling: {
       stroke: 'var(--color-warm-light)',

@@ -389,8 +389,6 @@ function relLabel(type: string, isPersonA: boolean): string {
       return 'Spouse'
     case 'divorced':
       return 'Former spouse'
-    case 'partner':
-      return 'Partner'
     case 'parent_child':
       return isPersonA ? 'Child' : 'Parent'
     case 'adopted_parent_child':

@@ -30,7 +30,7 @@
   let deleteRelLoading = $state(false)
   let deletePersonLoading = $state(false)
 
-  type RelAction = 'parent' | 'child' | 'sibling' | 'partner'
+  type RelAction = 'parent' | 'child' | 'sibling' | 'spouse'
   let modalAction = $state<RelAction | null>(null)
   const modalOpen = $derived(modalAction !== null)
 
@@ -91,7 +91,6 @@
     switch (type) {
       case 'spouse': return 'Spouse'
       case 'divorced': return 'Former spouse'
-      case 'partner': return 'Partner'
       case 'parent_child': return isPersonA ? 'Child' : 'Parent'
       case 'adopted_parent_child': return isPersonA ? 'Adopted child' : 'Adoptive parent'
       case 'step_parent_child': return isPersonA ? 'Step-child' : 'Step-parent'
@@ -446,7 +445,7 @@
         {#if showStagingHint}
           <div class="staging-hint" transition:fade={{ duration: dur, easing: cubicOut }}>
             <p class="staging-hint-title">Your staging area</p>
-            <p class="staging-hint-body">New people wait here until you connect them to someone else in the tree. Click someone to open their quick view and add a parent, child, sibling, or partner to place them on the canvas.</p>
+            <p class="staging-hint-body">New people wait here until you connect them to someone else in the tree. Click someone to open their quick view and add a parent, child, sibling, or spouse to place them on the canvas.</p>
             <button class="staging-hint-dismiss" type="button" onclick={dismissStagingHint}>Got it</button>
           </div>
         {/if}
@@ -507,7 +506,7 @@
                 <svg width="32" height="10" viewBox="0 0 32 10" aria-hidden="true">
                   <line x1="0" y1="5" x2="32" y2="5" stroke="var(--color-gold-light)" stroke-width="1.5"/>
                 </svg>
-                <span>Partner / Spouse</span>
+                <span>Spouse</span>
               </li>
               <li class="legend-item">
                 <svg width="32" height="10" viewBox="0 0 32 10" aria-hidden="true">
@@ -572,7 +571,7 @@
               <button class="conn-btn" type="button" onclick={() => openModal('parent')}>+ Parent</button>
               <button class="conn-btn" type="button" onclick={() => openModal('child')}>+ Child</button>
               <button class="conn-btn" type="button" onclick={() => openModal('sibling')}>+ Sibling</button>
-              <button class="conn-btn" type="button" onclick={() => openModal('partner')}>+ Partner</button>
+              <button class="conn-btn" type="button" onclick={() => openModal('spouse')}>+ Spouse</button>
             </div>
           </div>
         {/if}
