@@ -116,17 +116,20 @@
   onclose={() => { deleteModalOpen = false }}
 >
   <form
+    id="delete-tree-form"
     method="POST"
     action="?/delete"
     use:enhance={() => {
       deleting = true
       deleteError = null
-      return async ({ result }) => {
+      return async ({ result, update }) => {
         deleting = false
         if (result.type === 'failure') {
           deleteError = (result.data as { error?: string })?.error ?? 'Something went wrong.'
+        } else if (result.type === 'redirect') {
+          toast.success(`"${data.tree.name}" was deleted.`)
         }
-        // On success the server redirects to /dashboard — no client update needed
+        await update()
       }
     }}
   >
@@ -143,16 +146,16 @@
         error={deleteError ?? undefined}
       />
     </div>
-
-    {#snippet footer()}
-      <Button variant="secondary" onclick={() => { deleteModalOpen = false }} disabled={deleting}>
-        Cancel
-      </Button>
-      <Button variant="destructive" type="submit" disabled={!confirmMatch || deleting}>
-        {deleting ? 'Deleting…' : 'Delete permanently'}
-      </Button>
-    {/snippet}
   </form>
+
+  {#snippet footer()}
+    <Button variant="secondary" onclick={() => { deleteModalOpen = false }} disabled={deleting}>
+      Cancel
+    </Button>
+    <Button variant="destructive" type="submit" form="delete-tree-form" disabled={!confirmMatch || deleting}>
+      {deleting ? 'Deleting…' : 'Delete permanently'}
+    </Button>
+  {/snippet}
 </Modal>
 
 <style>
