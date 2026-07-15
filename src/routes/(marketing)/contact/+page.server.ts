@@ -29,9 +29,7 @@ export const actions: Actions = {
 		if (message.length > 2000)
 			return fail(400, { ...values, error: 'Message must be 2,000 characters or fewer.' })
 
-		// contact_submissions is not yet in generated types — cast until types are regenerated
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		const { error: insertError } = await (supabaseAdmin as any)
+		const { error: insertError } = await supabaseAdmin
 			.from('contact_submissions')
 			.insert({ name, email, reason, message })
 

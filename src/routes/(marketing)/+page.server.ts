@@ -16,9 +16,7 @@ export const actions: Actions = {
       return fail(400, { email, error: 'Please enter a valid email address.' })
     }
 
-    // waitlist_subscribers is not yet in generated types — cast until types are regenerated
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { error: insertError } = await (supabaseAdmin as any)
+    const { error: insertError } = await supabaseAdmin
       .from('waitlist_subscribers')
       .insert({ email, source: 'landing_hero' })
 

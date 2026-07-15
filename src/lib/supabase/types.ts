@@ -62,6 +62,33 @@ export type Database = {
           },
         ]
       }
+      contact_submissions: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          message: string
+          name: string
+          reason: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          message: string
+          name: string
+          reason: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          message?: string
+          name?: string
+          reason?: string
+        }
+        Relationships: []
+      }
       media: {
         Row: {
           caption: string | null
@@ -474,6 +501,27 @@ export type Database = {
           },
         ]
       }
+      waitlist_subscribers: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          source: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          source?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          source?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -496,7 +544,6 @@ export type Database = {
       relationship_type:
         | "spouse"
         | "divorced"
-        | "partner"
         | "parent_child"
         | "adopted_parent_child"
         | "step_parent_child"
@@ -644,7 +691,6 @@ export const Constants = {
       relationship_type: [
         "spouse",
         "divorced",
-        "partner",
         "parent_child",
         "adopted_parent_child",
         "step_parent_child",
