@@ -34,13 +34,19 @@
 
   let previouslyFocused: HTMLElement | null = null;
 
-  // Body scroll lock + focus return
+  // Body scroll lock — cleanup runs on close AND on destroy, so an unmount
+  // while still open (e.g. navigating away) can't leave scroll locked.
+  $effect(() => {
+    if (!open) return;
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = ''; };
+  });
+
+  // Focus return
   $effect(() => {
     if (open) {
       previouslyFocused = document.activeElement as HTMLElement;
-      document.body.style.overflow = 'hidden';
     } else {
-      document.body.style.overflow = '';
       previouslyFocused?.focus();
       previouslyFocused = null;
     }
