@@ -69,7 +69,8 @@ export const actions: Actions = {
         last_name: lastName || null,
         birth_date: birthDate,
         birth_place: birthplace || null,
-        is_living: true
+        is_living: true,
+        is_direct_descendant: true // the tree's own first person is presumed to be its blood line
       })
       .select('id')
       .single()

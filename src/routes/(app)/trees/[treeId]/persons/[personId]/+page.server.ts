@@ -2,6 +2,7 @@ import { error, fail } from '@sveltejs/kit'
 import type { Actions, PageServerLoad } from './$types'
 import { logActivity } from '$lib/utils/activity'
 import { signedDownloadUrls } from '$lib/server/storage'
+import { PARENT_CHILD_TYPES, parentsOf, inferredSiblingsOf } from '$lib/utils/relationships'
 
 export type ProfilePerson = {
   id: string
@@ -159,9 +160,9 @@ export const load: PageServerLoad = async ({ locals: { supabase }, params }) => 
     signedUrl: urlMap.get(m.storage_path) ?? null,
   }))
 
-  const relationships: ProfileRelationship[] = (
-    (relsRes.data ?? []) as unknown as RawRelationship[]
-  ).map((row) => {
+  const rawRels = (relsRes.data ?? []) as unknown as RawRelationship[]
+
+  const relationships: ProfileRelationship[] = rawRels.map((row) => {
     const isPersonA = row.person_a_id === params.personId
     const other = isPersonA ? row.person_b : row.person_a
     const birthYear = other.birth_date
@@ -187,11 +188,59 @@ export const load: PageServerLoad = async ({ locals: { supabase }, params }) => 
     }
   })
 
+  // Siblings are connected via shared parent_child rows, not a literal 'sibling' row
+  // (see AddRelationshipModal sibling rework) — infer them so the narrative stays correct.
+  const parentIds = parentsOf(params.personId, rawRels).map((p) => p.id)
+  let inferredSiblings: ProfileRelationship[] = []
+  if (parentIds.length > 0) {
+    const coChildrenRes = await supabase
+      .from('relationships')
+      .select(
+        'person_a_id, person_b_id, type,' +
+        'person_b:persons!relationships_person_b_id_fkey(id, first_name, last_name, birth_date, death_date, avatar_url, is_living)'
+      )
+      .eq('tree_id', params.treeId)
+      .in('person_a_id', parentIds)
+      .in('type', Array.from(PARENT_CHILD_TYPES) as ('parent_child' | 'adopted_parent_child' | 'step_parent_child')[])
+
+    type CoChildRow = { person_a_id: string; person_b_id: string; type: string; person_b: RawRelatedPerson }
+    const coChildRows = (coChildrenRes.data ?? []) as unknown as CoChildRow[]
+    const personById = new Map(coChildRows.map((r) => [r.person_b_id, r.person_b]))
+    const existingSiblingIds = new Set(
+      relationships.filter((r) => ['Sibling', 'Half-sibling', 'Step-sibling'].includes(r.label)).map((r) => r.person.id)
+    )
+
+    inferredSiblings = inferredSiblingsOf(params.personId, coChildRows)
+      .filter((s) => !existingSiblingIds.has(s.personId))
+      .map((s) => {
+        const other = personById.get(s.personId)!
+        const birthYear = other.birth_date
+          ? new Date(other.birth_date + 'T00:00:00').getFullYear().toString()
+          : null
+        const deathYear = other.death_date
+          ? new Date(other.death_date + 'T00:00:00').getFullYear().toString()
+          : null
+        return {
+          id: `sibling-inferred-${s.personId}`,
+          label: s.label,
+          person: {
+            id: other.id,
+            first_name: other.first_name,
+            last_name: other.last_name,
+            avatar_url: other.avatar_url,
+            is_living: other.is_living
+          },
+          dates: [birthYear, deathYear].filter(Boolean).join('–') || null,
+          is_current: true
+        }
+      })
+  }
+
   return {
     person: personRes.data as ProfilePerson,
     memories,
     media,
-    relationships,
+    relationships: [...relationships, ...inferredSiblings],
   }
 }
 

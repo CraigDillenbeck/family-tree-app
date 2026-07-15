@@ -14,6 +14,7 @@
   import { X, Plus, GitBranch, List, ChevronLeft, ChevronRight, Activity, Search, Settings, Users } from 'lucide-svelte'
   import Dropdown from '$lib/components/ui/Dropdown.svelte'
   import type { DropdownItem } from '$lib/components/ui/Dropdown.svelte'
+  import { SIBLING_TYPES, inferredSiblingsOf } from '$lib/utils/relationships'
 
   const { data }: PageProps = $props()
 
@@ -73,7 +74,7 @@
     if (browser) localStorage.setItem(pullTabHintKey, '1')
   }
 
-  const selectedConnections = $derived(
+  const directConnections = $derived(
     selected
       ? data.relationships
           .filter(r => r.person_a_id === selected.id || r.person_b_id === selected.id)
@@ -81,11 +82,29 @@
             const isPersonA = r.person_a_id === selected.id
             const otherId = isPersonA ? r.person_b_id : r.person_a_id
             const other = data.persons.find(p => p.id === otherId)
-            return { relId: r.id, relType: r.type, isPersonA, other }
+            return { relId: r.id, relType: r.type, isPersonA, other, deletable: true }
           })
-          .filter((c): c is { relId: string; relType: string; isPersonA: boolean; other: NonNullable<typeof c.other> } => c.other !== undefined)
+          .filter((c): c is { relId: string; relType: string; isPersonA: boolean; other: NonNullable<typeof c.other>; deletable: boolean } => c.other !== undefined)
       : []
   )
+
+  // Siblings are connected via shared parent_child rows, not a literal 'sibling' row
+  // (see AddRelationshipModal sibling rework) — infer them so this list stays correct.
+  const inferredSiblingConnections = $derived(
+    selected
+      ? inferredSiblingsOf(selected.id, data.relationships)
+          .filter(s => !directConnections.some(c => c.other.id === s.personId && SIBLING_TYPES.has(c.relType)))
+          .map(s => {
+            const other = data.persons.find(p => p.id === s.personId)
+            return other
+              ? { relId: `sibling-inferred-${s.personId}`, relType: s.label === 'Sibling' ? 'sibling' : 'half_sibling', isPersonA: true, other, deletable: false }
+              : null
+          })
+          .filter((c): c is { relId: string; relType: string; isPersonA: boolean; other: NonNullable<typeof c>['other']; deletable: boolean } => c !== null)
+      : []
+  )
+
+  const selectedConnections = $derived([...directConnections, ...inferredSiblingConnections])
 
   function relLabel(type: string, isPersonA: boolean): string {
     switch (type) {
@@ -594,9 +613,11 @@
                   />
                   <span class="econn-name">{conn.other.first_name}{conn.other.last_name ? ' ' + conn.other.last_name : ''}</span>
                   <span class="econn-label">{relLabel(conn.relType, conn.isPersonA)}</span>
-                  <button class="econn-delete" type="button" onclick={() => deletingRelId = conn.relId} aria-label="Remove this connection">
-                    <Icon icon={X} size={12} color="currentColor" />
-                  </button>
+                  {#if conn.deletable}
+                    <button class="econn-delete" type="button" onclick={() => deletingRelId = conn.relId} aria-label="Remove this connection">
+                      <Icon icon={X} size={12} color="currentColor" />
+                    </button>
+                  {/if}
                 {/if}
               </div>
             {/each}
@@ -627,6 +648,7 @@
   <AddRelationshipModal
     open={modalOpen}
     treeId={data.tree.id}
+    treeName={data.tree.name}
     sourcePerson={selected}
     action={modalAction}
     allPersons={data.persons}

@@ -18,6 +18,7 @@
     death_date: string | null
     avatar_url: string | null
     is_living: boolean
+    is_direct_descendant: boolean
   }
 
   export type CanvasRelationship = {
@@ -98,6 +99,9 @@
       connectedIds.add(r.person_b_id)
     }
 
+    const personIsDirectDescendant = new Map<string, boolean>()
+    for (const p of ps) personIsDirectDescendant.set(p.id, p.is_direct_descendant)
+
     for (const r of rs) {
       if (SPOUSE_TYPES.has(r.type)) {
         const key = [r.person_a_id, r.person_b_id].sort().join('_')
@@ -128,13 +132,16 @@
       }
     }
 
+    // A child's connector routes through a couple's shared junction whenever any ONE of
+    // the child's recorded parents belongs to that junction — not only when both members
+    // of the couple are recorded as this specific child's parents. Otherwise siblings with
+    // partial/mixed parent data (common for blended families, or simply incremental data
+    // entry) render with inconsistent connector anchor points.
     function findJunctionForChild(childId: string): string | null {
       const parents = childToParents.get(childId) ?? []
-      for (let i = 0; i < parents.length; i++) {
-        for (let j = i + 1; j < parents.length; j++) {
-          const key = [parents[i], parents[j]].sort().join('_')
-          if (junctionMap.has(key)) return junctionMap.get(key)!
-        }
+      for (const parentId of parents) {
+        const jxn = personToJxnMeta.get(parentId)
+        if (jxn) return jxn.id
       }
       return null
     }
@@ -230,32 +237,75 @@
       for (const childId of childPersonIds) addChildUnit(parentUnitId, childId)
     }
 
-    // Memoized subtree width: minimum horizontal span needed for this unit + all descendants
-    const widthCache = new Map<string, number>()
+    // For a junction, decide which spouse the connector "trunk" anchors on — the tree's
+    // own blood line (is_direct_descendant), so a family's line of descent stays visually
+    // traceable through every generation instead of jumping to each couple's midpoint.
+    // Falls back to a symmetric split when both or neither spouse is flagged as direct.
+    function bloodAnchorSide(jxn: JunctionMeta): 'a' | 'b' | null {
+      const aIsDirect = personIsDirectDescendant.get(jxn.personA) ?? true
+      const bIsDirect = personIsDirectDescendant.get(jxn.personB) ?? true
+      if (aIsDirect && !bIsDirect) return 'a'
+      if (bIsDirect && !aIsDirect) return 'b'
+      return null
+    }
 
-    function subtreeWidth(unitId: string, visiting = new Set<string>()): number {
-      if (widthCache.has(unitId)) return widthCache.get(unitId)!
-      if (visiting.has(unitId)) return NODE_W // cycle guard
+    // Memoized extents: how far a unit's own footprint + all descendants reaches to the
+    // left/right of its anchor point. Unlike a single symmetric "width", left and right
+    // can differ once a couple's trunk anchors on one spouse instead of their midpoint —
+    // tracking them separately keeps sibling reservations accurate (no overlap) even
+    // though the anchor isn't necessarily centered within the unit's own footprint.
+    type Extents = { left: number; right: number }
+    const extentsCache = new Map<string, Extents>()
+
+    function unitExtents(unitId: string, visiting = new Set<string>()): Extents {
+      if (extentsCache.has(unitId)) return extentsCache.get(unitId)!
+      if (visiting.has(unitId)) return { left: NODE_W / 2, right: NODE_W / 2 } // cycle guard
 
       const v = new Set(visiting)
       v.add(unitId)
 
       const isJunction = unitId.startsWith('__jxn_')
-      const ownW = isJunction ? NODE_W * 2 + SPOUSE_GAP : NODE_W
+      let ownLeft: number
+      let ownRight: number
+
+      if (isJunction) {
+        const jxn = junctionById.get(unitId)!
+        const side = bloodAnchorSide(jxn)
+        const spouseSpan = NODE_W / 2 + NODE_W + SPOUSE_GAP
+        if (side === 'a') {
+          ownLeft = NODE_W / 2
+          ownRight = spouseSpan
+        } else if (side === 'b') {
+          ownLeft = spouseSpan
+          ownRight = NODE_W / 2
+        } else {
+          const half = NODE_W / 2 + SPOUSE_GAP / 2 + NODE_W / 2
+          ownLeft = half
+          ownRight = half
+        }
+      } else {
+        ownLeft = NODE_W / 2
+        ownRight = NODE_W / 2
+      }
 
       const children = unitChildren.get(unitId) ?? []
       if (children.length === 0) {
-        widthCache.set(unitId, ownW)
-        return ownW
+        const ext = { left: ownLeft, right: ownRight }
+        extentsCache.set(unitId, ext)
+        return ext
       }
 
+      // Children fan out symmetrically as a block centered on this unit's own anchor.
       const childrenW =
-        children.reduce((s, cu) => s + subtreeWidth(cu, v), 0) +
+        children.reduce((s, cu) => s + (unitExtents(cu, v).left + unitExtents(cu, v).right), 0) +
         (children.length - 1) * SIBLING_GAP
 
-      const w = Math.max(ownW, childrenW)
-      widthCache.set(unitId, w)
-      return w
+      const ext = {
+        left: Math.max(ownLeft, childrenW / 2),
+        right: Math.max(ownRight, childrenW / 2),
+      }
+      extentsCache.set(unitId, ext)
+      return ext
     }
 
     // ── Phase E: Top-down X/Y placement ────────────────────────────────────────
@@ -266,7 +316,7 @@
     const personY = new Map<string, number>()
     const jxnPos = new Map<string, { x: number; y: number }>()
 
-    function placeUnit(unitId: string, centerX: number, visited: Set<string>) {
+    function placeUnit(unitId: string, anchorX: number, visited: Set<string>) {
       if (visited.has(unitId)) return
       visited.add(unitId)
 
@@ -279,28 +329,38 @@
           personGeneration.get(jxn.personB) ?? 0,
         )
         const y = gen * RANK_SEP
-        const half = NODE_W / 2 + SPOUSE_GAP / 2
-        personX.set(jxn.personA, centerX - half)
-        personX.set(jxn.personB, centerX + half)
+
+        const side = bloodAnchorSide(jxn)
+        if (side === 'a') {
+          personX.set(jxn.personA, anchorX)
+          personX.set(jxn.personB, anchorX + NODE_W + SPOUSE_GAP)
+        } else if (side === 'b') {
+          personX.set(jxn.personB, anchorX)
+          personX.set(jxn.personA, anchorX - NODE_W - SPOUSE_GAP)
+        } else {
+          const half = NODE_W / 2 + SPOUSE_GAP / 2
+          personX.set(jxn.personA, anchorX - half)
+          personX.set(jxn.personB, anchorX + half)
+        }
         personY.set(jxn.personA, y)
         personY.set(jxn.personB, y)
-        jxnPos.set(unitId, { x: centerX, y })
+        jxnPos.set(unitId, { x: anchorX, y })
       } else {
-        personX.set(unitId, centerX)
+        personX.set(unitId, anchorX)
         personY.set(unitId, (personGeneration.get(unitId) ?? 0) * RANK_SEP)
       }
 
       const children = unitChildren.get(unitId) ?? []
       if (children.length === 0) return
 
-      const totalW =
-        children.reduce((s, cu) => s + subtreeWidth(cu), 0) +
+      const childrenW =
+        children.reduce((s, cu) => s + (unitExtents(cu).left + unitExtents(cu).right), 0) +
         (children.length - 1) * SIBLING_GAP
-      let x = centerX - totalW / 2
+      let x = anchorX - childrenW / 2
       for (const cu of children) {
-        const w = subtreeWidth(cu)
-        placeUnit(cu, x + w / 2, visited)
-        x += w + SIBLING_GAP
+        const e = unitExtents(cu)
+        placeUnit(cu, x + e.left, visited)
+        x += e.left + e.right + SIBLING_GAP
       }
     }
 
@@ -313,14 +373,14 @@
     rootUnits.sort() // alphabetical by id for stable ordering across re-renders
 
     const totalRootW =
-      rootUnits.reduce((s, ru) => s + subtreeWidth(ru), 0) +
+      rootUnits.reduce((s, ru) => s + (unitExtents(ru).left + unitExtents(ru).right), 0) +
       Math.max(0, rootUnits.length - 1) * FAMILY_GAP
     let rx = -totalRootW / 2
     const placed = new Set<string>()
     for (const ru of rootUnits) {
-      const w = subtreeWidth(ru)
-      placeUnit(ru, rx + w / 2, placed)
-      rx += w + FAMILY_GAP
+      const e = unitExtents(ru)
+      placeUnit(ru, rx + e.left, placed)
+      rx += e.left + e.right + FAMILY_GAP
     }
 
     // Defensive fallback: ensure all connected persons have positions

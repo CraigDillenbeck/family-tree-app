@@ -8,6 +8,7 @@ export type CanvasPerson = {
   death_date: string | null
   avatar_url: string | null
   is_living: boolean
+  is_direct_descendant: boolean
 }
 
 export type CanvasRelationship = {
@@ -21,7 +22,7 @@ export const load: PageServerLoad = async ({ locals: { supabase }, params }) => 
   const [personsRes, relationshipsRes] = await Promise.all([
     supabase
       .from('persons')
-      .select('id, first_name, last_name, birth_date, death_date, avatar_url, is_living')
+      .select('id, first_name, last_name, birth_date, death_date, avatar_url, is_living, is_direct_descendant')
       .eq('tree_id', params.treeId)
       .order('created_at', { ascending: true }),
     supabase

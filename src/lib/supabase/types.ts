@@ -263,6 +263,7 @@ export type Database = {
           first_name: string
           highlights: string | null
           id: string
+          is_direct_descendant: boolean
           is_living: boolean
           last_name: string | null
           maiden_name: string | null
@@ -282,6 +283,7 @@ export type Database = {
           first_name: string
           highlights?: string | null
           id?: string
+          is_direct_descendant?: boolean
           is_living?: boolean
           last_name?: string | null
           maiden_name?: string | null
@@ -301,6 +303,7 @@ export type Database = {
           first_name?: string
           highlights?: string | null
           id?: string
+          is_direct_descendant?: boolean
           is_living?: boolean
           last_name?: string | null
           maiden_name?: string | null
