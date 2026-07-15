@@ -71,7 +71,7 @@
     font-family: var(--font-ui);
     font-weight: var(--font-weight-semibold);
     font-size: 13px;
-    letter-spacing: 0.6em;
+    letter-spacing: 0.3em;
     text-transform: uppercase;
     color: var(--color-text-inverse);
   }

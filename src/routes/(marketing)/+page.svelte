@@ -599,7 +599,7 @@
     font-family: var(--font-ui);
     font-weight: var(--font-weight-medium);
     font-size: 16px;
-    letter-spacing: 0.6em;
+    letter-spacing: 0.3em;
     text-transform: uppercase;
     color: var(--color-ink);
     text-decoration: none;
@@ -800,7 +800,7 @@
     font-family: var(--font-ui);
     font-weight: var(--font-weight-medium);
     font-size: 18px;
-    letter-spacing: 0.6em;
+    letter-spacing: 0.3em;
     text-transform: uppercase;
     color: var(--color-ink);
     display: block;
@@ -1565,7 +1565,7 @@
     font-family: var(--font-ui);
     font-weight: var(--font-weight-medium);
     font-size: 14px;
-    letter-spacing: 0.6em;
+    letter-spacing: 0.3em;
     text-transform: uppercase;
     color: var(--color-parchment);
     display: block;
