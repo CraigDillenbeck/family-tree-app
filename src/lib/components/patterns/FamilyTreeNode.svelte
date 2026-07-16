@@ -58,64 +58,84 @@
   }
 </script>
 
-{#if isDot}
-  <!-- 25% zoom: render as a positioned dot only -->
-  <!-- svelte-ignore a11y_click_events_have_key_events -->
-  <!-- svelte-ignore a11y_no_static_element_interactions -->
-  <div
-    class="dot"
-    title={fullName}
-    onclick={onclick}
-  ></div>
-{:else}
-  <div
-    class="node"
-    class:selected
-    class:viewing
-    class:full={isFull}
-    class:medium={isMedium}
-    class:compact={isCompact}
-    role="button"
-    tabindex="0"
-    aria-label="{fullName}{dateLine ? ', ' + dateLine : ''}"
-    aria-pressed={selected}
-    onclick={onclick}
-    ondblclick={ondblclick}
-    onkeydown={handleKeydown}
-  >
-    {#if viewing}
-      <div class="viewing-bar" aria-hidden="true"></div>
-    {/if}
+<!--
+  Fixed-size frame matching the XYFlow node's declared width/height (NODE_W/NODE_H
+  in TreeCanvas.svelte). Handles are positioned by XYFlow at this box's exact edges
+  and center, so whatever tier renders inside must be centered within it too —
+  otherwise the connector lines drift away from the visible card (e.g. compact/dot
+  tiers are much smaller than the box, and full-tier content can run taller than
+  the box's declared height).
+-->
+<div class="node-frame">
+  {#if isDot}
+    <!-- 25% zoom: render as a positioned dot only -->
+    <!-- svelte-ignore a11y_click_events_have_key_events -->
+    <!-- svelte-ignore a11y_no_static_element_interactions -->
+    <div
+      class="dot"
+      title={fullName}
+      onclick={onclick}
+    ></div>
+  {:else}
+    <div
+      class="node"
+      class:selected
+      class:viewing
+      class:full={isFull}
+      class:medium={isMedium}
+      class:compact={isCompact}
+      role="button"
+      tabindex="0"
+      aria-label="{fullName}{dateLine ? ', ' + dateLine : ''}"
+      aria-pressed={selected}
+      onclick={onclick}
+      ondblclick={ondblclick}
+      onkeydown={handleKeydown}
+    >
+      {#if viewing}
+        <div class="viewing-bar" aria-hidden="true"></div>
+      {/if}
 
-    <div class="avatar-wrap">
-      <Avatar
-        person={{
-          given: person.firstName,
-          family: person.lastName ?? undefined,
-          avatarUrl: person.avatarUrl,
-          status: person.isLiving ? 'living' : 'deceased',
-        }}
-        size={avatarSize}
-      />
-    </div>
-
-    {#if isFull || isMedium}
-      <p class="node-name">{fullName}</p>
-    {/if}
-
-    {#if isFull && dateLine}
-      <p class="node-dates">{dateLine}</p>
-    {/if}
-
-    {#if isFull && relationshipLabel}
-      <div class="rel-badge">
-        <Badge variant="warm">{relationshipLabel}</Badge>
+      <div class="avatar-wrap">
+        <Avatar
+          person={{
+            given: person.firstName,
+            family: person.lastName ?? undefined,
+            avatarUrl: person.avatarUrl,
+            status: person.isLiving ? 'living' : 'deceased',
+          }}
+          size={avatarSize}
+        />
       </div>
-    {/if}
-  </div>
-{/if}
+
+      {#if isFull || isMedium}
+        <p class="node-name">{fullName}</p>
+      {/if}
+
+      {#if isFull && dateLine}
+        <p class="node-dates">{dateLine}</p>
+      {/if}
+
+      {#if isFull && relationshipLabel}
+        <div class="rel-badge">
+          <Badge variant="warm">{relationshipLabel}</Badge>
+        </div>
+      {/if}
+    </div>
+  {/if}
+</div>
 
 <style>
+  /* Must match NODE_W/NODE_H in TreeCanvas.svelte — XYFlow positions connector
+     handles at this box's edges/center, so every tier centers inside it. */
+  .node-frame {
+    width: 160px;
+    height: 110px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
   /* ── Dot (< 25% zoom) ── */
   .dot {
     width: 8px;

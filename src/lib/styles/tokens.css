@@ -39,6 +39,10 @@
 /* Young Serif — display face (variable). wght axis: 300–700, ital axis: 0–100. */
 @font-face { font-family:'Young Serif'; font-style:normal; font-weight:300 700; font-display:swap; src:url('/fonts/YoungSerifVF.woff2') format('woff2-variations'); }
 
+/* League Spartan — variable, wght axis: 100–900. Trial swap for --font-display, see below.
+   Left declared (not deleted) so we can revert to Young Serif by changing one line. */
+@font-face { font-family:'League Spartan'; font-style:normal; font-weight:100 900; font-display:swap; src:url('/fonts/LeagueSpartanVF.woff2') format('woff2-variations'); }
+
 :root {
   /* ---------- COLOR — base palette ---------- */
   --color-ink:           #1C1A17;
@@ -91,7 +95,7 @@
   --color-border-inverse:  rgba(247,244,238,0.15);
 
   /* ---------- TYPOGRAPHY ---------- */
-  --font-display: 'Young Serif', 'Times New Roman', Georgia, serif;          /* display headlines */
+  --font-display: 'League Spartan', 'Times New Roman', Georgia, serif;       /* TRIAL: was 'Young Serif' — revert by swapping back */
   --font-ui:      'Plus Jakarta Sans', 'Helvetica Neue', Arial, sans-serif;  /* UI chrome */
   --font-body:    'Cormorant Garamond', Georgia, 'Times New Roman', serif;   /* narrative prose */
 
