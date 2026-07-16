@@ -31,7 +31,7 @@
         'Rich text biographies and life stories for every person',
         'Family tree canvas',
         'One family tree',
-        'Community support',
+        'Email support',
       ],
       featured: false,
     },
@@ -53,7 +53,6 @@
         'Audio uploads — voice recordings and oral histories',
         'Up to 3 family trees',
         'Invite up to 10 family collaborators',
-        'Export family tree as PDF',
         'Priority email support',
       ],
       featured: true,
@@ -75,9 +74,8 @@
         'Video uploads — family films and recordings',
         'Unlimited family trees',
         'Unlimited collaborators',
-        'Advanced export — PDF, GEDCOM, full archive download',
         'Early access to new features',
-        'Dedicated support',
+        'Priority email support, front of the queue',
       ],
       featured: false,
     },
@@ -358,30 +356,30 @@
       <div class="feature-col">
         <div class="feature-icon" aria-hidden="true">
           <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
-            <rect x="9" y="6" width="30" height="36" rx="15" fill="#D9D0C4" stroke="#1C1A17" stroke-width="1.25"/>
-            <rect x="11.5" y="8.5" width="25" height="31" rx="12.5" fill="none" stroke="#BFA882" stroke-width="0.75"/>
-            <path d="M14.5 36 C 16 28, 19 26, 24 26 C 29 26, 32 28, 33.5 36" fill="#1C1A17" stroke="none"/>
-            <circle cx="24" cy="20.5" r="5" fill="#1C1A17"/>
-            <circle cx="24" cy="3.5" r="1.25" fill="#7A6F63"/>
-            <path d="M24 4.5 L18 6 M24 4.5 L30 6" stroke="#7A6F63" stroke-width="0.75"/>
+            <circle cx="18" cy="24" r="14" fill="#D9D0C4" stroke="#1C1A17" stroke-width="1.25"/>
+            <circle cx="30" cy="24" r="14" fill="none" stroke="#1C1A17" stroke-width="1.25"/>
+            <circle cx="15" cy="20" r="3.5" fill="#1C1A17"/>
+            <path d="M8 30 C 9 25, 12 23, 15 23 C 18 23, 21 25, 22 30" fill="#1C1A17" stroke="none"/>
+            <circle cx="31" cy="20" r="3.5" fill="none" stroke="#1C1A17" stroke-width="1.25"/>
+            <path d="M24 30 C 25 25, 28 23, 31 23 C 34 23, 37 25, 38 30" fill="none" stroke="#1C1A17" stroke-width="1.25"/>
           </svg>
         </div>
-        <h3 class="feature-title">Connect across generations</h3>
-        <p class="feature-body">Build a living family tree that grows with you — linking people, places, and times across your entire family history. See where you came from. Understand who you are.</p>
+        <h3 class="feature-title">Collaborate across generations</h3>
+        <p class="feature-body">Invite your parents, siblings, and cousins to add their own memories — the version of a story only they remember. Your tree grows every time someone adds their voice, not just their name.</p>
       </div>
 
       <div class="feature-col">
         <div class="feature-icon" aria-hidden="true">
           <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
-            <path d="M6 12 C 12 11, 20 12, 24 16 C 28 12, 36 11, 42 12 L42 38 C 36 37, 28 38, 24 42 C 20 38, 12 37, 6 38 Z" fill="#D9D0C4" stroke="#1C1A17" stroke-width="1.25" stroke-linejoin="round"/>
-            <path d="M24 16 L24 42" stroke="#1C1A17" stroke-width="1.25" stroke-linecap="round"/>
-            <path d="M10 19 L20 19.5 M10 23 L20 23 M10 27 L18 27" stroke="#7A6F63" stroke-width="0.75" stroke-linecap="round"/>
-            <path d="M28 19.5 L38 19 M28 23 L38 23 M28 27 L36 27" stroke="#7A6F63" stroke-width="0.75" stroke-linecap="round"/>
-            <path d="M32 16 L32 28 L34.5 26 L37 28 L37 16" fill="#BFA882" stroke="#1C1A17" stroke-width="1"/>
+            <rect x="12" y="22" width="24" height="18" rx="3" fill="#D9D0C4" stroke="#1C1A17" stroke-width="1.25"/>
+            <rect x="14.5" y="24.5" width="19" height="13" rx="2" fill="none" stroke="#BFA882" stroke-width="0.75"/>
+            <path d="M17 22 L17 15 C17 10, 20 7, 24 7 C28 7, 31 10, 31 15 L31 22" fill="none" stroke="#1C1A17" stroke-width="1.25" stroke-linecap="round"/>
+            <circle cx="24" cy="29" r="2.5" fill="#1C1A17"/>
+            <path d="M24 31.5 L24 35" stroke="#1C1A17" stroke-width="1.25" stroke-linecap="round"/>
           </svg>
         </div>
-        <h3 class="feature-title">Celebrate who they were</h3>
-        <p class="feature-body">Every person in your tree gets a beautiful, dedicated profile — a space for their life, their character, and everything that made them themselves. A biography worthy of them.</p>
+        <h3 class="feature-title">Safe, and yours</h3>
+        <p class="feature-body">Your family's history isn't a public record. Your tree is private by default, visible only to the people you invite — never searchable, never sold, never someone else's data to mine.</p>
       </div>
     </div>
   </div>
@@ -472,7 +470,7 @@
       {/each}
     </div>
 
-    <p class="plans-footnote">All plans include end-to-end encryption and full data ownership. Your family's stories are yours, always.</p>
+    <p class="plans-footnote">All plans include encrypted storage and full data ownership. Your family's stories are yours, always.</p>
   </div>
 </section>
 
