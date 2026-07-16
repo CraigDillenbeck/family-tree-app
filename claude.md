@@ -137,7 +137,8 @@ src/
 │   ├── styles/tokens.css           — ALL tokens, fonts, base styles (imported once in root layout)
 │   ├── server/
 │   │   ├── supabase.ts             — Service-role client (NEVER import in .svelte or client .ts)
-│   │   └── auth.ts                 — getUser(), requireAuth() helpers
+│   │   ├── auth.ts                 — getUser(), requireAuth() helpers
+│   │   └── email.ts                — Resend send helper (minimal — collaborator invite only so far) ✓
 │   ├── supabase/
 │   │   ├── client.ts               — Browser Supabase client
 │   │   └── types.ts                — Generated DB types (regenerate after schema changes)
@@ -160,11 +161,12 @@ src/
 │       ├── activity.ts             — logActivity() — writes to activity_log table ✓
 │       ├── permissions.ts          — isOwner(), canEdit() helpers
 │       ├── motion.ts               — prefersReducedMotion() helper
-│       └── plans.ts                — plan limit enforcement (checkFileAllowed, checkStorageAllowed) ✓
+│       └── plans.ts                — plan limit enforcement (checkFileAllowed, checkStorageAllowed, checkCanAddCollaborator) ✓
 ├── routes/
 │   ├── +layout.svelte              — Root shell, PostHog ✓, Sentry ✓
 │   ├── (marketing)/+page.svelte    — Landing page ✓
-│   ├── (auth)/                     — login ✓, signup ✓, forgot-password ✓, reset-password ✓
+│   ├── (marketing)/invite/[token]/ — public accept-invite page, outside the beta gate + (app) ✓
+│   ├── (auth)/                     — login ✓, signup ✓ (redirectTo/email prefill for invites) ✓, forgot-password ✓, reset-password ✓
 │   ├── (onboarding)/onboarding/    — full-screen 3-step flow, no TopNav, auth-gated ✓
 │   ├── (app)/                      — All protected routes
 │   │   ├── dashboard/              — S2: surface + Supabase data layer ✓
@@ -175,8 +177,8 @@ src/
 │   │           ├── activity/       — timeline feed, category cards with deep links ✓
 │   │           ├── memories/
 │   │           │   └── [memoryId]/ — full-page memory detail + edit drawer ✓
-│   │           ├── collaborators/  — stub
-│   │           ├── settings/       — stub
+│   │           ├── collaborators/  — owner-only management UI: invite modal, role change, remove, resend/revoke invites ✓
+│   │           ├── settings/       — rename/description form, danger zone delete ✓
 │   │           └── persons/
 │   │               ├── new/        — Add Person form ✓
 │   │               └── [personId]/ — S4: surface + Supabase data layer ✓
@@ -184,8 +186,8 @@ src/
 │   │                   ├── media/  — full media gallery + upload + delete ✓
 │   │                   └── memories/ — stub
 │   └── api/
-│       ├── auth/signout/           — DELETE session endpoint
-│       └── trees/[treeId]/         — tree · persons · relationships · memories · media · collaborators
+│       ├── auth/signout/           — POST session endpoint
+│       └── trees/[treeId]/         — tree · persons · relationships · memories · media · collaborators (POST = invite) ✓
 └── admin/                          — Founder dashboard (not yet built)
 ```
 
@@ -206,6 +208,15 @@ trees             — id, owner_id (→ profiles.id), name, description, is_publ
 tree_collaborators — id, tree_id (→ trees.id), profile_id (→ profiles.id),
                      role (viewer|editor), invited_by (→ profiles.id, nullable),
                      invited_at, accepted_at (nullable)
+
+tree_invites      — id, tree_id (→ trees.id), invited_by (→ profiles.id),
+                    email, role (viewer|editor), token (unique), expires_at,
+                    accepted_at (nullable), created_at
+                  -- Pending, email-addressed invites for people without a Prosapia
+                  -- account yet. tree_collaborators.profile_id is mandatory, so this
+                  -- table bridges the gap until accepted, at which point a
+                  -- tree_collaborators row is created and this row's accepted_at is set.
+                  -- UNIQUE(tree_id, email) — re-inviting refreshes the existing row.
 
 persons           — id, tree_id (→ trees.id), created_by (→ profiles.id),
                     first_name, last_name (nullable), maiden_name (nullable),
@@ -282,7 +293,7 @@ Three tiers. Plan gating always enforced **server-side** — never trust client-
 
 | Plan | Storage | Trees | Collaborators | Media |
 | --- | --- | --- | --- | --- |
-| Remembrance (free) | No storage | 1 | 0 | No media uploads |
+| Remembrance (free) | 1GB | 1 | 1 | Images only, 10MB/file |
 | Heritage ($7.99/mo · $76.70/yr) | 50GB | 3 | 10 | Images + audio |
 | Legacy ($14.99/mo · $143.90/yr) | Unlimited* | ∞ | ∞ | Images + audio + video |
 
@@ -498,10 +509,13 @@ Blocks revenue. Nothing ships without this.
 
 ### Phase 6 — Email (Resend)
 
-No user email exists today. Auth reset email is Supabase default (unbranded).
+`resend` is installed and `src/lib/server/email.ts` exists, but scoped to one
+email so far (the Phase 8 collaborator invite) — extend it for the items
+below rather than recreating it. Auth reset email is still Supabase default
+(unbranded).
 
-- [ ] `npm install resend`
-- [ ] `src/lib/server/email.ts` — shared send helper wrapping Resend client
+- [x] `npm install resend`
+- [x] `src/lib/server/email.ts` — minimal send helper wrapping Resend client (`sendCollaboratorInviteEmail` only so far)
 - [ ] Welcome email — triggered on `subscription_created` (and/or signup)
 - [ ] Payment confirmation email — triggered on `subscription_created`
 - [ ] Payment failed email — triggered on `subscription_payment_failed` (note 7-day grace period)
@@ -520,14 +534,13 @@ No user email exists today. Auth reset email is Supabase default (unbranded).
 
 ---
 
-### Phase 8 — Collaborator Invitations
+### Phase 8 — Collaborator Invitations ✓ COMPLETE
 
-Can ship without this and add in v1.1, but it's a core differentiator.
-
-- [ ] Invite form on collaborators page — email input + role selector (viewer/editor)
-- [ ] `POST /api/trees/[treeId]/collaborators` — validate plan limit, insert `tree_collaborators` row with `accepted_at = null`, send invitation email via Resend
-- [ ] Accept-invite route `/invite/[token]` — validates token, sets `accepted_at`, redirects to tree
-- [ ] Collaborator management UI — list current collaborators, remove button, change role
+- [x] Invite form on collaborators page — email input + role selector (viewer/editor), via a `Modal`
+- [x] `POST /api/trees/[treeId]/collaborators` — validates plan limit (`checkCanAddCollaborator`, counts pending invites too), upserts a `tree_invites` row, sends invitation email via Resend with a copy-link fallback if the send fails
+- [x] Accept-invite route `/invite/[token]` (under `(marketing)`, bypasses the beta gate via `beta.ts`'s `/invite/` prefix check and the `(app)` auth-required layout) — validates token (not found/expired/already-accepted/valid), requires the signed-in account's email to match the invited email, sets `accepted_at`, creates the `tree_collaborators` row, redirects to the tree
+- [x] Collaborator management UI (`trees/[treeId]/collaborators`) — owner-only; lists active collaborators (role change, remove) and pending invites (copy link, resend, revoke)
+- [x] `signup` supports `?redirectTo=` and `?email=` so an invited signup lands back on the invite accept page instead of onboarding
 
 ---
 
@@ -615,11 +628,14 @@ All core screens built and wired to Supabase. Key highlights:
 - GDPR cookie consent banner: localStorage-persisted, PostHog opt-in/out wired ✓
 - Tree canvas accessible list-view: List toggle + `role="list"` panel ✓
 
-**Still a stub (built in Phase 8):**
-- `trees/[treeId]/collaborators` — route exists, invite flow built in Phase 8
+**Phase 8 — Collaborator Invitations: ✓ COMPLETE**
+- `tree_invites` table (migration `20260716000000_add_tree_invites.sql`) for pending, email-addressed invites ahead of signup ✓
+- Invite/manage UI at `trees/[treeId]/collaborators`, invite creation at `POST /api/trees/[treeId]/collaborators`, accept flow at `(marketing)/invite/[token]` ✓
+- Minimal `src/lib/server/email.ts` (Resend) pulled forward from Phase 6 for the invite email, with a copy-link fallback if sending fails ✓
+- Remembrance (free) tier given 1 GB image storage + 1 collaborator slot so the two positioning-pillar features (photos, collaboration) are experienceable before paying — see `src/lib/utils/plans.ts` ✓
 
 **Private-beta password gate + waitlist: ✓ COMPLETE**
-- `src/hooks.server.ts` gates all routes except `/`, `/contact`, `/terms`, `/privacy`, `/beta-access`, `/api/*` behind a signed `prosapia_beta` cookie (`src/lib/server/beta.ts`) ✓
+- `src/hooks.server.ts` gates all routes except `/`, `/contact`, `/terms`, `/privacy`, `/beta-access`, `/invite/*`, `/api/*` behind a signed `prosapia_beta` cookie (`src/lib/server/beta.ts`) ✓
 - `/beta-access` — standalone password entry page, sets the cookie and redirects testers into the real, unmodified `(auth)` signup/login flow ✓
 - Landing page hero: founder note callout + email waitlist form (replaces the old inline signup/login panel — that logic now lives only in `(auth)/login` and `(auth)/signup`) ✓
 - `waitlist_subscribers` table + `contact_submissions` table — created live 2026-07-15 (migrations existed but were never applied; `types.ts` regenerated, `as any` casts removed from `contact/+page.server.ts` and the landing page's `waitlist` action) ✓

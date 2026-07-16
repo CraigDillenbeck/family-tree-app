@@ -8,6 +8,7 @@ const PUBLIC_PATHS = new Set(['/', '/contact', '/terms', '/privacy', '/beta-acce
 export function isBetaGatedPath(pathname: string): boolean {
   if (PUBLIC_PATHS.has(pathname)) return false
   if (pathname.startsWith('/api/')) return false
+  if (pathname.startsWith('/invite/')) return false
   return true
 }
 

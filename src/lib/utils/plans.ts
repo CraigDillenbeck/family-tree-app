@@ -20,12 +20,12 @@ export interface PlanLimits {
 
 export const PLANS: Record<PlanId, PlanLimits> = {
   remembrance: {
-    storageBytes: 0,
+    storageBytes: 1 * 1024 * 1024 * 1024,
     maxTrees: 1,
-    maxCollaborators: 0,
-    allowedMediaKinds: [],
-    maxFileSizeBytes: 0,
-    storageLabel: 'No media storage',
+    maxCollaborators: 1,
+    allowedMediaKinds: ['image'],
+    maxFileSizeBytes: 10 * 1024 * 1024, // 10 MB per file
+    storageLabel: '1 GB',
     displayName: 'Remembrance',
     priceLabel: 'Free',
   },
@@ -182,24 +182,26 @@ export async function checkCanAddCollaborator(
 ): Promise<CheckResult> {
   if (plan.maxCollaborators === -1) return { allowed: true }
 
-  if (plan.maxCollaborators === 0) {
-    return {
-      allowed: false,
-      message: `Collaborators are available on the Heritage plan. Upgrade to invite others to your tree.`,
-    }
-  }
+  const [{ count: collaboratorCount }, { count: pendingInviteCount }] = await Promise.all([
+    supabase
+      .from('tree_collaborators')
+      .select('id', { count: 'exact', head: true })
+      .eq('tree_id', treeId),
+    supabase
+      .from('tree_invites')
+      .select('id', { count: 'exact', head: true })
+      .eq('tree_id', treeId)
+      .is('accepted_at', null)
+      .gt('expires_at', new Date().toISOString()),
+  ])
 
-  const { count } = await supabase
-    .from('tree_collaborators')
-    .select('id', { count: 'exact', head: true })
-    .eq('tree_id', treeId)
-
-  const current = count ?? 0
+  const current = (collaboratorCount ?? 0) + (pendingInviteCount ?? 0)
 
   if (current >= plan.maxCollaborators) {
+    const nextPlan = plan.displayName === 'Remembrance' ? 'Heritage' : 'Legacy'
     return {
       allowed: false,
-      message: `You've reached the ${plan.maxCollaborators}-collaborator limit on the ${plan.displayName} plan. Upgrade to Legacy for unlimited collaborators.`,
+      message: `You've reached the ${plan.maxCollaborators}-collaborator limit on the ${plan.displayName} plan. Upgrade to ${nextPlan} for more collaborators.`,
     }
   }
 

@@ -4,9 +4,11 @@
   import Input from '$lib/components/ui/Input.svelte'
   import Button from '$lib/components/ui/Button.svelte'
   import { capture } from '$lib/utils/analytics'
+  import type { PageData } from './$types'
 
-  let { form }: { form: ActionData } = $props()
+  let { form, data }: { form: ActionData; data: PageData } = $props()
   let loading = $state(false)
+  let loginHref = $derived(data.redirectTo ? `/login?redirectTo=${encodeURIComponent(data.redirectTo)}` : '/login')
 </script>
 
 <svelte:head>
@@ -24,7 +26,7 @@
 
     <div class="card">
       <nav class="tabs" aria-label="Account access">
-        <a href="/login" class="tab">Sign in</a>
+        <a href={loginHref} class="tab">Sign in</a>
         <a href="/signup" class="tab active" aria-current="page">Create account</a>
       </nav>
 
@@ -45,8 +47,9 @@
         }}
       >
         <div class="fields">
+          <input type="hidden" name="redirectTo" value={data.redirectTo} />
           <Input label="Given name" type="text" name="displayName" autocomplete="given-name" required placeholder="Sarah" />
-          <Input label="Email" type="email" name="email" autocomplete="email" required placeholder="you@example.com" />
+          <Input label="Email" type="email" name="email" autocomplete="email" required placeholder="you@example.com" value={data.email} />
           <Input label="Password" type="password" name="password" autocomplete="new-password" required placeholder="At least 8 characters" />
           <Button type="submit" size="lg" disabled={loading} style="width:100%;justify-content:center;margin-top:8px">
             {loading ? 'Creating account…' : 'Create account'}
