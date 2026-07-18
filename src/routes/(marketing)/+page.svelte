@@ -47,7 +47,7 @@
       ctaPrimary: true,
       ctaLabel: 'Start with Heritage',
       ctaHref: '/signup',
-      storage: '50 GB storage',
+      storage: '20 GB storage',
       storageNote: 'Room for thousands of family photographs',
       features: [
         'Everything in Remembrance',
@@ -62,15 +62,15 @@
     {
       key: 'legacy',
       name: 'Legacy',
-      description: 'For the dedicated family historian. Everything, unlimited, forever.',
+      description: 'For the dedicated family historian who wants space for it all.',
       price: '$14.99',
       period: '/month',
       annualPrice: 143.90,
       ctaPrimary: false,
       ctaLabel: 'Start with Legacy',
       ctaHref: '/signup',
-      storage: 'Unlimited storage',
-      storageNote: 'No limits — every photo, video, and voice, kept forever',
+      storage: 'Generous storage',
+      storageNote: 'Plenty of room for every photo, video, and voice recording you want to keep',
       features: [
         'Everything in Heritage',
         'Video uploads — family films and recordings',

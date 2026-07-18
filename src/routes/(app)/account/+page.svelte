@@ -134,7 +134,7 @@
           {#if storageNearLimit}
             <p class="storage-warning">
               You've used {Math.round(storagePercent)}% of your storage.
-              <a href="/signup" class="storage-upgrade">Upgrade to Heritage for 50 GB →</a>
+              <a href="/signup" class="storage-upgrade">Upgrade to Heritage for 20 GB →</a>
             </p>
           {/if}
         </div>

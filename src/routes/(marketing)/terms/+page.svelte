@@ -79,12 +79,12 @@
 						written memories, no media uploads, no collaborators.
 					</li>
 					<li>
-						<strong>Heritage ($7.99/month or $76.70/year)</strong> — Up to three family trees, 50 GB
+						<strong>Heritage ($7.99/month or $76.70/year)</strong> — Up to three family trees, 20 GB
 						of storage, image and audio uploads, up to 10 collaborators per tree.
 					</li>
 					<li>
 						<strong>Legacy ($14.99/month or $143.90/year)</strong> — Unlimited family trees,
-						unlimited storage, image, audio, and video uploads, unlimited collaborators.
+						generous storage, image, audio, and video uploads, unlimited collaborators.
 					</li>
 				</ul>
 				<p>
@@ -175,6 +175,15 @@
 					We recommend keeping your own backup copies of any irreplaceable content. While we take
 					data integrity seriously, Prosapia is not a backup service and we cannot guarantee
 					against data loss.
+				</p>
+				<p>
+					Legacy plan storage is generous and not subject to a hard limit, but it's intended for
+					genuine family archiving — photos, audio, video, and documents connected to your family's
+					history. It isn't intended to be used as general-purpose file storage, for hosting content
+					unrelated to your family trees, or for sharing or reselling storage capacity to people
+					outside your invited collaborators. If we see usage that's clearly inconsistent with
+					ordinary family archiving, we'll reach out to talk with you about it before taking any
+					action — we won't cap or restrict your account without contacting you first.
 				</p>
 			</section>
 

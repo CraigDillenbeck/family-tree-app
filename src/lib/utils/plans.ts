@@ -30,12 +30,12 @@ export const PLANS: Record<PlanId, PlanLimits> = {
     priceLabel: 'Free',
   },
   heritage: {
-    storageBytes: 50 * 1024 * 1024 * 1024,
+    storageBytes: 20 * 1024 * 1024 * 1024,
     maxTrees: 3,
     maxCollaborators: 10,
     allowedMediaKinds: ['image', 'audio', 'document'],
     maxFileSizeBytes: 50 * 1024 * 1024, // 50 MB per file
-    storageLabel: '50 GB',
+    storageLabel: '20 GB',
     displayName: 'Heritage',
     priceLabel: '$7.99/mo',
   },
@@ -220,7 +220,7 @@ export async function checkStorageAllowed(
 
   if (used + fileSizeBytes > plan.storageBytes) {
     const nextPlan = plan.displayName === 'Remembrance' ? 'Heritage' : 'Legacy'
-    const nextStorage = nextPlan === 'Heritage' ? '50 GB' : 'unlimited storage'
+    const nextStorage = nextPlan === 'Heritage' ? PLANS.heritage.storageLabel : 'generous storage'
     return {
       allowed: false,
       message: `You've reached your storage limit on the ${plan.displayName} plan. Upgrade to ${nextPlan} for ${nextStorage}.`,
